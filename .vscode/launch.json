@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "ai-evolution (with .env)",
+      "request": "launch",
+      "mainClass": "com.aievolution.AiEvolutionApplication",
+      "projectName": "ai-evolution",
+      // 关键：把 .env 注入为环境变量，等价于命令行的 source .env；
+      // 缺了它应用会因 DeepSeek API Key 缺失而启动失败
+      "envFile": "${workspaceFolder}/.env"
+    }
+  ]
+}
