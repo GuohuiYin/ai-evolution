@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: ai-evolution
-          image: aievolution:0.1.0-w1-SNAPSHOT
+          image: ai-evolution:0.1.0-w1-SNAPSHOT
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
