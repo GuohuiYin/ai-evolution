@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: ai-evolution
+  lifecycle:
+    timeout-per-shutdown-phase: 10s
+
+server:
+  port: 8080
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
