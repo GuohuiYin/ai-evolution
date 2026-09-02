@@ -4,3 +4,5 @@ metadata:
   name: ai-evolution-config
 data:
   SPRING_APPLICATION_NAME: ai-evolution
+  # 约定 A7：K8s 部署关闭 Swagger UI（文档页面也是攻击面），/v3/api-docs JSON 保留
+  SPRINGDOC_SWAGGER_UI_ENABLED: "false"

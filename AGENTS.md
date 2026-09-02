@@ -1,7 +1,7 @@
 # AGENTS.md — ai_evolution 工作约定
 
 > 本文件是本仓库的最高协作规范，人与 AI 协作者共同遵守。
-> 制定日期：2026-09-02 · 版本 v1.0 · 修改需经仓库所有者确认
+> 制定日期：2026-09-02 · 版本 v1.1（2026-09-02 新增 A7，修订 C1） · 修改需经仓库所有者确认
 
 ## 0. 项目定位
 
@@ -28,6 +28,7 @@ ai_evolution：Java 架构师向 AI 应用架构师转型的实战项目。
 - **A4** ADR 架构决策记录，存 `docs/adr/`，关键决策必须留痕
 - **A5** 密钥与配置隔离（12-factor）：环境变量注入，`.env` 不入库，提供 `.env.example`
 - **A6** 结构化日志 + Micrometer 埋点从第一个端点开始（Token 计量为交付物之一）
+- **A7** API 文档即契约：所有 HTTP 接口必须有完整的 OpenAPI 3 文档（springdoc 注解生成，不手写 YAML）——每个端点标注 summary/description、请求与响应 schema、全部错误码（400/502/503 等）及示例；文档与实现同步变更。Swagger UI 仅本地开放，K8s 部署通过配置关闭 UI（文档页面也是攻击面）
 - **B1** Testcontainers 集成测试——W3 引入 Qdrant 时启用
 - **B2** ArchUnit 架构约束测试——W5 Harness 阶段启用，将依赖方向写成会失败的测试
 - **B3** 结构化错误返回 RFC 7807 ProblemDetail——W5 工具工程启用
@@ -35,15 +36,15 @@ ai_evolution：Java 架构师向 AI 应用架构师转型的实战项目。
 
 ## 3. 云原生约定（C1）
 
-- 容器化从 W1 开始，使用 Spring Boot Buildpacks 构建镜像，不手写 Dockerfile
+- 容器化从 W1 开始，使用 Jib 构建镜像，不手写 Dockerfile（原约定 Buildpacks 因网络约束替换，见 ADR-0002）
 - 从第一个端点具备 K8s 友好最小集：actuator 健康探针（liveness/readiness 分离）、优雅停机、日志到 stdout、配置外置
 - 部署清单存 `k8s/` 目录，基础设施即代码；镜像用语义化 tag，禁用 `latest`
 - **开发循环本地化，部署验证里程碑化**：日常开发走 `./mvnw` 本地反馈环；每个里程碑与每周五在 minikube 做部署冒烟，保持"随时可部署"
 
 ## 4. Definition of Done
 
-每步完成 = ① 编译绿 ② 测试绿（`./mvnw verify`）③ Owner review 通过 ④ 退出条件达成。
-四者齐备才算完成，协作者不得自行宣布完成。
+每步完成 = ① 编译绿 ② 测试绿（`./mvnw verify`）③ Owner review 通过 ④ 退出条件达成 ⑤ 含接口变更的步骤，OpenAPI 文档可访问且与实际行为一致。
+五者齐备才算完成，协作者不得自行宣布完成。
 
 ## 5. 金融域三条红线（写进 Harness，全项目生效）
 

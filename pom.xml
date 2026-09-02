@@ -47,6 +47,12 @@
       <groupId>org.springframework.ai</groupId>
       <artifactId>spring-ai-starter-model-deepseek</artifactId>
     </dependency>
+    <!-- OpenAPI 3 文档（约定 A7）：注解生成契约 + 内嵌 Swagger UI，Boot 4 兼容线从 3.x 开始 -->
+    <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+      <version>3.1.0</version>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>
