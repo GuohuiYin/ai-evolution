@@ -23,6 +23,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: ai-evolution-config
+            - secretRef:
+                name: ai-evolution-secret
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
