@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Evolution · 对话</title>
+  <style>
+    :root {
+      --bg: #f7f7f9;
+      --panel: #ffffff;
+      --border: #e8e8ee;
+      --text: #1f2329;
+      --text-2nd: #6b7280;
+      --accent: #4d6bfe;
+      --accent-grad: linear-gradient(135deg, #4d6bfe 0%, #7c5cff 100%);
+      --user-grad: linear-gradient(135deg, #4d6bfe 0%, #6a5cff 100%);
+      --error-bg: #fef2f2;
+      --error-text: #b91c1c;
+      --radius: 18px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── 顶栏 ─────────────────────────── */
+    header {
+      height: 56px;
+      flex: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 24px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      width: 28px; height: 28px;
+      border-radius: 9px;
+      background: var(--accent-grad);
+      display: grid; place-items: center;
+      color: #fff; font-size: 15px; font-weight: 700;
+    }
+    .title { font-size: 15px; font-weight: 600; letter-spacing: 0.2px; }
+    .badge {
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--text-2nd);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 3px 12px;
+      background: var(--panel);
+    }
+
+    /* ── 消息区 ───────────────────────── */
+    main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 0 16px;
+      scroll-behavior: smooth;
+    }
+    .thread { max-width: 780px; margin: 0 auto; padding: 0 20px; display: flex; flex-direction: column; gap: 20px; }
+
+    .welcome { text-align: center; padding: 48px 0 12px; animation: fadeUp .5s ease both; }
+    .welcome h1 { font-size: 26px; font-weight: 700; background: var(--accent-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .welcome p { margin-top: 10px; color: var(--text-2nd); font-size: 14px; }
+    .chips { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+    .chip {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      font-size: 13px;
+      border-radius: 999px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: all .18s ease;
+    }
+    .chip:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(77,107,254,.12); }
+
+    .msg { display: flex; gap: 12px; animation: fadeUp .3s ease both; }
+    .msg.user { flex-direction: row-reverse; }
+    .avatar {
+      flex: none;
+      width: 34px; height: 34px;
+      border-radius: 11px;
+      display: grid; place-items: center;
+      font-size: 13px; font-weight: 700; color: #fff;
+      background: var(--accent-grad);
+    }
+    .msg.user .avatar { background: #d9dde6; color: #4b5563; }
+    .bubble {
+      max-width: 78%;
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      font-size: 14.5px;
+      line-height: 1.75;
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-top-left-radius: 6px;
+      box-shadow: 0 1px 2px rgba(16,24,40,.04);
+    }
+    .msg.user .bubble {
+      background: var(--user-grad);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      border-top-right-radius: 6px;
+    }
+    .bubble.error {
+      background: var(--error-bg);
+      border-color: #fecaca;
+      color: var(--error-text);
+      font-size: 13.5px;
+    }
+
+    /* 打字指示器 */
+    .typing { display: inline-flex; gap: 5px; padding: 4px 2px; }
+    .typing i {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #b6bcc9;
+      animation: bounce 1.2s infinite ease-in-out;
+    }
+    .typing i:nth-child(2) { animation-delay: .15s; }
+    .typing i:nth-child(3) { animation-delay: .3s; }
+    @keyframes bounce { 0%,60%,100% { transform: translateY(0); opacity:.5 } 30% { transform: translateY(-5px); opacity:1 } }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    /* ── 输入区 ───────────────────────── */
+    footer { flex: none; padding: 12px 20px 18px; }
+    .composer {
+      max-width: 780px; margin: 0 auto;
+      display: flex; align-items: flex-end; gap: 10px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 10px 10px 10px 20px;
+      box-shadow: 0 6px 24px rgba(16,24,40,.06);
+      transition: border-color .18s ease, box-shadow .18s ease;
+    }
+    .composer:focus-within { border-color: var(--accent); box-shadow: 0 6px 24px rgba(77,107,254,.16); }
+    textarea {
+      flex: 1;
+      border: none; outline: none; resize: none;
+      font: inherit; font-size: 14.5px; line-height: 1.6;
+      max-height: 140px;
+      background: transparent;
+      color: var(--text);
+    }
+    .send {
+      flex: none;
+      width: 40px; height: 40px;
+      border: none; border-radius: 14px;
+      background: var(--accent-grad);
+      color: #fff; font-size: 17px;
+      cursor: pointer;
+      display: grid; place-items: center;
+      transition: transform .15s ease, opacity .15s ease;
+    }
+    .send:hover:not(:disabled) { transform: scale(1.06); }
+    .send:disabled { opacity: .4; cursor: not-allowed; }
+    .disclaimer { max-width: 780px; margin: 8px auto 0; text-align: center; font-size: 11.5px; color: #9aa0ab; }
+
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-thumb { background: #d4d7de; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #b9bec9; }
+
+    @media (max-width: 640px) {
+      .bubble { max-width: 86%; }
+      .welcome { padding-top: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">AI</div>
+    <div class="title">AI Evolution</div>
+    <div class="badge">deepseek-chat</div>
+  </header>
+
+  <main id="scroll">
+    <div class="thread" id="thread">
+      <div class="welcome" id="welcome">
+        <h1>你好，我是你的 AI 研究助手</h1>
+        <p>由 DeepSeek 驱动 · ai-evolution W2 测试台</p>
+        <div class="chips">
+          <button class="chip" onclick="ask(this)">什么是 RAG，用三句话解释</button>
+          <button class="chip" onclick="ask(this)">Spring AI 和 LangChain4j 怎么选</button>
+          <button class="chip" onclick="ask(this)">Java 25 有哪些值得关注的新特性</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="composer">
+      <textarea id="input" rows="1" placeholder="输入消息，Enter 发送，Shift+Enter 换行…"></textarea>
+      <button class="send" id="sendBtn" title="发送" aria-label="发送">➤</button>
+    </div>
+    <div class="disclaimer">AI 生成内容仅供参考 · 不构成投资建议</div>
+  </footer>
+
+  <script>
+    const thread = document.getElementById('thread');
+    const scrollBox = document.getElementById('scroll');
+    const input = document.getElementById('input');
+    const sendBtn = document.getElementById('sendBtn');
+
+    /* ── 视图层：气泡渲染 ─────────────────────────── */
+    function addBubble(role, text) {
+      const msg = document.createElement('div');
+      msg.className = 'msg ' + role;
+      const avatar = document.createElement('div');
+      avatar.className = 'avatar';
+      avatar.textContent = role === 'user' ? '我' : 'AI';
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble' + (role === 'error' ? ' error' : '');
+      bubble.textContent = text;
+      msg.append(avatar, bubble);
+      thread.appendChild(msg);
+      scrollBox.scrollTop = scrollBox.scrollHeight;
+      return bubble;
+    }
+
+    function showTyping() {
+      const bubble = addBubble('ai', '');
+      bubble.innerHTML = '<span class="typing"><i></i><i></i><i></i></span>';
+      return bubble.closest('.msg'); // 返回整条消息节点，移除时连头像一起带走
+    }
+
+    /* ── 服务层：唯一的后端出口，后续改 SSE 流式只动这里 ── */
+    async function callChat(message) {
+      const resp = await fetch('/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message })
+      });
+      if (resp.ok) return { reply: (await resp.json()).reply };
+      const hint = { 400: '请求参数不合法', 502: '模型服务异常（不可重试）', 503: '模型繁忙，请稍后重试' };
+      return { error: `⚠️ ${hint[resp.status] || '服务异常'}（HTTP ${resp.status}）` };
+    }
+
+    /* ── 控制层：交互编排 ─────────────────────────── */
+    let pending = false;
+    async function send() {
+      const text = input.value.trim();
+      if (!text || pending) return;
+      document.getElementById('welcome')?.remove();
+      pending = true; sendBtn.disabled = true;
+      input.value = ''; input.style.height = 'auto';
+
+      addBubble('user', text);
+      const typing = showTyping();
+      try {
+        const { reply, error } = await callChat(text);
+        typing.remove();
+        error ? addBubble('error', error) : addBubble('ai', reply);
+      } catch (e) {
+        typing.remove();
+        addBubble('error', '⚠️ 网络异常：无法连接服务，请确认应用已启动');
+      } finally {
+        pending = false; sendBtn.disabled = false; input.focus();
+      }
+    }
+
+    function ask(chip) { input.value = chip.textContent; send(); }
+
+    /* 输入行为：Enter 发送 / Shift+Enter 换行 / 自动增高 */
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+    });
+    input.addEventListener('input', () => {
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 140) + 'px';
+    });
+    sendBtn.addEventListener('click', send);
+    input.focus();
+  </script>
+</body>
+</html>
