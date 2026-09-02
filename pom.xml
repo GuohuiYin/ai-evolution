@@ -48,10 +48,28 @@
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+      <!-- 镜像构建用 Jib 而非 Buildpacks：本机 github.com 直连不可达，Paketo 构建器无法下载
+           BellSoft Liberica JRE；Jib 免 Dockerfile、走 Docker daemon 的 registry mirror 拉取
+           基础镜像，可复现性同样有保障（详见 docs/adr/0002-image-build-with-jib.md） -->
+      <plugin>
+        <groupId>com.google.cloud.tools</groupId>
+        <artifactId>jib-maven-plugin</artifactId>
+        <version>3.5.2</version>
         <configuration>
-          <image>
-            <name>aievolution:${project.version}</name>
-          </image>
+          <from>
+            <!-- docker:// 前缀：基础镜像直接从本地 Docker daemon 读取（已 docker pull 预拉取），
+                 避免 Jib 直连 registry-1.docker.io 校验 manifest（本机不可达） -->
+            <image>docker://eclipse-temurin:25-jre</image>
+          </from>
+          <to>
+            <image>aievolution:${project.version}</image>
+          </to>
+          <container>
+            <ports>
+              <port>8080</port>
+            </ports>
+          </container>
         </configuration>
       </plugin>
       <plugin>
