@@ -1,0 +1,8 @@
+[
+  { "query": "茅台的酿造工艺是什么", "expectSource": "maotai.md" },
+  { "query": "茅台一年的营收规模", "expectSource": "maotai.md" },
+  { "query": "宁德时代的全球市占率", "expectSource": "catl.md" },
+  { "query": "储能电池业务的增长情况", "expectSource": "catl.md" },
+  { "query": "特斯拉的自动驾驶技术", "expectSource": null },
+  { "query": "今天天气怎么样", "expectSource": null }
+]

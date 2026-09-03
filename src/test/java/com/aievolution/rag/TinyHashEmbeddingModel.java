@@ -15,7 +15,8 @@ import org.springframework.ai.embedding.EmbeddingResultMetadata;
  */
 class TinyHashEmbeddingModel implements EmbeddingModel {
 
-  static final int DIMENSIONS = 32;
+  // 32 维时大量二元组哈希撞桶、区分度不足；256 维可把碰撞噪音降到可用水平
+  static final int DIMENSIONS = 256;
 
   @Override
   public EmbeddingResponse call(EmbeddingRequest request) {
