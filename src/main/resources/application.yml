@@ -3,6 +3,10 @@ spring:
     name: ai-evolution
   lifecycle:
     timeout-per-shutdown-phase: 10s
+  # 临时排除：Qdrant VectorStore 自动装配强依赖 EmbeddingModel Bean，
+  # W3-Step2 接入真实 Embedding 模型（SiliconFlow bge-m3）后移除此行
+  autoconfigure:
+    exclude: org.springframework.ai.vectorstore.qdrant.autoconfigure.QdrantVectorStoreAutoConfiguration
   ai:
     deepseek:
       api-key: ${AI_API_KEY:}
