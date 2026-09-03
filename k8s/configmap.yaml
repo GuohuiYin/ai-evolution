@@ -6,3 +6,6 @@ data:
   SPRING_APPLICATION_NAME: ai-evolution
   # 约定 A7：K8s 部署关闭 Swagger UI（文档页面也是攻击面），/v3/api-docs JSON 保留
   SPRINGDOC_SWAGGER_UI_ENABLED: "false"
+  # 向量库指向集群内 qdrant Service（gRPC 端口），域名由 K8s DNS 解析
+  QDRANT_HOST: qdrant
+  QDRANT_PORT: "6334"

@@ -6,16 +6,19 @@
 # 1. 构建镜像（本机需显式 DOCKER_HOST，见 ADR-0002）
 DOCKER_HOST=unix:///var/run/docker.sock ./mvnw compile jib:dockerBuild -DskipTests
 
-# 2. 加载镜像到 minikube 并应用清单
+# 2. 加载镜像到 minikube 并应用清单（Qdrant 镜像也需提前 docker pull 后载入）
 minikube image load ai-evolution:0.1.0-w1-SNAPSHOT
+minikube image load qdrant/qdrant:v1.15.1
 kubectl apply -f k8s/
 
 # 3. 创建密钥（Secret 清单不进 git，密钥取自本地 .env）
 set -a && source .env && set +a
 kubectl create secret generic ai-evolution-secret \
   --from-literal=AI_API_KEY="$AI_API_KEY" \
+  --from-literal=SILICONFLOW_API_KEY="$SILICONFLOW_API_KEY" \
   --dry-run=client -o yaml | kubectl apply -f -
 
+kubectl rollout status deploy/qdrant
 kubectl rollout status deploy/ai-evolution
 ```
 
