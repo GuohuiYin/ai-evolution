@@ -44,6 +44,7 @@ public class ChatController {
   })
   @PostMapping("/chat")
   public ChatResponse chat(@Valid @RequestBody ChatRequest request) {
-    return new ChatResponse(chatService.chat(request.message()));
+    ChatAnswer answer = chatService.chat(request.message());
+    return new ChatResponse(answer.reply(), answer.sources());
   }
 }

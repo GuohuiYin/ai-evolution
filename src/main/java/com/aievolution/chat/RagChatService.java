@@ -1,0 +1,101 @@
+package com.aievolution.chat;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.ai.document.Document;
+import org.springframework.ai.vectorstore.SearchRequest;
+import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+/**
+ * 检索增强的 {@link ChatService}：先查知识库，再把资料拼进 Prompt 让模型"看着资料回答"。
+ *
+ * <p>手动编排（而非 Advisor 黑盒）的原因：引用来源必须随响应返回（金融红线三）， 且检索为空时直接拒答、不调用模型（防幻觉闸门）。
+ *
+ * <p>金融红线一在此落地：所有回复末尾服务端强制追加免责声明，不依赖模型自觉。
+ */
+@Service
+public class RagChatService implements ChatService {
+
+  private static final int TOP_K = 4;
+  private static final int EXCERPT_MAX_LENGTH = 120;
+  private static final String DISCLAIMER = "\n\n——以上由 AI 基于知识库生成，不构成投资建议。";
+  private static final String NO_KNOWLEDGE_REPLY = "知识库中未找到与问题相关的资料。为避免误导，我不凭空作答；请先补充相关文档再提问。";
+
+  private static final PromptTemplate PROMPT_TEMPLATE =
+      new PromptTemplate(
+          """
+          你是一位严谨的个股研究助手。请仅根据下面提供的资料回答问题：
+          - 资料覆盖的，结合资料回答；涉及数字时必须注明来源文件与数据时点；
+          - 资料不足的，明确回答"知识库中暂无相关资料"，禁止凭记忆编造数字或事实；
+          - 禁止给出具体买卖建议或目标价。
+
+          【资料】
+          {context}
+
+          【问题】
+          {question}
+          """);
+
+  private final ChatClient chatClient;
+  private final VectorStore vectorStore;
+  // 相似度阈值是可调参而非硬编码：与 Embedding 模型/语料强相关，需在 eval 中调优
+  private final double similarityThreshold;
+
+  public RagChatService(
+      ChatClient.Builder chatClientBuilder,
+      VectorStore vectorStore,
+      @Value("${ai.rag.similarity-threshold:0.5}") double similarityThreshold) {
+    this.chatClient = chatClientBuilder.build();
+    this.vectorStore = vectorStore;
+    this.similarityThreshold = similarityThreshold;
+  }
+
+  @Override
+  public ChatAnswer chat(String message) {
+    List<Document> docs = retrieve(message);
+    if (docs.isEmpty()) {
+      return new ChatAnswer(NO_KNOWLEDGE_REPLY + DISCLAIMER, List.of());
+    }
+    Prompt prompt =
+        PROMPT_TEMPLATE.create(Map.of("context", joinContents(docs), "question", message));
+    String reply = chatClient.prompt(prompt).call().content();
+    return new ChatAnswer(reply + DISCLAIMER, toSources(docs));
+  }
+
+  private List<Document> retrieve(String message) {
+    return vectorStore.similaritySearch(
+        SearchRequest.builder()
+            .query(message)
+            .topK(TOP_K)
+            .similarityThreshold(similarityThreshold)
+            .build());
+  }
+
+  private String joinContents(List<Document> docs) {
+    return docs.stream().map(Document::getText).collect(Collectors.joining("\n---\n"));
+  }
+
+  private List<SourceDocument> toSources(List<Document> docs) {
+    return docs.stream()
+        .map(
+            doc ->
+                new SourceDocument(
+                    String.valueOf(doc.getMetadata().getOrDefault("source", "unknown")),
+                    excerpt(doc.getText())))
+        .distinct()
+        .toList();
+  }
+
+  private String excerpt(String text) {
+    String oneLine = text.replaceAll("\\s+", " ").trim();
+    return oneLine.length() <= EXCERPT_MAX_LENGTH
+        ? oneLine
+        : oneLine.substring(0, EXCERPT_MAX_LENGTH) + "…";
+  }
+}

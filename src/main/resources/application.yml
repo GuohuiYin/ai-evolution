@@ -14,15 +14,13 @@ spring:
       api-key: ${AI_API_KEY:}
       base-url: ${AI_BASE_URL:https://api.deepseek.com}
       chat:
-        options:
-          model: ${AI_MODEL:deepseek-chat}
+        model: ${AI_MODEL:deepseek-chat}
     openai:
       api-key: ${SILICONFLOW_API_KEY:}
       # 注意：OpenAI 兼容客户端要求 base-url 包含 /v1 路径段，否则 404
       base-url: ${SILICONFLOW_BASE_URL:https://api.siliconflow.cn/v1}
       embedding:
-        options:
-          model: BAAI/bge-m3
+        model: BAAI/bge-m3
     vectorstore:
       qdrant:
         host: ${QDRANT_HOST:localhost}

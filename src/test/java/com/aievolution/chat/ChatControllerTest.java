@@ -22,7 +22,10 @@ class ChatControllerTest {
 
   @Test
   void chatReturnsReplyFromService() throws Exception {
-    when(chatService.chat("你好")).thenReturn("你好，我是 DeepSeek");
+    when(chatService.chat("你好"))
+        .thenReturn(
+            new ChatAnswer(
+                "你好，我是 DeepSeek", java.util.List.of(new SourceDocument("maotai.md", "示例片段"))));
 
     mockMvc
         .perform(
@@ -30,7 +33,8 @@ class ChatControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"message\":\"你好\"}"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.reply").value("你好，我是 DeepSeek"));
+        .andExpect(jsonPath("$.reply").value("你好，我是 DeepSeek"))
+        .andExpect(jsonPath("$.sources[0].source").value("maotai.md"));
   }
 
   @Test
