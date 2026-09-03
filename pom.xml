@@ -56,6 +56,11 @@
       <groupId>org.springframework.ai</groupId>
       <artifactId>spring-ai-starter-model-deepseek</artifactId>
     </dependency>
+    <!-- Embedding：SiliconFlow bge-m3，走 OpenAI 兼容协议（DeepSeek 无 Embedding API） -->
+    <dependency>
+      <groupId>org.springframework.ai</groupId>
+      <artifactId>spring-ai-starter-model-openai</artifactId>
+    </dependency>
     <!-- W3：向量库（Qdrant）。版本由 spring-ai-bom 管理 -->
     <dependency>
       <groupId>org.springframework.ai</groupId>

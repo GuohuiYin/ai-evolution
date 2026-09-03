@@ -13,7 +13,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 /** 对话页面冒烟测试：首页可访问且返回 HTML（详细交互逻辑由人工浏览器验收兜底）。 */
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-    properties = "spring.ai.deepseek.api-key=test-key")
+    properties = {
+      "spring.ai.deepseek.api-key=test-key",
+      "spring.ai.openai.api-key=test-key",
+      "spring.ai.vectorstore.qdrant.initialize-schema=false",
+      "ai.knowledge.ingest.enabled=false"
+    })
 class ChatPageTest {
 
   @Value("${local.server.port}")
