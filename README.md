@@ -24,7 +24,7 @@
 |---|---|---|
 | 语言 / 框架 | Java 25 (LTS) / Spring Boot 4.1.1 | [ADR-0001](docs/adr/0001-foundation-and-stack.md) |
 | AI 编排 | Spring AI 2.0.1 | ADR-0001 |
-| 模型供应商 | DeepSeek（对话）+ SiliconFlow bge-m3（Embedding，OpenAI 兼容协议） | 选型笔记见 W4 产出 |
+| 模型供应商 | DeepSeek（对话）+ SiliconFlow bge-m3（Embedding，OpenAI 兼容协议） | [模型选型笔记 v1](docs/model-selection-v1.md)（双模型实测） |
 | 向量数据库 | Qdrant v1.15.1 | W3 落地 |
 | 镜像构建 | Jib | [ADR-0002](docs/adr/0002-image-build-with-jib.md) |
 | 部署 | Kubernetes（本地 Minikube）——云原生第一天 | W2 落地 |
@@ -50,25 +50,28 @@ minikube image load ai-evolution:0.1.0-w1-SNAPSHOT
 kubectl apply -f k8s/
 ```
 
-## 架构快照（截至 W3 · 2026-09-03）
+## 架构快照（截至 W4 · 2026-09-04）
 
 ```
-用户 ──► 对话页 / REST /ai/chat
-           │
-           ▼
-     RagChatService（手动编排，非 Advisor 黑盒）
-           │  ① 检索：bge-m3 向量化 ──► Qdrant（topK=4，阈值闸门）
-           │  ② 空检索 ──► 硬拒答（不过模型，防幻觉）
-           │  ③ 命中 ──► 拼装上下文 ──► DeepSeek 生成
-           ▼
-     响应 = 回答 + 引用来源（sources）+ 免责声明（服务端追加）
+通路一（知识问答）                    通路二（结构化分析）
+/ai/chat                            /ai/analyze?code=600519
+   │                                   │
+   ▼                                   ▼
+RagChatService                     StockAnalysisService
+（手动编排，非 Advisor 黑盒）         （拉数据 → 拼 prompt → .entity()）
+   │                                   │
+   │  bge-m3 向量化 ──► Qdrant          │  StockDataClient（mock 先行，W5 换真源）
+   │  空检索 → 硬拒答                    │  未知代码 → 404（空数据不过模型）
+   ▼                                   ▼
+回答 + sources + 免责声明            StockAnalysisReport(JSON) + 免责声明
 
+共享底座：PromptLibrary（prompts/*.md 版本化资产）· ChatExceptionHandler（502/503 语义化）
 部署形态：ai-evolution + Qdrant 同集群（Minikube），ConfigMap/Secret 分层，
          探针 + 优雅停机 + Jib 镜像，eval 雏形（golden-set 6 条，Recall 全中）
 ```
 
-**当前能力**：知识库问答可溯源、越界硬拒答、集群内全链路运行。
-**路线图**：W4 L1 Prompt 工程补课（结构化输出/选型实验）→ W5 工具调用 + M1 验收门 → M2 MCP/护栏/Eval → M3 最小研究 Loop。
+**当前能力**：知识库问答可溯源、越界硬拒答、结构化个股分析（CO-STAR + few-shot + schema 输出）、双模型供应商配置切换（DeepSeek 主力 / Qwen 备选，实测定稿）、集群内全链路运行。
+**路线图**：W5 工具调用（@Tool）+ M1 验收门（Recall@5 ≥ 0.7）→ M2 MCP/护栏/Eval → M3 最小研究 Loop。
 
 ## 文档导航
 
@@ -76,7 +79,9 @@ kubectl apply -f k8s/
 |---|---|
 | [docs/plans/](docs/plans/README.md) | 周作战计划与回顾（对 PPT 路线的执行校准版） |
 | [docs/adr/](docs/adr/) | 架构决策记录 |
-| [docs/eval/](docs/eval/) | 评估报告 |
+| [docs/eval/](docs/eval/) | 评估报告（prompt 对比 / 模型选型）与原始样本 |
+| [docs/journal/](docs/journal/) | 周记（PPT 机制篇约定：每周末 5 行） |
+| [docs/model-selection-v1.md](docs/model-selection-v1.md) | 模型选型笔记（DeepSeek vs Qwen 实测） |
 | [k8s/](k8s/README.md) | 部署清单与配置分层原则 |
 | [AGENTS.md](AGENTS.md) | 开发工作约定（TDD / Clean Code / 金融红线 / review 颗粒度） |
 
