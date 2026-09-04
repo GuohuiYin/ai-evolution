@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.aievolution.chat.ChatAnswer;
+import com.aievolution.chat.PromptLibrary;
 import com.aievolution.chat.RagChatService;
 import io.qdrant.client.QdrantClient;
 import io.qdrant.client.QdrantGrpcClient;
@@ -50,7 +51,8 @@ class RagChatIT {
       when(callSpec.content()).thenReturn("基于资料的回答");
 
       // 测试替身的哈希向量得分分布与真实语义向量不同，集成测试放低阈值专注验证链路
-      ChatAnswer answer = new RagChatService(builder, store, 0.0).chat("酱香白酒的酿造工艺");
+      ChatAnswer answer =
+          new RagChatService(builder, store, new PromptLibrary(), 0.0).chat("酱香白酒的酿造工艺");
 
       // 引用的来源必须命中知识库文档
       assertThat(answer.sources()).anySatisfy(s -> assertThat(s.source()).isEqualTo("maotai.md"));
