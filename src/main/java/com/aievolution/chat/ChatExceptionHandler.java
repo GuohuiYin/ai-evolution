@@ -41,5 +41,16 @@ class ChatExceptionHandler {
         .body(new ErrorBody("upstream_output_parse_error"));
   }
 
+  /**
+   * OpenAI 兼容客户端（SiliconFlow/Qwen 等）的原生 HTTP 错误（如 402 余额不足）→ 502。 Spring AI
+   * 的异常包装不覆盖该客户端的原生异常，需单独翻译，保证对外错误语义稳定。
+   */
+  @ExceptionHandler(com.openai.errors.OpenAIException.class)
+  ResponseEntity<ErrorBody> handleOpenAiClient(com.openai.errors.OpenAIException ex) {
+    log.error("上游模型调用失败（OpenAI 兼容通道）: {}", ex.getMessage());
+    return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+        .body(new ErrorBody("upstream_model_error"));
+  }
+
   record ErrorBody(String error) {}
 }
