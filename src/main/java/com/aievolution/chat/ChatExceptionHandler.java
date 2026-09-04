@@ -31,5 +31,15 @@ class ChatExceptionHandler {
         .body(new ErrorBody("upstream_model_unavailable"));
   }
 
+  /**
+   * 模型输出无法解析为约定 schema（结构化输出的固有脆弱性）→ 502。 模型输出不合法本质上是上游故障而非服务端缺陷；W5/W7 再升级为"重试一次+修复提示"的 Correct 机制。
+   */
+  @ExceptionHandler(tools.jackson.core.exc.StreamReadException.class)
+  ResponseEntity<ErrorBody> handleOutputParse(tools.jackson.core.exc.StreamReadException ex) {
+    log.warn("模型输出解析失败（非约定 JSON）: {}", ex.getMessage());
+    return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+        .body(new ErrorBody("upstream_output_parse_error"));
+  }
+
   record ErrorBody(String error) {}
 }
