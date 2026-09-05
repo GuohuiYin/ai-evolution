@@ -1,4 +1,4 @@
-package com.aievolution.chat;
+package com.aievolution.compliance;
 
 /**
  * 合规文案单点定义（约定 A12：红线逻辑单点化）。

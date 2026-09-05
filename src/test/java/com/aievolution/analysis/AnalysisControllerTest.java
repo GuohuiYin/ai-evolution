@@ -5,7 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.aievolution.chat.Disclaimers;
+import com.aievolution.compliance.Disclaimers;
 import com.aievolution.prompt.InvalidPromptVersionException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
