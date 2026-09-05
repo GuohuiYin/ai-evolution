@@ -35,14 +35,20 @@ public class ChatController {
         content =
             @Content(
                 mediaType = "application/json",
-                examples = @ExampleObject(value = "{\"error\":\"upstream_model_error\"}"))),
+                examples =
+                    @ExampleObject(
+                        value =
+                            "{\"title\":\"上游模型调用失败\",\"status\":502,\"error\":\"upstream_model_error\"}"))),
     @ApiResponse(
         responseCode = "503",
         description = "上游模型暂不可用，可稍后重试（如限流、超时）",
         content =
             @Content(
                 mediaType = "application/json",
-                examples = @ExampleObject(value = "{\"error\":\"upstream_model_unavailable\"}")))
+                examples =
+                    @ExampleObject(
+                        value =
+                            "{\"title\":\"上游模型暂不可用\",\"status\":503,\"error\":\"upstream_model_unavailable\"}")))
   })
   @PostMapping("/chat")
   public ChatResponse chat(@Valid @RequestBody ChatRequest request) {
