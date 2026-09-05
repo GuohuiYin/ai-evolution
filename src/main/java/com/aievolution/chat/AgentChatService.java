@@ -15,7 +15,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class AgentChatService {
 
-  private static final String DISCLAIMER = "\n\n——以上由 AI 生成，不构成投资建议。";
+  // 红线 01：免责声明引用全项目单点定义（约定 A12），不各自拷贝
+  private static final String DISCLAIMER = "\n\n" + Disclaimers.AI_GENERATED;
   private static final String PROMPT_NAME = "agent-chat-v1";
 
   private final ChatClient chatClient;

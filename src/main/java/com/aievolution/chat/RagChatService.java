@@ -21,7 +21,8 @@ import org.springframework.stereotype.Service;
 public class RagChatService implements ChatService {
 
   private static final int EXCERPT_MAX_LENGTH = 120;
-  private static final String DISCLAIMER = "\n\n——以上由 AI 基于知识库生成，不构成投资建议。";
+  // 红线 01：免责声明引用全项目单点定义（约定 A12），不各自拷贝
+  private static final String DISCLAIMER = "\n\n" + Disclaimers.AI_GENERATED;
   private static final String NO_KNOWLEDGE_REPLY = "知识库中未找到与问题相关的资料。为避免误导，我不凭空作答；请先补充相关文档再提问。";
 
   // prompt 是资产不是字符串常量：模板存 resources/prompts/rag-chat-v1.md，版本化随 git 管理

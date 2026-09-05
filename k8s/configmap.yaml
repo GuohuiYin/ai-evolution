@@ -9,3 +9,6 @@ data:
   # 向量库指向集群内 qdrant Service（gRPC 端口），域名由 K8s DNS 解析
   QDRANT_HOST: qdrant
   QDRANT_PORT: "6334"
+  # 检索调参显式声明：部署环境的检索口径对运维可见，不依赖代码默认值兜底
+  AI_RAG_TOP_K: "5"
+  AI_RAG_SIMILARITY_THRESHOLD: "0.5"

@@ -25,7 +25,15 @@ class StockAnalysisServiceTest {
     chatClient = mock(ChatClient.class, RETURNS_DEEP_STUBS);
     ChatClient.Builder builder = mock(ChatClient.Builder.class);
     when(builder.build()).thenReturn(chatClient);
-    service = new StockAnalysisService(builder, new MockStockDataClient(), new PromptLibrary());
+    service =
+        new StockAnalysisService(builder, new MockStockDataClient(), new PromptLibrary(), 2024);
+  }
+
+  @Test
+  void rejectsUnknownPromptVersionAsClientError() {
+    // 对外参数白名单校验：不存在的 prompt 版本是 400 客户端错误，不是 500 服务端故障
+    assertThatThrownBy(() -> service.analyze("600519", "v9"))
+        .isInstanceOf(InvalidPromptVersionException.class);
   }
 
   @Test

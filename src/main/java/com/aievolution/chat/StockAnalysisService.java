@@ -1,7 +1,6 @@
 package com.aievolution.chat;
 
 import com.aievolution.stock.DailyQuote;
-import com.aievolution.stock.FinancialSummary;
 import com.aievolution.stock.StockDataClient;
 import java.time.LocalDate;
 import java.util.List;
@@ -9,6 +8,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
@@ -20,51 +20,51 @@ import org.springframework.stereotype.Service;
 public class StockAnalysisService {
 
   private static final String PROMPT_PREFIX = "stock-analysis-";
-  private static final int DEFAULT_FISCAL_YEAR = 2024;
 
   private final ChatClient chatClient;
   private final StockDataClient stockDataClient;
   private final PromptLibrary promptLibrary;
+  // 分析年度是策略值（随时间/需求调整）而非数学常量：配置化，约定 A11-2
+  private final int analysisYear;
 
   public StockAnalysisService(
       ChatClient.Builder chatClientBuilder,
       StockDataClient stockDataClient,
-      PromptLibrary promptLibrary) {
+      PromptLibrary promptLibrary,
+      @Value("${ai.stock.analysis-year:2024}") int analysisYear) {
     this.chatClient = chatClientBuilder.build();
     this.stockDataClient = stockDataClient;
     this.promptLibrary = promptLibrary;
+    this.analysisYear = analysisYear;
   }
 
   public StockAnalysisReport analyze(String code, String promptVersion) {
-    FinancialSummary summary =
+    String promptName = PROMPT_PREFIX + promptVersion;
+    if (!promptLibrary.exists(promptName)) {
+      throw new InvalidPromptVersionException(promptVersion);
+    }
+    var summary =
         stockDataClient
-            .getFinancialSummary(code, DEFAULT_FISCAL_YEAR)
+            .getFinancialSummary(code, analysisYear)
             .orElseThrow(() -> new StockDataNotFoundException(code));
     List<DailyQuote> quotes =
-        stockDataClient.getDailyQuotes(code, LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31));
+        stockDataClient.getDailyQuotes(
+            code, LocalDate.of(analysisYear, 1, 1), LocalDate.of(analysisYear, 12, 31));
 
     var prompt =
-        new PromptTemplate(promptLibrary.get(PROMPT_PREFIX + promptVersion))
+        new PromptTemplate(promptLibrary.get(promptName))
             .create(
                 Map.of(
                     "code", code,
-                    "financialData", render(summary),
+                    "financialData", summary.toPromptText(),
                     "quoteData", render(quotes)));
     return chatClient.prompt(prompt).call().entity(StockAnalysisReport.class);
-  }
-
-  // 红线 03：拼进 prompt 的每条数据自带来源与时点，模型才有"可溯源"的原料
-  private String render(FinancialSummary s) {
-    return "%d 年营收 %s 亿元、净利 %s 亿元（来源: %s，时点: %s）"
-        .formatted(s.fiscalYear(), s.revenue(), s.netProfit(), s.source(), s.asOf());
   }
 
   private String render(List<DailyQuote> quotes) {
     if (quotes.isEmpty()) {
       return "（数据源暂无行情记录）";
     }
-    return quotes.stream()
-        .map(q -> "%s 收盘价 %s 元（来源: %s，时点: %s）".formatted(q.date(), q.close(), q.source(), q.asOf()))
-        .collect(Collectors.joining("\n"));
+    return quotes.stream().map(DailyQuote::toPromptText).collect(Collectors.joining("\n"));
   }
 }

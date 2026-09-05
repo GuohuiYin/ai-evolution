@@ -28,3 +28,8 @@
 
 - MCP 在 L2 是信息管道，W6 之后升级为受控执行通道（PPT Slide 11）
 - 注入攻击素材：金融公告天然混入指令式语言——选金融域的红利之一
+
+## W5 扫描遗留（W6/W7 裁决）
+
+- `ChatController` 依赖不对称：`/ai/chat` 走 `ChatService` 接口，`/ai/agent` 直注具体类 `AgentChatService`。两服务语义不同（纯 RAG 固定管道 vs 工具增强 Agent），W6/W7 引入查询理解/路由层时统一裁决：是否抽象统一的对话路由接口
+- 黄金集负例分层：`out-of-domain`（检索层拒召回）与 `in-domain-unanswerable`（检索命中、生成层拒答）拆分类别，后者改由生成层评估覆盖——见 docs/eval/m1-gate-recall.md 的设计讨论

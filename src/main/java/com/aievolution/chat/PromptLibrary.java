@@ -26,6 +26,11 @@ public class PromptLibrary {
     return cache.computeIfAbsent(name, this::load);
   }
 
+  /** 判断指定名字的 prompt 模板是否存在（对外参数白名单校验用）。 */
+  public boolean exists(String name) {
+    return new ClassPathResource(LOCATION_PATTERN.formatted(name)).exists();
+  }
+
   private String load(String name) {
     ClassPathResource resource = new ClassPathResource(LOCATION_PATTERN.formatted(name));
     if (!resource.exists()) {

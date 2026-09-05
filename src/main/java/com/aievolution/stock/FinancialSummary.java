@@ -15,4 +15,11 @@ public record FinancialSummary(
     BigDecimal revenue,
     BigDecimal netProfit,
     String source,
-    LocalDate asOf) {}
+    LocalDate asOf) {
+
+  /** 渲染为可溯源的 prompt / 工具输出文本（红线 03 的统一格式，约定 A12 单点定义）。 分析管道与工具层共用此格式，禁止各自拼装。 */
+  public String toPromptText() {
+    return "%s %d 年营收 %s 亿元、净利 %s 亿元（来源: %s，时点: %s）"
+        .formatted(code, fiscalYear, revenue, netProfit, source, asOf);
+  }
+}

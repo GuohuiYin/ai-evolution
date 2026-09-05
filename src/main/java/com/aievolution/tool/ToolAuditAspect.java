@@ -27,14 +27,15 @@ public class ToolAuditAspect {
     String tool = pjp.getSignature().getName();
     String args =
         Arrays.stream(pjp.getArgs()).map(String::valueOf).collect(Collectors.joining(","));
-    long start = System.currentTimeMillis();
+    // 审计计时用 nanoTime：currentTimeMillis 受系统时钟回拨影响，耗时审计必须单调
+    long startNanos = System.nanoTime();
     try {
       Object result = pjp.proceed();
       auditLog.info(
           "tool={} args=[{}] outcome=success elapsedMs={} resultSummary={}",
           tool,
           args,
-          System.currentTimeMillis() - start,
+          elapsedMillis(startNanos),
           summarize(result));
       return result;
     } catch (Throwable e) {
@@ -42,10 +43,14 @@ public class ToolAuditAspect {
           "tool={} args=[{}] outcome=error elapsedMs={} errorType={}",
           tool,
           args,
-          System.currentTimeMillis() - start,
+          elapsedMillis(startNanos),
           e.getClass().getSimpleName());
       throw e;
     }
+  }
+
+  private long elapsedMillis(long startNanos) {
+    return (System.nanoTime() - startNanos) / 1_000_000;
   }
 
   private String summarize(Object result) {
