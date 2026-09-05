@@ -52,7 +52,9 @@ class RagChatIT {
 
       // 测试替身的哈希向量得分分布与真实语义向量不同，集成测试放低阈值专注验证链路
       ChatAnswer answer =
-          new RagChatService(builder, store, new PromptLibrary(), 0.0, 5).chat("酱香白酒的酿造工艺");
+          new RagChatService(
+                  builder, new VectorStoreKnowledgeRetriever(store, 0.0, 5), new PromptLibrary())
+              .chat("酱香白酒的酿造工艺");
 
       // 引用的来源必须命中知识库文档
       assertThat(answer.sources()).anySatisfy(s -> assertThat(s.source()).isEqualTo("maotai.md"));

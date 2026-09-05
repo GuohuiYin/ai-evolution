@@ -1,5 +1,6 @@
 package com.aievolution.chat;
 
+import com.aievolution.rag.KnowledgeRetriever;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -7,9 +8,6 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.document.Document;
-import org.springframework.ai.vectorstore.SearchRequest;
-import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
@@ -30,28 +28,21 @@ public class RagChatService implements ChatService {
   private static final String PROMPT_NAME = "rag-chat-v1";
 
   private final ChatClient chatClient;
-  private final VectorStore vectorStore;
+  private final KnowledgeRetriever knowledgeRetriever;
   private final PromptLibrary promptLibrary;
-  // 相似度阈值与 topK 是可调参而非硬编码：与 Embedding 模型/语料强相关，需在 eval 中调优
-  private final double similarityThreshold;
-  private final int topK;
 
   public RagChatService(
       ChatClient.Builder chatClientBuilder,
-      VectorStore vectorStore,
-      PromptLibrary promptLibrary,
-      @Value("${ai.rag.similarity-threshold:0.5}") double similarityThreshold,
-      @Value("${ai.rag.top-k:5}") int topK) {
+      KnowledgeRetriever knowledgeRetriever,
+      PromptLibrary promptLibrary) {
     this.chatClient = chatClientBuilder.build();
-    this.vectorStore = vectorStore;
+    this.knowledgeRetriever = knowledgeRetriever;
     this.promptLibrary = promptLibrary;
-    this.similarityThreshold = similarityThreshold;
-    this.topK = topK;
   }
 
   @Override
   public ChatAnswer chat(String message) {
-    List<Document> docs = retrieve(message);
+    List<Document> docs = knowledgeRetriever.retrieve(message);
     if (docs.isEmpty()) {
       return new ChatAnswer(NO_KNOWLEDGE_REPLY + DISCLAIMER, List.of());
     }
@@ -60,15 +51,6 @@ public class RagChatService implements ChatService {
             .create(Map.of("context", joinContents(docs), "question", message));
     String reply = chatClient.prompt(prompt).call().content();
     return new ChatAnswer(reply + DISCLAIMER, toSources(docs));
-  }
-
-  private List<Document> retrieve(String message) {
-    return vectorStore.similaritySearch(
-        SearchRequest.builder()
-            .query(message)
-            .topK(topK)
-            .similarityThreshold(similarityThreshold)
-            .build());
   }
 
   private String joinContents(List<Document> docs) {

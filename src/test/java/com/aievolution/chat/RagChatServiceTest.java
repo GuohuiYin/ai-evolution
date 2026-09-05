@@ -7,6 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.aievolution.rag.KnowledgeRetriever;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,14 +16,12 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.document.Document;
-import org.springframework.ai.vectorstore.SearchRequest;
-import org.springframework.ai.vectorstore.VectorStore;
 
 class RagChatServiceTest {
 
   private ChatClient chatClient;
   private ChatClient.ChatClientRequestSpec requestSpec;
-  private VectorStore vectorStore;
+  private KnowledgeRetriever knowledgeRetriever;
   private RagChatService service;
 
   @BeforeEach
@@ -31,19 +30,19 @@ class RagChatServiceTest {
     chatClient = mock(ChatClient.class);
     requestSpec = mock(ChatClient.ChatClientRequestSpec.class);
     ChatClient.CallResponseSpec callSpec = mock(ChatClient.CallResponseSpec.class);
-    vectorStore = mock(VectorStore.class);
+    knowledgeRetriever = mock(KnowledgeRetriever.class);
 
     when(builder.build()).thenReturn(chatClient);
     when(chatClient.prompt(any(Prompt.class))).thenReturn(requestSpec);
     when(requestSpec.call()).thenReturn(callSpec);
     when(callSpec.content()).thenReturn("模型回复");
 
-    service = new RagChatService(builder, vectorStore, new PromptLibrary(), 0.5, 5);
+    service = new RagChatService(builder, knowledgeRetriever, new PromptLibrary());
   }
 
   @Test
   void answersWithSourcesAndDisclaimerWhenKnowledgeFound() {
-    when(vectorStore.similaritySearch(any(SearchRequest.class)))
+    when(knowledgeRetriever.retrieve("茅台营收多少？"))
         .thenReturn(
             List.of(
                 new Document("id1", "营业总收入约1740亿元（数据时点：2024年年报）", Map.of("source", "maotai.md"))));
@@ -58,7 +57,7 @@ class RagChatServiceTest {
 
   @Test
   void promptCarriesRetrievedContextAndUserQuestion() {
-    when(vectorStore.similaritySearch(any(SearchRequest.class)))
+    when(knowledgeRetriever.retrieve("酿造工艺是什么？"))
         .thenReturn(List.of(new Document("id1", "酱香型白酒 12987 工艺", Map.of("source", "maotai.md"))));
 
     service.chat("酿造工艺是什么？");
@@ -70,7 +69,7 @@ class RagChatServiceTest {
 
   @Test
   void refusesWithoutCallingModelWhenNoKnowledgeFound() {
-    when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(List.of());
+    when(knowledgeRetriever.retrieve("特斯拉怎么样？")).thenReturn(List.of());
 
     ChatAnswer answer = service.chat("特斯拉怎么样？");
 

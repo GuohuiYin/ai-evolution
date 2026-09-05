@@ -1,5 +1,6 @@
 package com.aievolution.eval;
 
+import com.aievolution.rag.KnowledgeRetriever;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
@@ -7,7 +8,6 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -31,16 +31,16 @@ public class RetrievalEvalRunner implements ApplicationRunner {
   /** M1 验收门：正例 Recall@K 不得低于该值（铁律：不过不进下一阶段） */
   static final double GATE_THRESHOLD = 0.7;
 
-  private final VectorStore vectorStore;
+  private final KnowledgeRetriever knowledgeRetriever;
+  // 以下两个配置仅用于报告头展示当前评估口径，检索行为由 KnowledgeRetriever 收口
   private final double similarityThreshold;
-  // 与线上服务共用 ai.rag.top-k 配置：评估口径=线上口径，由配置而非约定保证
   private final int topK;
 
   public RetrievalEvalRunner(
-      VectorStore vectorStore,
+      KnowledgeRetriever knowledgeRetriever,
       @Value("${ai.rag.similarity-threshold:0.5}") double similarityThreshold,
       @Value("${ai.rag.top-k:5}") int topK) {
-    this.vectorStore = vectorStore;
+    this.knowledgeRetriever = knowledgeRetriever;
     this.similarityThreshold = similarityThreshold;
     this.topK = topK;
   }
@@ -53,7 +53,7 @@ public class RetrievalEvalRunner implements ApplicationRunner {
             .readValue(new ClassPathResource("eval/golden-set.json").getInputStream());
 
     List<RetrievalEvaluator.EvalResult> results =
-        new RetrievalEvaluator(vectorStore, similarityThreshold, topK).evaluate(goldenSet);
+        new RetrievalEvaluator(knowledgeRetriever).evaluate(goldenSet);
 
     log.info("════════ 检索 eval 报告（Recall@{}，阈值 {}） ════════", topK, similarityThreshold);
     results.forEach(

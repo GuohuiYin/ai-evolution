@@ -1,25 +1,19 @@
 package com.aievolution.eval;
 
+import com.aievolution.rag.KnowledgeRetriever;
 import java.util.List;
-import org.springframework.ai.document.Document;
-import org.springframework.ai.vectorstore.SearchRequest;
-import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.lang.Nullable;
 
 /**
- * 检索评估器（eval 雏形的核心）：用黄金集度量 Recall@K——"该召回的在 Top-K 内召回了、不该召回的 没召回"。与具体 Embedding 模型解耦——CI 里用确定性测试替身跑
- * normal 正例，本地用真实 bge-m3 跑全量（含 boundary / adversarial）。
+ * 检索评估器（eval 雏形的核心）：用黄金集度量 Recall@K——"该召回的在 Top-K 内召回了、不该召回的 没召回"。检索走与线上一致的 {@link
+ * KnowledgeRetriever}——评的就是用的。
  */
 public class RetrievalEvaluator {
 
-  private final VectorStore vectorStore;
-  private final double similarityThreshold;
-  private final int topK;
+  private final KnowledgeRetriever knowledgeRetriever;
 
-  public RetrievalEvaluator(VectorStore vectorStore, double similarityThreshold, int topK) {
-    this.vectorStore = vectorStore;
-    this.similarityThreshold = similarityThreshold;
-    this.topK = topK;
+  public RetrievalEvaluator(KnowledgeRetriever knowledgeRetriever) {
+    this.knowledgeRetriever = knowledgeRetriever;
   }
 
   public List<EvalResult> evaluate(List<GoldenCase> cases) {
@@ -27,15 +21,10 @@ public class RetrievalEvaluator {
   }
 
   private EvalResult evaluateOne(GoldenCase goldenCase) {
-    List<Document> results =
-        vectorStore.similaritySearch(
-            SearchRequest.builder()
-                .query(goldenCase.query())
-                .topK(topK)
-                .similarityThreshold(similarityThreshold)
-                .build());
     List<String> actualSources =
-        results.stream().map(d -> String.valueOf(d.getMetadata().get("source"))).toList();
+        knowledgeRetriever.retrieve(goldenCase.query()).stream()
+            .map(d -> String.valueOf(d.getMetadata().get("source")))
+            .toList();
     boolean pass =
         goldenCase.expectSource() == null
             ? actualSources.isEmpty()
