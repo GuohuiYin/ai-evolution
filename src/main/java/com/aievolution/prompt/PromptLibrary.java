@@ -1,45 +1,20 @@
 package com.aievolution.prompt;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.stereotype.Component;
-
 /**
- * Prompt 资产库：prompt 是资产而非字符串常量——统一存 {@code resources/prompts/}， 文件名带版本号（如 {@code rag-chat-v1}），随
- * git 版本管理，运行时加载并缓存。
+ * Prompt 资产库契约：prompt 是资产而非字符串常量——统一存 {@code resources/prompts/}， 文件名带版本号（如 {@code rag-chat-v1}），随
+ * git 版本管理。
  *
- * <p>加载失败即快速失败（fail-fast）：prompt 缺失是部署事故而非运行期容错场景。
+ * <p>跨域协作以本接口为契约（约定 A10）：chat 与 analysis 域只依赖接口， 加载机制（classpath / 数据库 / 远程配置中心）由实现决定。
  */
-@Component
-public class PromptLibrary {
+public interface PromptLibrary {
 
-  private static final String LOCATION_PATTERN = "prompts/%s.md";
-
-  private final Map<String, String> cache = new ConcurrentHashMap<>();
-
-  /** 按名字加载 prompt 模板（不含 .md 后缀），结果进程内缓存。 */
-  public String get(String name) {
-    return cache.computeIfAbsent(name, this::load);
-  }
+  /**
+   * 按名字加载 prompt 模板（不含 .md 后缀）。
+   *
+   * @throws IllegalStateException 模板不存在时快速失败——prompt 缺失是部署事故而非运行期容错场景
+   */
+  String get(String name);
 
   /** 判断指定名字的 prompt 模板是否存在（对外参数白名单校验用）。 */
-  public boolean exists(String name) {
-    return new ClassPathResource(LOCATION_PATTERN.formatted(name)).exists();
-  }
-
-  private String load(String name) {
-    ClassPathResource resource = new ClassPathResource(LOCATION_PATTERN.formatted(name));
-    if (!resource.exists()) {
-      throw new IllegalStateException("Prompt 不存在: prompts/%s.md".formatted(name));
-    }
-    try {
-      return resource.getContentAsString(StandardCharsets.UTF_8);
-    } catch (IOException e) {
-      throw new UncheckedIOException("Prompt 读取失败: " + name, e);
-    }
-  }
+  boolean exists(String name);
 }

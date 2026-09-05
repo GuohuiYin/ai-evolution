@@ -8,7 +8,7 @@ import static org.mockito.Mockito.when;
 
 import com.aievolution.chat.ChatAnswer;
 import com.aievolution.chat.RagChatService;
-import com.aievolution.prompt.PromptLibrary;
+import com.aievolution.prompt.ClasspathPromptLibrary;
 import io.qdrant.client.QdrantClient;
 import io.qdrant.client.QdrantGrpcClient;
 import org.junit.jupiter.api.Test;
@@ -53,7 +53,9 @@ class RagChatIT {
       // 测试替身的哈希向量得分分布与真实语义向量不同，集成测试放低阈值专注验证链路
       ChatAnswer answer =
           new RagChatService(
-                  builder, new VectorStoreKnowledgeRetriever(store, 0.0, 5), new PromptLibrary())
+                  builder,
+                  new VectorStoreKnowledgeRetriever(store, 0.0, 5),
+                  new ClasspathPromptLibrary())
               .chat("酱香白酒的酿造工艺");
 
       // 引用的来源必须命中知识库文档

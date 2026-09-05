@@ -5,9 +5,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
 
-class PromptLibraryTest {
+class ClasspathPromptLibraryTest {
 
-  private final PromptLibrary library = new PromptLibrary();
+  private final ClasspathPromptLibrary library = new ClasspathPromptLibrary();
 
   @Test
   void loadsVersionedPromptFromClasspath() {

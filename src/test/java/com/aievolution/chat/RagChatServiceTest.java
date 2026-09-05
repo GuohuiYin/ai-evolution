@@ -7,7 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.aievolution.prompt.PromptLibrary;
+import com.aievolution.prompt.ClasspathPromptLibrary;
 import com.aievolution.rag.KnowledgeRetriever;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +38,7 @@ class RagChatServiceTest {
     when(requestSpec.call()).thenReturn(callSpec);
     when(callSpec.content()).thenReturn("模型回复");
 
-    service = new RagChatService(builder, knowledgeRetriever, new PromptLibrary());
+    service = new RagChatService(builder, knowledgeRetriever, new ClasspathPromptLibrary());
   }
 
   @Test

@@ -7,8 +7,8 @@ import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.aievolution.prompt.ClasspathPromptLibrary;
 import com.aievolution.prompt.InvalidPromptVersionException;
-import com.aievolution.prompt.PromptLibrary;
 import com.aievolution.stock.MockStockDataClient;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,7 +28,8 @@ class StockAnalysisServiceTest {
     ChatClient.Builder builder = mock(ChatClient.Builder.class);
     when(builder.build()).thenReturn(chatClient);
     service =
-        new StockAnalysisService(builder, new MockStockDataClient(), new PromptLibrary(), 2024);
+        new StockAnalysisService(
+            builder, new MockStockDataClient(), new ClasspathPromptLibrary(), 2024);
   }
 
   @Test
