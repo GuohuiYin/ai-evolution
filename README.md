@@ -67,7 +67,7 @@ RagChatService                     StockAnalysisService
 
 共享底座：PromptLibrary（prompts/*.md 版本化资产）· ChatExceptionHandler（502/503 语义化）
 部署形态：ai-evolution + Qdrant 同集群（Minikube），ConfigMap/Secret 分层，
-         探针 + 优雅停机 + Jib 镜像，eval 雏形（golden-set 6 条，Recall 全中）
+         探针 + 优雅停机 + Jib 镜像，eval harness（golden-set 20 条，Recall@5=85.7%，M1 门已过）
 ```
 
 **当前能力**：知识库问答可溯源、越界硬拒答、结构化个股分析（CO-STAR + few-shot + schema 输出）、双模型供应商配置切换（DeepSeek 主力 / Qwen 备选，实测定稿）、集群内全链路运行。

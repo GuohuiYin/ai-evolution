@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class AnnouncementTools {
 
-  private static final int TOP_K = 4;
+  private static final int TOP_K = 5;
 
   private final VectorStore vectorStore;
   private final double similarityThreshold;

@@ -22,7 +22,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class RagChatService implements ChatService {
 
-  private static final int TOP_K = 4;
+  private static final int TOP_K = 5;
   private static final int EXCERPT_MAX_LENGTH = 120;
   private static final String DISCLAIMER = "\n\n——以上由 AI 基于知识库生成，不构成投资建议。";
   private static final String NO_KNOWLEDGE_REPLY = "知识库中未找到与问题相关的资料。为避免误导，我不凭空作答；请先补充相关文档再提问。";

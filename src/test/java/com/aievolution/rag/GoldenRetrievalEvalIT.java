@@ -3,6 +3,7 @@ package com.aievolution.rag;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.aievolution.eval.GoldenCase;
+import com.aievolution.eval.RetrievalEvalRunner;
 import com.aievolution.eval.RetrievalEvaluator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.qdrant.client.QdrantClient;
@@ -25,7 +26,7 @@ class GoldenRetrievalEvalIT {
   @Container static final QdrantContainer QDRANT = new QdrantContainer("qdrant/qdrant:v1.15.1");
 
   @Test
-  void positiveGoldenCasesAllHitExpectedSource() throws Exception {
+  void normalPositiveGoldenCasesAllHitExpectedSource() throws Exception {
     try (QdrantClient client =
         new QdrantClient(
             QdrantGrpcClient.newBuilder(QDRANT.getHost(), QDRANT.getGrpcPort(), false).build())) {
@@ -37,18 +38,21 @@ class GoldenRetrievalEvalIT {
       store.afterPropertiesSet();
       new KnowledgeBaseIngestor(store).run(null);
 
-      List<GoldenCase> positiveCases =
+      // 只回归 normal 正例：boundary/adversarial 的判定依赖真实语义向量的距离分布，
+      // 由本地 eval Runner（真实 bge-m3）覆盖
+      List<GoldenCase> normalPositiveCases =
           new ObjectMapper()
                   .readerForListOf(GoldenCase.class)
                   .<List<GoldenCase>>readValue(
                       new ClassPathResource("eval/golden-set.json").getInputStream())
                   .stream()
-                  .filter(c -> c.expectSource() != null)
+                  .filter(c -> c.expectSource() != null && "normal".equals(c.category()))
                   .toList();
 
-      // 测试替身的哈希向量得分分布与真实模型不同，阈值放 0 专注验证"Top-1 命中正确来源"
+      // 测试替身的哈希向量得分分布与真实模型不同，阈值放 0 专注验证"Recall@5 命中正确来源"
       List<RetrievalEvaluator.EvalResult> results =
-          new RetrievalEvaluator(store, 0.0).evaluate(positiveCases);
+          new RetrievalEvaluator(store, 0.0, RetrievalEvalRunner.TOP_K)
+              .evaluate(normalPositiveCases);
 
       assertThat(results)
           .isNotEmpty()

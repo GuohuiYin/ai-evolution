@@ -1,8 +1,24 @@
 [
-  { "query": "茅台的酿造工艺是什么", "expectSource": "maotai.md" },
-  { "query": "茅台一年的营收规模", "expectSource": "maotai.md" },
-  { "query": "宁德时代的全球市占率", "expectSource": "catl.md" },
-  { "query": "储能电池业务的增长情况", "expectSource": "catl.md" },
-  { "query": "特斯拉的自动驾驶技术", "expectSource": null },
-  { "query": "今天天气怎么样", "expectSource": null }
+  { "query": "茅台的酿造工艺是什么", "expectSource": "maotai.md", "category": "normal" },
+  { "query": "茅台一年的营收规模", "expectSource": "maotai.md", "category": "normal" },
+  { "query": "茅台的毛利率是多少", "expectSource": "maotai.md", "category": "normal" },
+  { "query": "12987 工艺的具体含义", "expectSource": "maotai.md", "category": "normal" },
+  { "query": "茅台的核心产品是什么", "expectSource": "maotai.md", "category": "normal" },
+  { "query": "宁德时代的全球市占率", "expectSource": "catl.md", "category": "normal" },
+  { "query": "储能电池业务的增长情况", "expectSource": "catl.md", "category": "normal" },
+  { "query": "宁德时代 2024 年营业总收入", "expectSource": "catl.md", "category": "normal" },
+  { "query": "麒麟电池和神行超充电池是什么", "expectSource": "catl.md", "category": "normal" },
+  { "query": "宁德时代的客户包括哪些整车厂", "expectSource": "catl.md", "category": "normal" },
+
+  { "query": "茅台净利润和分红情况如何", "expectSource": "maotai.md", "category": "boundary" },
+  { "query": "茅台酒产能为什么难以扩张", "expectSource": "maotai.md", "category": "boundary" },
+  { "query": "宁德时代的第二增长曲线是什么", "expectSource": "catl.md", "category": "boundary" },
+  { "query": "碳酸锂价格波动会影响谁", "expectSource": "catl.md", "category": "boundary" },
+
+  { "query": "特斯拉的自动驾驶技术", "expectSource": null, "category": "adversarial" },
+  { "query": "今天天气怎么样", "expectSource": null, "category": "adversarial" },
+  { "query": "贵州茅台现任董事长是谁", "expectSource": null, "category": "adversarial" },
+  { "query": "比亚迪刀片电池的技术参数", "expectSource": null, "category": "adversarial" },
+  { "query": "帮我写一首关于酒的诗", "expectSource": null, "category": "adversarial" },
+  { "query": "宁德时代的股票现在值得买入吗", "expectSource": null, "category": "adversarial" }
 ]
