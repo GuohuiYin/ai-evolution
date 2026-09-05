@@ -103,6 +103,13 @@
       <artifactId>testcontainers-qdrant</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- W5（约定 B2）：ArchUnit 把域间依赖方向写成会失败的测试，版本独立管理（Boot BOM 不含） -->
+    <dependency>
+      <groupId>com.tngtech.archunit</groupId>
+      <artifactId>archunit-junit5</artifactId>
+      <version>1.5.0</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>

@@ -23,3 +23,8 @@ W5 中期 `chat` 包膨胀到 16 个文件，Owner 提出按技术类型细分�
 - 包结构：`chat`（对话：RAG/Agent）、`analysis`（个股分析）、`prompt`（prompt 资产）、`rag`（知识检索）、`stock`（数据源）、`tool`（工具层）、`eval`（评估）
 - AGENTS.md A9 修订为"子域前置拆分"（v1.6）
 - ArchUnit 规则（B2）落地时按此包结构定义依赖方向
+
+## 补充裁决（2026-09-05）
+
+- **tool 域具体类被 chat 直接注入（AgentChatService → AnnouncementTools/StockDataTools）**：Spring AI 的 `@Tool` 注册机制要求带注解的具体对象，工具类上的 `@Tool` 注解表面本身就是 tool 域暴露的契约。裁决为可接受灰区，不抽接口；若未来 Spring AI 支持接口级工具注册再重审。
+- **compliance 域零出度**：合规内容（Disclaimers）不依赖任何兄弟域，由 ArchUnit 白名单固化。

@@ -38,7 +38,7 @@ ai_evolution：Java 架构师向 AI 应用架构师转型的实战项目。
   3. **这个新依赖暴露的是领域能力还是实现细节？** 构造器注入的类型应是领域接口或领域类型；若业务类直接持有基础设施类型（`VectorStore`、`RestClient` 等）并自行组装调用参数，说明封装层级错了，先收口再提交
 - **A12** 红线逻辑单点化：合规性内容（免责声明、来源标注格式、拒答话术）是全项目强一致要求，必须单点定义、处处引用，禁止复制后各自演化——审计时多处文案/格式不一致即缺陷。落地先例：免责声明统一于 `Disclaimers`；数据→文本的可溯源格式（"来源+时点"）由领域类型自带（`DailyQuote.toPromptText()` / `FinancialSummary.toPromptText()`），分析管道与工具层共用
 - **B1** Testcontainers 集成测试——W3 引入 Qdrant 时启用
-- **B2** ArchUnit 架构约束测试——W5 Harness 阶段启用，将依赖方向写成会失败的测试
+- **B2** ArchUnit 架构约束测试——已于 W5 启用：`ArchitectureTest` 以白名单表固化域间依赖方向（新增跨域依赖必须显式改表）+ 域间无环检测
 - **B3** 结构化错误返回 RFC 7807 ProblemDetail——W5 工具工程启用
 - **B4** AssertJ 断言 + 测试金字塔——W2 起：单测为主、集测守关键链路、eval 守 LLM 输出
 
