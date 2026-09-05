@@ -1,4 +1,4 @@
-package com.aievolution.chat;
+package com.aievolution.prompt;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;

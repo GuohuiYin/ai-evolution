@@ -1,5 +1,6 @@
 package com.aievolution.chat;
 
+import com.aievolution.prompt.PromptLibrary;
 import com.aievolution.tool.AnnouncementTools;
 import com.aievolution.tool.StockDataTools;
 import java.util.List;

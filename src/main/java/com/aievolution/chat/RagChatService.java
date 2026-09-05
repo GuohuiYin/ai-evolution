@@ -1,5 +1,6 @@
 package com.aievolution.chat;
 
+import com.aievolution.prompt.PromptLibrary;
 import com.aievolution.rag.KnowledgeRetriever;
 import java.util.List;
 import java.util.Map;

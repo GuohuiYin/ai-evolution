@@ -1,4 +1,4 @@
-package com.aievolution.chat;
+package com.aievolution.analysis;
 
 import java.util.List;
 

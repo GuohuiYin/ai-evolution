@@ -1,4 +1,4 @@
-package com.aievolution.chat;
+package com.aievolution.analysis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -7,6 +7,8 @@ import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.aievolution.prompt.InvalidPromptVersionException;
+import com.aievolution.prompt.PromptLibrary;
 import com.aievolution.stock.MockStockDataClient;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;

@@ -7,8 +7,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.aievolution.chat.ChatAnswer;
-import com.aievolution.chat.PromptLibrary;
 import com.aievolution.chat.RagChatService;
+import com.aievolution.prompt.PromptLibrary;
 import io.qdrant.client.QdrantClient;
 import io.qdrant.client.QdrantGrpcClient;
 import org.junit.jupiter.api.Test;
