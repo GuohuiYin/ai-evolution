@@ -14,7 +14,7 @@ spring:
       api-key: ${AI_API_KEY:}
       base-url: ${AI_BASE_URL:https://api.deepseek.com}
       chat:
-        model: ${AI_MODEL:deepseek-chat}
+        model: ${AI_MODEL:deepseek-v4-flash}
     openai:
       api-key: ${SILICONFLOW_API_KEY:}
       # 注意：OpenAI 兼容客户端要求 base-url 包含 /v1 路径段，否则 404

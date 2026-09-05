@@ -20,6 +20,8 @@ class ChatControllerTest {
 
   @MockitoBean private ChatService chatService;
 
+  @MockitoBean private AgentChatService agentChatService;
+
   @Test
   void chatReturnsReplyFromService() throws Exception {
     when(chatService.chat("你好"))
@@ -43,6 +45,20 @@ class ChatControllerTest {
         .perform(
             post("/ai/chat").contentType(MediaType.APPLICATION_JSON).content("{\"message\":\"\"}"))
         .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void agentReturnsReplyFromAgentService() throws Exception {
+    when(agentChatService.chat("茅台2024年营收"))
+        .thenReturn(new ChatAnswer("营收1741.44亿元（来源: mock）", java.util.List.of()));
+
+    mockMvc
+        .perform(
+            post("/ai/agent")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"message\":\"茅台2024年营收\"}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.reply").value("营收1741.44亿元（来源: mock）"));
   }
 
   @Test

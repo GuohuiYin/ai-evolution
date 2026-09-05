@@ -18,9 +18,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class ChatController {
 
   private final ChatService chatService;
+  private final AgentChatService agentChatService;
 
-  public ChatController(ChatService chatService) {
+  public ChatController(ChatService chatService, AgentChatService agentChatService) {
     this.chatService = chatService;
+    this.agentChatService = agentChatService;
   }
 
   @Operation(summary = "发送对话消息", description = "将用户消息发送给大模型，返回模型生成的回复")
@@ -45,6 +47,19 @@ public class ChatController {
   @PostMapping("/chat")
   public ChatResponse chat(@Valid @RequestBody ChatRequest request) {
     ChatAnswer answer = chatService.chat(request.message());
+    return new ChatResponse(answer.reply(), answer.sources());
+  }
+
+  @Operation(summary = "Agent 对话（工具增强）", description = "模型可自主调用行情/财务工具取数后作答；涉及数字时必先调工具，禁止凭记忆报数")
+  @ApiResponses({
+    @ApiResponse(responseCode = "200", description = "成功返回模型回复"),
+    @ApiResponse(responseCode = "400", description = "请求参数非法（如 message 为空或缺失）"),
+    @ApiResponse(responseCode = "502", description = "上游模型错误或输出解析失败"),
+    @ApiResponse(responseCode = "503", description = "上游模型暂不可用，可稍后重试")
+  })
+  @PostMapping("/agent")
+  public ChatResponse agent(@Valid @RequestBody ChatRequest request) {
+    ChatAnswer answer = agentChatService.chat(request.message());
     return new ChatResponse(answer.reply(), answer.sources());
   }
 }
