@@ -1,5 +1,6 @@
 package com.aievolution.chat;
 
+import com.aievolution.tool.AnnouncementTools;
 import com.aievolution.tool.StockDataTools;
 import java.util.List;
 import org.springframework.ai.chat.client.ChatClient;
@@ -19,14 +20,17 @@ public class AgentChatService {
 
   private final ChatClient chatClient;
   private final StockDataTools stockDataTools;
+  private final AnnouncementTools announcementTools;
   private final PromptLibrary promptLibrary;
 
   public AgentChatService(
       ChatClient.Builder chatClientBuilder,
       StockDataTools stockDataTools,
+      AnnouncementTools announcementTools,
       PromptLibrary promptLibrary) {
     this.chatClient = chatClientBuilder.build();
     this.stockDataTools = stockDataTools;
+    this.announcementTools = announcementTools;
     this.promptLibrary = promptLibrary;
   }
 
@@ -36,7 +40,7 @@ public class AgentChatService {
             .prompt()
             .system(promptLibrary.get(PROMPT_NAME))
             .user(message)
-            .tools(stockDataTools)
+            .tools(stockDataTools, announcementTools)
             .call()
             .content();
     return new ChatAnswer(reply + DISCLAIMER, List.of());
