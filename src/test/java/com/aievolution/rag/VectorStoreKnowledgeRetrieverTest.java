@@ -26,4 +26,21 @@ class VectorStoreKnowledgeRetrieverTest {
     assertThat(request.getTopK()).isEqualTo(7);
     assertThat(request.getSimilarityThreshold()).isEqualTo(0.65);
   }
+
+  @Test
+  void knowledgeFilterIsTranslatedIntoSearchRequest() {
+    KnowledgeRetriever retriever = new VectorStoreKnowledgeRetriever(vectorStore, 0.5, 5);
+
+    retriever.retrieve("年报", new KnowledgeFilter("report", "2024-12-31"));
+
+    ArgumentCaptor<SearchRequest> captor = ArgumentCaptor.forClass(SearchRequest.class);
+    verify(vectorStore).similaritySearch(captor.capture());
+    // 元数据过滤：docType 与 asOf 都必须进入过滤表达式
+    String filter = String.valueOf(captor.getValue().getFilterExpression());
+    assertThat(filter)
+        .contains("docType")
+        .contains("report")
+        .contains("asOf")
+        .contains("2024-12-31");
+  }
 }

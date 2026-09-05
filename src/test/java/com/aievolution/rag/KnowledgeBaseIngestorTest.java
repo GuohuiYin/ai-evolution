@@ -16,7 +16,8 @@ class KnowledgeBaseIngestorTest {
   @Test
   void ingestsMarkdownWithDeterministicIdsAndSourceMetadata() throws Exception {
     VectorStore vectorStore = mock(VectorStore.class);
-    KnowledgeBaseIngestor ingestor = new KnowledgeBaseIngestor(vectorStore, 800);
+    KnowledgeBaseIngestor ingestor =
+        new KnowledgeBaseIngestor(vectorStore, 800, "classpath:knowledge/*.md");
 
     ingestor.run(null);
     ArgumentCaptor<List<Document>> first = ArgumentCaptor.forClass(List.class);

@@ -67,11 +67,12 @@ RagChatService                     StockAnalysisService
 
 共享底座：PromptLibrary（prompts/*.md 版本化资产）· ChatExceptionHandler（502/503 语义化）
 部署形态：ai-evolution + Qdrant 同集群（Minikube），ConfigMap/Secret 分层，
-         探针 + 优雅停机 + Jib 镜像，eval harness（golden-set 20 条，Recall@5=85.7%，M1 门已过）
+         探针 + 优雅停机 + Jib 镜像，eval harness（golden-set 21 条多源语义，Recall@5=86.7%，M1 门已过）
+知识摄入：md + PDF（真实年报 303 分块），元数据三件套（source/docType/asOf）进 payload 支持过滤检索
 ```
 
-**当前能力**：知识库问答可溯源、越界硬拒答、结构化个股分析（CO-STAR + few-shot + schema 输出）、双模型供应商配置切换（DeepSeek 主力 / Qwen 备选，实测定稿）、集群内全链路运行。
-**路线图**：W5 工具调用（@Tool）+ M1 验收门（Recall@5 ≥ 0.7）→ M2 MCP/护栏/Eval → M3 最小研究 Loop。
+**当前能力**：知识库问答可溯源、越界硬拒答、PDF 年报摄入与元数据过滤（"只查 2024 年报"）、Agent 工具调用（行情/财务/公告检索 + AOP 审计留痕）、结构化个股分析（CO-STAR + few-shot + schema 输出）、双模型供应商配置切换（DeepSeek 主力 / Qwen 备选，实测定稿）、集群内全链路运行。
+**路线图**：W5 工具调用（@Tool）+ M1 验收门（Recall@5 ≥ 0.7）✅ → M2 MCP/护栏/Eval → M3 最小研究 Loop。
 
 ## 文档导航
 

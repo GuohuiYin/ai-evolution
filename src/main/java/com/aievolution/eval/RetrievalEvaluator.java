@@ -26,9 +26,9 @@ public class RetrievalEvaluator {
             .map(d -> String.valueOf(d.getMetadata().get("source")))
             .toList();
     boolean pass =
-        goldenCase.expectSource() == null
+        goldenCase.expectSources() == null
             ? actualSources.isEmpty()
-            : actualSources.contains(goldenCase.expectSource());
+            : actualSources.stream().anyMatch(goldenCase.expectSources()::contains);
     return new EvalResult(goldenCase, actualSources, pass);
   }
 

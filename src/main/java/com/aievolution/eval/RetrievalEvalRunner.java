@@ -65,7 +65,7 @@ public class RetrievalEvalRunner implements ApplicationRunner {
                 r.pass() ? "✅" : "❌",
                 r.goldenCase().category(),
                 r.goldenCase().query(),
-                r.goldenCase().expectSource() == null ? "不召回" : r.goldenCase().expectSource(),
+                r.goldenCase().expectSources() == null ? "不召回" : r.goldenCase().expectSources(),
                 r.topSource() == null ? "未召回" : r.topSource(),
                 r.pass() ? "通过" : "未通过"));
 
@@ -85,11 +85,11 @@ public class RetrievalEvalRunner implements ApplicationRunner {
         (category, counts) -> log.info("类别 {}：{}/{} 通过", category, counts[0], counts[1]));
 
     List<RetrievalEvaluator.EvalResult> positives =
-        results.stream().filter(r -> r.goldenCase().expectSource() != null).toList();
+        results.stream().filter(r -> r.goldenCase().expectSources() != null).toList();
     long positivePassed = positives.stream().filter(RetrievalEvaluator.EvalResult::pass).count();
     double recall = positives.isEmpty() ? 0 : (double) positivePassed / positives.size();
     List<RetrievalEvaluator.EvalResult> negatives =
-        results.stream().filter(r -> r.goldenCase().expectSource() == null).toList();
+        results.stream().filter(r -> r.goldenCase().expectSources() == null).toList();
     long negativePassed = negatives.stream().filter(RetrievalEvaluator.EvalResult::pass).count();
 
     log.info(

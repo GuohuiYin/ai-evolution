@@ -39,7 +39,7 @@ class RagChatIT {
               .initializeSchema(true)
               .build();
       store.afterPropertiesSet();
-      new KnowledgeBaseIngestor(store, 800).run(null);
+      new KnowledgeBaseIngestor(store, 800, "classpath:knowledge/*.md").run(null);
 
       ChatClient.Builder builder = mock(ChatClient.Builder.class);
       ChatClient chatClient = mock(ChatClient.class);

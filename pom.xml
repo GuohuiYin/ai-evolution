@@ -71,6 +71,11 @@
       <groupId>org.springframework.ai</groupId>
       <artifactId>spring-ai-starter-vector-store-qdrant</artifactId>
     </dependency>
+    <!-- W5-Step4：PDF 公告摄入（PagePdfDocumentReader）。版本由 spring-ai-bom 管理 -->
+    <dependency>
+      <groupId>org.springframework.ai</groupId>
+      <artifactId>spring-ai-pdf-document-reader</artifactId>
+    </dependency>
     <!-- OpenAPI 3 文档（约定 A7）：注解生成契约 + 内嵌 Swagger UI，Boot 4 兼容线从 3.x 开始 -->
     <dependency>
       <groupId>org.springdoc</groupId>

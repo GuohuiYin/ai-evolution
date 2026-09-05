@@ -35,17 +35,21 @@ class GoldenRetrievalEvalIT {
               .initializeSchema(true)
               .build();
       store.afterPropertiesSet();
-      new KnowledgeBaseIngestor(store, 800).run(null);
+      new KnowledgeBaseIngestor(store, 800, "classpath:knowledge/*.md").run(null);
 
       // 只回归 normal 正例：boundary/adversarial 的判定依赖真实语义向量的距离分布，
-      // 由本地 eval Runner（真实 bge-m3）覆盖
+      // 由本地 eval Runner（真实 bge-m3）覆盖；PDF 源用例同样留给本地（CI 不摄入 PDF）
       List<GoldenCase> normalPositiveCases =
           new ObjectMapper()
                   .readerForListOf(GoldenCase.class)
                   .<List<GoldenCase>>readValue(
                       new ClassPathResource("eval/golden-set.json").getInputStream())
                   .stream()
-                  .filter(c -> c.expectSource() != null && "normal".equals(c.category()))
+                  .filter(
+                      c ->
+                          c.expectSources() != null
+                              && "normal".equals(c.category())
+                              && c.expectSources().stream().allMatch(s -> s.endsWith(".md")))
                   .toList();
 
       // 测试替身的哈希向量得分分布与真实模型不同，阈值放 0 专注验证"Recall@5 命中正确来源"
@@ -59,7 +63,7 @@ class GoldenRetrievalEvalIT {
           .allSatisfy(
               r ->
                   assertThat(r.pass())
-                      .as("用例 [%s] 应命中 %s", r.goldenCase().query(), r.goldenCase().expectSource())
+                      .as("用例 [%s] 应命中 %s", r.goldenCase().query(), r.goldenCase().expectSources())
                       .isTrue());
     }
   }

@@ -17,4 +17,11 @@ public interface KnowledgeRetriever {
    * @return 相关文档片段（按相似度降序）；空列表表示阈值内无命中
    */
   List<Document> retrieve(String query);
+
+  /**
+   * 带元数据过滤的语义检索（如"只查 2024 年报"）。
+   *
+   * @param filter 过滤条件；{@link KnowledgeFilter#NONE} 等价于 {@link #retrieve(String)}
+   */
+  List<Document> retrieve(String query, KnowledgeFilter filter);
 }
