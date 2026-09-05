@@ -14,7 +14,7 @@ import org.springframework.ai.vectorstore.VectorStore;
 class AnnouncementToolsTest {
 
   private final VectorStore vectorStore = mock(VectorStore.class);
-  private final AnnouncementTools tools = new AnnouncementTools(vectorStore, 0.5);
+  private final AnnouncementTools tools = new AnnouncementTools(vectorStore, 0.5, 5);
 
   @Test
   void searchResultsCarrySourceFileNames() {

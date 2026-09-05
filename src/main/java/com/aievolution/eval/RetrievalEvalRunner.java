@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
  * ≥ {@value #GATE_THRESHOLD}）。
  *
  * <p>用法：{@code AI_EVAL_ENABLED=true ./mvnw spring-boot:run} （环境变量经 relaxed binding 映射到
- * ai.eval.enabled）。topK 与线上检索口径（RagChatService / AnnouncementTools）保持一致——评的就是用的。
+ * ai.eval.enabled）。topK 与线上检索服务共用 ai.rag.top-k 配置——评的就是用的。
  */
 @Component
 @ConditionalOnProperty(name = "ai.eval.enabled", havingValue = "true")
@@ -28,20 +28,21 @@ public class RetrievalEvalRunner implements ApplicationRunner {
 
   private static final Logger log = LoggerFactory.getLogger(RetrievalEvalRunner.class);
 
-  /** M1 验收门：正例 Recall@5 不得低于该值（铁律：不过不进下一阶段） */
+  /** M1 验收门：正例 Recall@K 不得低于该值（铁律：不过不进下一阶段） */
   static final double GATE_THRESHOLD = 0.7;
-
-  /** 评估 topK，与 RagChatService.TOP_K / AnnouncementTools.TOP_K 对齐 */
-  public static final int TOP_K = 5;
 
   private final VectorStore vectorStore;
   private final double similarityThreshold;
+  // 与线上服务共用 ai.rag.top-k 配置：评估口径=线上口径，由配置而非约定保证
+  private final int topK;
 
   public RetrievalEvalRunner(
       VectorStore vectorStore,
-      @Value("${ai.rag.similarity-threshold:0.5}") double similarityThreshold) {
+      @Value("${ai.rag.similarity-threshold:0.5}") double similarityThreshold,
+      @Value("${ai.rag.top-k:5}") int topK) {
     this.vectorStore = vectorStore;
     this.similarityThreshold = similarityThreshold;
+    this.topK = topK;
   }
 
   @Override
@@ -52,9 +53,9 @@ public class RetrievalEvalRunner implements ApplicationRunner {
             .readValue(new ClassPathResource("eval/golden-set.json").getInputStream());
 
     List<RetrievalEvaluator.EvalResult> results =
-        new RetrievalEvaluator(vectorStore, similarityThreshold, TOP_K).evaluate(goldenSet);
+        new RetrievalEvaluator(vectorStore, similarityThreshold, topK).evaluate(goldenSet);
 
-    log.info("════════ 检索 eval 报告（Recall@{}，阈值 {}） ════════", TOP_K, similarityThreshold);
+    log.info("════════ 检索 eval 报告（Recall@{}，阈值 {}） ════════", topK, similarityThreshold);
     results.forEach(
         r ->
             log.info(
@@ -91,16 +92,13 @@ public class RetrievalEvalRunner implements ApplicationRunner {
 
     log.info(
         "正例 Recall@{}：{}/{}（{}%）",
-        TOP_K, positivePassed, positives.size(), Math.round(recall * 100));
+        topK, positivePassed, positives.size(), Math.round(recall * 100));
     log.info("负例拒答率：{}/{}", negativePassed, negatives.size());
     if (recall >= GATE_THRESHOLD) {
-      log.info("════════ M1 验收门：通过（Recall@{} {} ≥ {}） ════════", TOP_K, recall, GATE_THRESHOLD);
+      log.info("════════ M1 验收门：通过（Recall@{} {} ≥ {}） ════════", topK, recall, GATE_THRESHOLD);
     } else {
       log.warn(
-          "════════ M1 验收门：未通过（Recall@{} {} < {}），不得进入下一阶段 ════════",
-          TOP_K,
-          recall,
-          GATE_THRESHOLD);
+          "════════ M1 验收门：未通过（Recall@{} {} < {}），不得进入下一阶段 ════════", topK, recall, GATE_THRESHOLD);
     }
   }
 }

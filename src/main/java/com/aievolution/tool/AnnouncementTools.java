@@ -19,16 +19,17 @@ import org.springframework.stereotype.Component;
 @Component
 public class AnnouncementTools {
 
-  private static final int TOP_K = 5;
-
   private final VectorStore vectorStore;
   private final double similarityThreshold;
+  private final int topK;
 
   public AnnouncementTools(
       VectorStore vectorStore,
-      @Value("${ai.rag.similarity-threshold:0.5}") double similarityThreshold) {
+      @Value("${ai.rag.similarity-threshold:0.5}") double similarityThreshold,
+      @Value("${ai.rag.top-k:5}") int topK) {
     this.vectorStore = vectorStore;
     this.similarityThreshold = similarityThreshold;
+    this.topK = topK;
   }
 
   @Tool(
@@ -39,7 +40,7 @@ public class AnnouncementTools {
         vectorStore.similaritySearch(
             SearchRequest.builder()
                 .query(query)
-                .topK(TOP_K)
+                .topK(topK)
                 .similarityThreshold(similarityThreshold)
                 .build());
     if (docs.isEmpty()) {

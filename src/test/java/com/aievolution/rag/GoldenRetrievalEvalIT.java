@@ -3,7 +3,6 @@ package com.aievolution.rag;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.aievolution.eval.GoldenCase;
-import com.aievolution.eval.RetrievalEvalRunner;
 import com.aievolution.eval.RetrievalEvaluator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.qdrant.client.QdrantClient;
@@ -50,9 +49,9 @@ class GoldenRetrievalEvalIT {
                   .toList();
 
       // 测试替身的哈希向量得分分布与真实模型不同，阈值放 0 专注验证"Recall@5 命中正确来源"
+      // topK 与 application.yml 的 ai.rag.top-k 默认值保持一致（非 Spring 测试，手工传入）
       List<RetrievalEvaluator.EvalResult> results =
-          new RetrievalEvaluator(store, 0.0, RetrievalEvalRunner.TOP_K)
-              .evaluate(normalPositiveCases);
+          new RetrievalEvaluator(store, 0.0, 5).evaluate(normalPositiveCases);
 
       assertThat(results)
           .isNotEmpty()

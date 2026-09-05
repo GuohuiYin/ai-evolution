@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class RagChatService implements ChatService {
 
-  private static final int TOP_K = 5;
   private static final int EXCERPT_MAX_LENGTH = 120;
   private static final String DISCLAIMER = "\n\n——以上由 AI 基于知识库生成，不构成投资建议。";
   private static final String NO_KNOWLEDGE_REPLY = "知识库中未找到与问题相关的资料。为避免误导，我不凭空作答；请先补充相关文档再提问。";
@@ -33,18 +32,21 @@ public class RagChatService implements ChatService {
   private final ChatClient chatClient;
   private final VectorStore vectorStore;
   private final PromptLibrary promptLibrary;
-  // 相似度阈值是可调参而非硬编码：与 Embedding 模型/语料强相关，需在 eval 中调优
+  // 相似度阈值与 topK 是可调参而非硬编码：与 Embedding 模型/语料强相关，需在 eval 中调优
   private final double similarityThreshold;
+  private final int topK;
 
   public RagChatService(
       ChatClient.Builder chatClientBuilder,
       VectorStore vectorStore,
       PromptLibrary promptLibrary,
-      @Value("${ai.rag.similarity-threshold:0.5}") double similarityThreshold) {
+      @Value("${ai.rag.similarity-threshold:0.5}") double similarityThreshold,
+      @Value("${ai.rag.top-k:5}") int topK) {
     this.chatClient = chatClientBuilder.build();
     this.vectorStore = vectorStore;
     this.promptLibrary = promptLibrary;
     this.similarityThreshold = similarityThreshold;
+    this.topK = topK;
   }
 
   @Override
@@ -64,7 +66,7 @@ public class RagChatService implements ChatService {
     return vectorStore.similaritySearch(
         SearchRequest.builder()
             .query(message)
-            .topK(TOP_K)
+            .topK(topK)
             .similarityThreshold(similarityThreshold)
             .build());
   }

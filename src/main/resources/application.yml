@@ -32,6 +32,12 @@ server:
   port: 8080
   shutdown: graceful
 
+ai:
+  rag:
+    # 检索调参集中于此：线上服务（RAG/公告工具）与 eval 验收门共用，保证"评估口径=线上口径"
+    top-k: 5
+    similarity-threshold: 0.5
+
 management:
   endpoints:
     web:
