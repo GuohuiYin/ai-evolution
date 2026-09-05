@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * 检索评估执行器：本地手动触发（{@code ai.eval.enabled=true}），用真实 bge-m3 跑全量黄金集，输出 Recall@5 报告并判定 M1 验收门（Recall@5
- * ≥ {@value #GATE_THRESHOLD}）。
+ * ≥ {@code ai.eval.gate-threshold}）。
  *
  * <p>用法：{@code AI_EVAL_ENABLED=true ./mvnw spring-boot:run} （环境变量经 relaxed binding 映射到
  * ai.eval.enabled）。topK 与线上检索服务共用 ai.rag.top-k 配置——评的就是用的。
@@ -28,21 +28,23 @@ public class RetrievalEvalRunner implements ApplicationRunner {
 
   private static final Logger log = LoggerFactory.getLogger(RetrievalEvalRunner.class);
 
-  /** M1 验收门：正例 Recall@K 不得低于该值（铁律：不过不进下一阶段） */
-  static final double GATE_THRESHOLD = 0.7;
-
   private final KnowledgeRetriever knowledgeRetriever;
-  // 以下两个配置仅用于报告头展示当前评估口径，检索行为由 KnowledgeRetriever 收口
+  // 以下配置仅用于报告头展示与验收门判定，检索行为由 KnowledgeRetriever 收口
   private final double similarityThreshold;
   private final int topK;
+
+  /** M1 验收门阈值：正例 Recall@K 不得低于该值（铁律：不过不进下一阶段），策略值配置化（A11-2） */
+  private final double gateThreshold;
 
   public RetrievalEvalRunner(
       KnowledgeRetriever knowledgeRetriever,
       @Value("${ai.rag.similarity-threshold:0.5}") double similarityThreshold,
-      @Value("${ai.rag.top-k:5}") int topK) {
+      @Value("${ai.rag.top-k:5}") int topK,
+      @Value("${ai.eval.gate-threshold:0.7}") double gateThreshold) {
     this.knowledgeRetriever = knowledgeRetriever;
     this.similarityThreshold = similarityThreshold;
     this.topK = topK;
+    this.gateThreshold = gateThreshold;
   }
 
   @Override
@@ -94,11 +96,11 @@ public class RetrievalEvalRunner implements ApplicationRunner {
         "正例 Recall@{}：{}/{}（{}%）",
         topK, positivePassed, positives.size(), Math.round(recall * 100));
     log.info("负例拒答率：{}/{}", negativePassed, negatives.size());
-    if (recall >= GATE_THRESHOLD) {
-      log.info("════════ M1 验收门：通过（Recall@{} {} ≥ {}） ════════", topK, recall, GATE_THRESHOLD);
+    if (recall >= gateThreshold) {
+      log.info("════════ M1 验收门：通过（Recall@{} {} ≥ {}） ════════", topK, recall, gateThreshold);
     } else {
       log.warn(
-          "════════ M1 验收门：未通过（Recall@{} {} < {}），不得进入下一阶段 ════════", topK, recall, GATE_THRESHOLD);
+          "════════ M1 验收门：未通过（Recall@{} {} < {}），不得进入下一阶段 ════════", topK, recall, gateThreshold);
     }
   }
 }

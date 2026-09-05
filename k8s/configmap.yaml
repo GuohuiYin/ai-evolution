@@ -12,3 +12,4 @@ data:
   # 检索调参显式声明：部署环境的检索口径对运维可见，不依赖代码默认值兜底
   AI_RAG_TOP_K: "5"
   AI_RAG_SIMILARITY_THRESHOLD: "0.5"
+  AI_RAG_CHUNK_SIZE: "800"

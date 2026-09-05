@@ -34,9 +34,21 @@ server:
 
 ai:
   rag:
-    # 检索调参集中于此：线上服务（RAG/公告工具）与 eval 验收门共用，保证"评估口径=线上口径"
+    # 检索调参集中于此：线上服务与 eval 验收门共用，保证"评估口径=线上口径"
     top-k: 5
     similarity-threshold: 0.5
+    # 分块大小（token）：与检索质量直接相关，调整需以黄金集全量回归为前提
+    chunk-size: 800
+  stock:
+    # 个股分析默认会计年度（mock 种子数据按 2024 口径）
+    analysis-year: 2024
+  knowledge:
+    ingest:
+      # 启动时摄入知识库；测试环境关闭避免打真实 Embedding API
+      enabled: true
+  eval:
+    # M1 验收门阈值：正例 Recall@topK 低于此值不得进入下一阶段
+    gate-threshold: 0.7
 
 management:
   endpoints:

@@ -11,6 +11,7 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.transformer.splitter.TextSplitter;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -41,10 +42,13 @@ public class KnowledgeBaseIngestor implements ApplicationRunner {
   private final VectorStore vectorStore;
   private final ResourcePatternResolver resourceResolver =
       new PathMatchingResourcePatternResolver();
-  private final TextSplitter textSplitter = new TokenTextSplitter();
+  // 分块大小是 RAG 最经典的调参项（与检索质量直接相关），显式配置化而非吃库默认值（约定 A11-2）
+  private final TextSplitter textSplitter;
 
-  public KnowledgeBaseIngestor(VectorStore vectorStore) {
+  public KnowledgeBaseIngestor(
+      VectorStore vectorStore, @Value("${ai.rag.chunk-size:800}") int chunkSize) {
     this.vectorStore = vectorStore;
+    this.textSplitter = TokenTextSplitter.builder().withChunkSize(chunkSize).build();
   }
 
   @Override
