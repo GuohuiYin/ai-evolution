@@ -2,6 +2,8 @@ package com.aievolution.chat;
 
 import java.util.List;
 import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -29,6 +31,8 @@ public class ChatRouter {
   /** A 股代码形态：独立出现的 6 位数字（\b 防止误伤长数字串/年份片段）。 */
   private static final Pattern STOCK_CODE = Pattern.compile("\\b\\d{6}\\b");
 
+  private static final Logger log = LoggerFactory.getLogger(ChatRouter.class);
+
   private final List<String> agentKeywords;
 
   public ChatRouter(
@@ -38,11 +42,29 @@ public class ChatRouter {
 
   public Route route(String message) {
     if (message == null || message.isBlank()) {
-      return Route.RAG;
+      return logDecision(Route.RAG, "blank", message);
     }
     if (STOCK_CODE.matcher(message).find()) {
-      return Route.AGENT;
+      return logDecision(Route.AGENT, "stock_code", message);
     }
-    return agentKeywords.stream().anyMatch(message::contains) ? Route.AGENT : Route.RAG;
+    return agentKeywords.stream()
+        .filter(message::contains)
+        .findFirst()
+        .map(keyword -> logDecision(Route.AGENT, "keyword:" + keyword, message))
+        .orElseGet(() -> logDecision(Route.RAG, "fallback", message));
+  }
+
+  /** 路由决策唯一日志出口（A12 单点化）：排查"为什么走这条路"只看这里。 */
+  private Route logDecision(Route route, String reason, String message) {
+    log.info("stage=ROUTE route={} reason={} msg={}", route, reason, abbreviate(message));
+    return route;
+  }
+
+  private static String abbreviate(String message) {
+    if (message == null) {
+      return "";
+    }
+    String oneLine = message.replaceAll("\\s+", " ").trim();
+    return oneLine.length() <= 30 ? oneLine : oneLine.substring(0, 30) + "…";
   }
 }
