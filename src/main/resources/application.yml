@@ -70,3 +70,8 @@ management:
     health:
       probes:
         enabled: true
+
+# 可观测性基座：控制台日志统一带 traceId（TraceIdFilter 写入 MDC），调用链按号串联
+logging:
+  pattern:
+    console: "%d{HH:mm:ss.SSS} %5p [traceId=%X{traceId:--}] %-40.40logger{39}: %m%n"

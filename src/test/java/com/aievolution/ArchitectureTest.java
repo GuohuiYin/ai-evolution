@@ -26,6 +26,7 @@ class ArchitectureTest {
           "mcp", List.of("tool"),
           "eval", List.of("rag"),
           // 以下为零出度域：基础域不依赖任何兄弟域
+          "infra", List.of(),
           "rag", List.of(),
           "stock", List.of(),
           "prompt", List.of(),
