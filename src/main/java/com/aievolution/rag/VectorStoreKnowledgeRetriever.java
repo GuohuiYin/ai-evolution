@@ -1,6 +1,8 @@
 package com.aievolution.rag;
 
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
@@ -16,6 +18,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class VectorStoreKnowledgeRetriever implements KnowledgeRetriever {
+
+  private static final Logger log = LoggerFactory.getLogger(VectorStoreKnowledgeRetriever.class);
 
   private final VectorStore vectorStore;
   private final double similarityThreshold;
@@ -37,13 +41,34 @@ public class VectorStoreKnowledgeRetriever implements KnowledgeRetriever {
 
   @Override
   public List<Document> retrieve(String query, KnowledgeFilter filter) {
-    return vectorStore.similaritySearch(
-        SearchRequest.builder()
-            .query(query)
-            .topK(topK)
-            .similarityThreshold(similarityThreshold)
-            .filterExpression(toFilterExpression(filter))
-            .build());
+    List<Document> hits =
+        vectorStore.similaritySearch(
+            SearchRequest.builder()
+                .query(query)
+                .topK(topK)
+                .similarityThreshold(similarityThreshold)
+                .filterExpression(toFilterExpression(filter))
+                .build());
+    // 检索判罚依据单点留痕：hits=0 即拒答现场；topScore 即"差多少命中"的标尺
+    log.info(
+        "stage=RETRIEVE hits={} topScore={} threshold={} topK={} filter={} query={}",
+        hits.size(),
+        hits.stream()
+            .map(Document::getScore)
+            .filter(java.util.Objects::nonNull)
+            .map(s -> String.format("%.2f", s))
+            .findFirst()
+            .orElse("--"),
+        similarityThreshold,
+        topK,
+        filter,
+        abbreviate(query));
+    return hits;
+  }
+
+  private static String abbreviate(String query) {
+    String oneLine = query.replaceAll("\\s+", " ").trim();
+    return oneLine.length() <= 30 ? oneLine : oneLine.substring(0, 30) + "…";
   }
 
   /** 领域过滤条件 → Spring AI 过滤表达式；null 字段不参与过滤。 */
