@@ -27,6 +27,14 @@ spring:
         port: ${QDRANT_PORT:6334}
         collection-name: knowledge_base
         initialize-schema: true
+    # W6-Step2：MCP Server。Streamable HTTP（现行标准，旧 SSE 已废弃且 Codex 不支持）；
+    # 端点默认 POST /mcp，与 /ai/* 业务命名空间隔离
+    mcp:
+      server:
+        name: ai-evolution
+        version: 0.2.0-m2-SNAPSHOT
+        protocol: STREAMABLE
+        type: SYNC
 
 server:
   port: 8080

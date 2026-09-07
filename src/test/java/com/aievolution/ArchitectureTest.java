@@ -23,6 +23,7 @@ class ArchitectureTest {
           "chat", List.of("compliance", "prompt", "rag", "tool"),
           "analysis", List.of("compliance", "prompt", "stock"),
           "tool", List.of("rag", "stock"),
+          "mcp", List.of("tool"),
           "eval", List.of("rag"),
           // 以下为零出度域：基础域不依赖任何兄弟域
           "rag", List.of(),
