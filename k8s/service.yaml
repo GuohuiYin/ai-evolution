@@ -6,5 +6,5 @@ spec:
   selector:
     app: ai-evolution
   ports:
-    - port: 8080
-      targetPort: 8080
+    - port: 18080
+      targetPort: 18080

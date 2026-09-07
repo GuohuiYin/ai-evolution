@@ -36,7 +36,8 @@
 # 前置：.env 配置 AI_API_KEY / SILICONFLOW_API_KEY；本地 Qdrant 容器
 docker run -d --name qdrant -p 6333:6333 -p 6334:6334 qdrant/qdrant:v1.15.1
 
-# 本地运行（对话页 http://localhost:8080/，Swagger UI /swagger-ui/index.html）
+# 本地运行（对话页 http://localhost:18080/，Swagger UI /swagger-ui/index.html，MCP /mcp）
+# 端口说明：默认 18080（非 8080）——本机 8080 常被 IDE 占用，W6 起全链路统一（含 k8s）
 set -a && source .env && set +a
 ./mvnw spring-boot:run
 

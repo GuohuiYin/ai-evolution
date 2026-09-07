@@ -37,7 +37,7 @@ spring:
         type: SYNC
 
 server:
-  port: 8080
+  port: 18080
   shutdown: graceful
 
 ai:

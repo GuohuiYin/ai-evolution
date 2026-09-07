@@ -19,7 +19,7 @@ spec:
           image: ai-evolution:0.2.0-m2-SNAPSHOT
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 8080
+            - containerPort: 18080
           envFrom:
             - configMapRef:
                 name: ai-evolution-config
@@ -28,11 +28,11 @@ spec:
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
-              port: 8080
+              port: 18080
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
-              port: 8080
+              port: 18080
           resources:
             requests:
               cpu: 250m
