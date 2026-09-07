@@ -46,7 +46,7 @@ set -a && source .env && set +a
 
 # Minikube 集群部署（详见 k8s/README.md）
 DOCKER_HOST=unix:///var/run/docker.sock ./mvnw compile jib:dockerBuild -DskipTests
-minikube image load ai-evolution:0.1.0-w1-SNAPSHOT
+minikube image load ai-evolution:0.2.0-m2-SNAPSHOT
 kubectl apply -f k8s/
 ```
 

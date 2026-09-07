@@ -13,7 +13,7 @@
 
   <groupId>com.aievolution</groupId>
   <artifactId>ai-evolution</artifactId>
-  <version>0.1.0-w1-SNAPSHOT</version>
+  <version>0.2.0-m2-SNAPSHOT</version>
   <name>ai-evolution</name>
   <description>Java 架构师到 AI 应用架构师的实战项目（个股研究域）</description>
 
