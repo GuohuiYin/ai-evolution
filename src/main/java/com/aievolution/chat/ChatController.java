@@ -25,7 +25,9 @@ public class ChatController {
     this.agentChatService = agentChatService;
   }
 
-  @Operation(summary = "发送对话消息", description = "将用户消息发送给大模型，返回模型生成的回复")
+  @Operation(
+      summary = "发送对话消息",
+      description = "统一对话入口：含股票代码/取数关键词自动路由 Agent 工具通路，其余走 RAG 检索管道（ADR-0010）")
   @ApiResponses({
     @ApiResponse(responseCode = "200", description = "成功返回模型回复"),
     @ApiResponse(responseCode = "400", description = "请求参数非法（如 message 为空或缺失）"),

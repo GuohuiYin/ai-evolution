@@ -50,6 +50,9 @@ ai:
   stock:
     # 个股分析默认会计年度（mock 种子数据按 2024 口径）
     analysis-year: 2024
+  chat:
+    # 统一入口路由策略（ChatRouter）：命中股票代码或下列关键词 → Agent 工具通路；其余 → RAG 管道
+    agent-keywords: 股价,行情,走势,营收,净利,利润,财务
   knowledge:
     ingest:
       # 启动时摄入知识库；测试环境关闭避免打真实 Embedding API
