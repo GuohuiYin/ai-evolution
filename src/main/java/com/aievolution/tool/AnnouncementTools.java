@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 /**
@@ -18,15 +19,24 @@ import org.springframework.stereotype.Component;
 public class AnnouncementTools {
 
   private final KnowledgeRetriever knowledgeRetriever;
+  private final int maxQueryLength;
 
-  public AnnouncementTools(KnowledgeRetriever knowledgeRetriever) {
+  public AnnouncementTools(
+      KnowledgeRetriever knowledgeRetriever,
+      @Value("${ai.tool.max-query-length:2000}") int maxQueryLength) {
     this.knowledgeRetriever = knowledgeRetriever;
+    this.maxQueryLength = maxQueryLength;
   }
 
   @Tool(
       description =
           "检索知识库中的公司公告与研究资料（语义检索）。当问题涉及公司业务、工艺、战略、公告等" + "非数字信息时使用。返回资料片段并标注来源文件名，回答中必须引用来源。")
   public String searchAnnouncements(@ToolParam(description = "检索问题，用完整问句效果更好") String query) {
+    // 红队基线 M3（P0）：超长参数直达上游付费 embedding API = 成本攻击面；上限外置 ai.tool.*（A11）
+    if (query.length() > maxQueryLength) {
+      throw new IllegalArgumentException(
+          "query 超长（%d 字符，上限 %d）".formatted(query.length(), maxQueryLength));
+    }
     List<Document> docs = knowledgeRetriever.retrieve(query);
     if (docs.isEmpty()) {
       return "知识库中未找到与问题相关的资料";

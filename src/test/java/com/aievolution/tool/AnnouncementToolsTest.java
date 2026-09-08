@@ -1,7 +1,9 @@
 package com.aievolution.tool;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.aievolution.rag.KnowledgeRetriever;
@@ -13,7 +15,20 @@ import org.springframework.ai.document.Document;
 class AnnouncementToolsTest {
 
   private final KnowledgeRetriever knowledgeRetriever = mock(KnowledgeRetriever.class);
-  private final AnnouncementTools tools = new AnnouncementTools(knowledgeRetriever);
+  private final AnnouncementTools tools = new AnnouncementTools(knowledgeRetriever, 2000);
+
+  @Test
+  void oversizedQueryRejectedBeforeRetrieval() {
+    // 红队基线 M3（P0）：超长参数直达上游付费 embedding API = 成本攻击面。
+    // 防线必须在工具入口、上游调用之前
+    String hugeQuery = "A".repeat(2001);
+
+    assertThatThrownBy(() -> tools.searchAnnouncements(hugeQuery))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("超长");
+
+    verifyNoInteractions(knowledgeRetriever);
+  }
 
   @Test
   void searchResultsCarrySourceFileNames() {

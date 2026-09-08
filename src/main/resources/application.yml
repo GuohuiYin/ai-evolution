@@ -53,6 +53,9 @@ ai:
   chat:
     # 统一入口路由策略（ChatRouter）：命中股票代码或下列关键词 → Agent 工具通路；其余 → RAG 管道
     agent-keywords: 股价,行情,走势,营收,净利,利润,财务
+  tool:
+    # 工具入参长度上限（红队基线 M3 修复：防超长 query 直达上游付费 API 的成本攻击）
+    max-query-length: 2000
   knowledge:
     ingest:
       # 启动时摄入知识库；测试环境关闭避免打真实 Embedding API

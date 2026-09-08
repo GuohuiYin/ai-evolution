@@ -54,6 +54,21 @@ class McpServerIT {
   }
 
   @Test
+  void errorResponseNeverLeaksStackTrace() throws Exception {
+    // 红队基线 M1 实锤漏洞（P0）：无会话的业务请求曾泄漏完整 Java 堆栈（类名/行号）。
+    // 安全契约：任何错误响应只允许 JSON-RPC 规范字段，禁止 stackTrace/className 等内部信息
+    String toolsListNoSession =
+        """
+        {"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}
+        """;
+
+    HttpResponse<String> resp =
+        http.send(mcpPost(toolsListNoSession).build(), HttpResponse.BodyHandlers.ofString());
+
+    assertThat(resp.body()).doesNotContain("stackTrace").doesNotContain("className");
+  }
+
+  @Test
   void toolsListExposesExistingThreeTools() throws Exception {
     String initialize =
         """
