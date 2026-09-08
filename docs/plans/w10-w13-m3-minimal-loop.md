@@ -22,6 +22,25 @@
 
 - Minikube 全链路部署 W3 已完成 → W12 的"部署到 minikube"基本免做
 - 手动编排经验（W3 RagChatService）→ 理解 Loop 的"观察→推理→行动"循环时有具象参照
+- **MCP 双向贯通（W6 Server 已验证）→ M3 候选动作：以 MCP Client 身份接入外部工具**
+  （2026-09-08 讨论决策，详见下节）
+
+## M3 候选：MCP Client 接入外部工具（W10 开工前评估）
+
+**背景**：W6 完成了"对外暴露"（MCP Server），对称的方向是"调用外部"（MCP Client）——
+`spring-ai-starter-mcp-client` 把外部 MCP server 的工具自动包装为 ToolCallback，
+与自有 @Tool 在模型眼中无差别。生态已有一百多个现成 server（搜索/数据库/数据源等）。
+
+**候选接入目标**（按与场景的贴合度）：
+1. 网页搜索类 server（Brave/Tavily 等）→ 场景 1"前瞻观点聚合"需要外部观点源；
+2. 数据源类 server（如有靠谱的 A 股数据 server）→ 与 stock 域真实数据源替换互为备选路径。
+
+**必须遵守的既有约束**（红队基线的教训直接适用）：
+- 外部工具输出与自有工具同受 ToolAuditAspect + RedLineGuard 覆盖（AOP 切在调用层，天然满足）；
+- 外部 server 是第三方代码，返回内容可能含注入载荷——超时/熔断/长度上限必须先配好再接通；
+- 接入层按 A9 先定子域归属（候选：新建 `mcpclient` 子域或并入 tool 域适配层），ArchUnit 白名单先行。
+
+**评估时机**：W8 结束后、W10 开工前，用一个小 spike（连通官方 everything 测试 server）验证手感后拍板。
 
 ## 进阶期预告（W14-27，详见 PPT Slide 20）
 
