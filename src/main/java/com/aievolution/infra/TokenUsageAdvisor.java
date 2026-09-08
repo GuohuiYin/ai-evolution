@@ -7,6 +7,7 @@ import org.springframework.ai.chat.client.ChatClientResponse;
 import org.springframework.ai.chat.client.advisor.api.CallAdvisor;
 import org.springframework.ai.chat.client.advisor.api.CallAdvisorChain;
 import org.springframework.ai.chat.metadata.Usage;
+import org.springframework.ai.deepseek.api.DeepSeekApi;
 import org.springframework.core.Ordered;
 
 /**
@@ -29,14 +30,40 @@ public class TokenUsageAdvisor implements CallAdvisor {
     // 空 usage（供应商未上报时返回 total=0 的空对象）按"未上报"处理，记 -- 而非误导性的 0
     boolean reported =
         usage != null && usage.getTotalTokens() != null && usage.getTotalTokens() > 0;
-    Long cacheRead = reported ? usage.getCacheReadInputTokens() : null;
+    Long cacheRead = reported ? resolveCacheRead(usage) : null;
     log.info(
-        "stage=MODEL model={} tokens_in={} tokens_out={} cache_read={}",
+        "stage=MODEL model={} tokens_in={} tokens_out={} cache_read={} native={}",
         model == null || model.isBlank() ? "--" : model,
         reported ? usage.getPromptTokens() : "--",
         reported ? usage.getCompletionTokens() : "--",
-        cacheRead == null ? "--" : cacheRead);
+        cacheRead == null ? "--" : cacheRead,
+        abbreviateNative(reported ? usage.getNativeUsage() : null));
     return response;
+  }
+
+  /**
+   * 缓存命中量解析：优先框架标准化键；缺失时按供应商原生结构兜底—— DeepSeek 的命中量在 {@code
+   * nativeUsage.promptTokensDetails.cachedTokens}（框架 2.0.1 未映射）。 新增供应商时在此扩展分支，调用方不变。
+   */
+  private static Long resolveCacheRead(Usage usage) {
+    if (usage.getCacheReadInputTokens() != null) {
+      return usage.getCacheReadInputTokens();
+    }
+    if (usage.getNativeUsage() instanceof DeepSeekApi.Usage nativeUsage
+        && nativeUsage.promptTokensDetails() != null
+        && nativeUsage.promptTokensDetails().cachedTokens() != null) {
+      return nativeUsage.promptTokensDetails().cachedTokens().longValue();
+    }
+    return null;
+  }
+
+  /** 供应商原生 usage 截断输出：缓存命中等扩展字段框架未标准化，先观测原生字段（DeepSeek 缓存字段在此）。 */
+  private static String abbreviateNative(Object nativeUsage) {
+    if (nativeUsage == null) {
+      return "--";
+    }
+    String text = nativeUsage.toString();
+    return text.length() <= 120 ? text : text.substring(0, 120) + "…";
   }
 
   @Override
