@@ -17,11 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/ai")
 public class ChatController {
 
-  private final ChatService chatService;
+  private final RoutingChatService routingChatService;
   private final AgentChatService agentChatService;
 
-  public ChatController(ChatService chatService, AgentChatService agentChatService) {
-    this.chatService = chatService;
+  public ChatController(RoutingChatService routingChatService, AgentChatService agentChatService) {
+    this.routingChatService = routingChatService;
     this.agentChatService = agentChatService;
   }
 
@@ -54,7 +54,7 @@ public class ChatController {
   })
   @PostMapping("/chat")
   public ChatResponse chat(@Valid @RequestBody ChatRequest request) {
-    ChatAnswer answer = chatService.chat(request.message());
+    ChatAnswer answer = routingChatService.chat(request.message());
     return new ChatResponse(answer.reply(), answer.sources());
   }
 

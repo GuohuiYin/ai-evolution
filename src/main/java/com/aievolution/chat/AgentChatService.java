@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
  * Agent 入口。
  */
 @Service
-public class AgentChatService {
+public class AgentChatService implements ChatService {
 
   // 红线 01：免责声明引用全项目单点定义（约定 A12），不各自拷贝
   private static final String DISCLAIMER = "\n\n" + Disclaimers.AI_GENERATED;

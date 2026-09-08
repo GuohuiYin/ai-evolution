@@ -18,13 +18,13 @@ class ChatControllerTest {
 
   @Autowired private MockMvc mockMvc;
 
-  @MockitoBean private ChatService chatService;
+  @MockitoBean private RoutingChatService routingChatService;
 
   @MockitoBean private AgentChatService agentChatService;
 
   @Test
   void chatReturnsReplyFromService() throws Exception {
-    when(chatService.chat("你好"))
+    when(routingChatService.chat("你好"))
         .thenReturn(
             new ChatAnswer(
                 "你好，我是 DeepSeek", java.util.List.of(new SourceDocument("maotai.md", "示例片段"))));
@@ -63,7 +63,7 @@ class ChatControllerTest {
 
   @Test
   void nonTransientModelErrorMapsToBadGateway() throws Exception {
-    when(chatService.chat("test")).thenThrow(new NonTransientAiException("HTTP 402"));
+    when(routingChatService.chat("test")).thenThrow(new NonTransientAiException("HTTP 402"));
 
     mockMvc
         .perform(
