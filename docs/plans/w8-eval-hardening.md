@@ -8,7 +8,7 @@
 |---|---|---|---|
 | 1 | **CVE-2026-59318 修复落实** | W8 欠账（周扫描发现：Spring AI 2.0.1 为安全修复版） | 工具解析兜底显式配置为 fail-fast；验证异常输入下不静默吞错；测试覆盖 |
 | 2 | **知识库增量摄入（manifest）** | 用户提问后拍板 | 启动时按文件 SHA-256 对比 manifest：未变跳过（零 embedding 调用）、变更重算该文件、删除文件清理对应向量；修复"分块数变少导致旧块残留"问题；第二次启动耗时/调用数可观测下降 |
-| 3 | **黄金集扩充 21 → 30-50 条** | M2 验收门前置 | 含 12987 问法敏感性 case、负例分层（out-of-domain / in-domain-unanswerable）、字面型 query（评估混合检索价值） |
+| 3 | **黄金集扩充 21 → 30-50 条** | M2 验收门前置 | 含 12987 问法敏感性 case、负例分层（out-of-domain / in-domain-unanswerable）、字面型 query（评估混合检索价值）；**rag 模板做有/无 few-shot 对照实验（命中引用示例 + 资料不足拒答示例），以 eval 指标裁决是否保留，agent 侧暂不加** |
 | 4 | **eval 报告扩到三维度** | PPT 交付物③ | 准确性 + 遵循度 + 溯源完整性（现在只有检索 Recall） |
 | 5 | **一页成本账** | M2 验收门③ | 基于 TokenUsageAdvisor 数据，单次问答成本、缓存命中率、月度预估 |
 | 6 | **prompt/response 日志可观测** | 用户新增要求 | 日志可见模型调用输入 prompt 与返回 response（Spring AI SimpleLoggerAdvisor 或等价方案）；配置开关默认本地开/生产关（金融语料敏感）；挂进现有 traceId 链路 |
