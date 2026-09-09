@@ -42,4 +42,26 @@ class ToolResolutionFailFastTest {
         .as("工具解析兜底必须关闭：不可解析的工具名应 fail-fast，禁止回落到全局工具表")
         .isFalse();
   }
+
+  @Test
+  void toolCallLimitsMustBeExplicitlyConfigured() {
+    // 纵深防御：防模型死循环/被注入诱导反复调工具烧 token（成本攻击），上限必须显式声明
+    assertThat(environment.getProperty("spring.ai.tools.limits.max-total-tool-calls"))
+        .as("spring.ai.tools.limits.max-total-tool-calls 必须显式配置")
+        .isNotNull();
+    assertThat(environment.getProperty("spring.ai.tools.limits.on-limit-exceeded"))
+        .as("spring.ai.tools.limits.on-limit-exceeded 必须显式配置")
+        .isNotNull();
+  }
+
+  @Test
+  void toolCallLimitsMustBeEffective() {
+    assertThat(toolCallingProperties.getLimits().getMaxTotalToolCalls())
+        .as("每请求工具调用总次数上限")
+        .isEqualTo(10);
+    // RETURN_ERROR_RESPONSE 而非 THROW：超限作为错误观察喂回模型，由模型组织措辞答复，
+    // 避免未处理异常击穿到用户（与 W7 MCP 堆栈脱敏同一思路）
+    assertThat(toolCallingProperties.getLimits().getOnLimitExceeded().name())
+        .isEqualTo("RETURN_ERROR_RESPONSE");
+  }
 }

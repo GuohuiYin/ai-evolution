@@ -18,6 +18,11 @@ spring:
       resolution:
         fallback:
           enabled: false
+      # 纵深防御（W8-1 顺手项）：每请求工具调用次数上限，防模型死循环/注入诱导反复调工具烧 token。
+      # RETURN_ERROR_RESPONSE：超限作为错误观察喂回模型组织措辞，不击穿到用户（同 W7 脱敏思路）
+      limits:
+        max-total-tool-calls: 10
+        on-limit-exceeded: RETURN_ERROR_RESPONSE
     deepseek:
       api-key: ${AI_API_KEY:}
       base-url: ${AI_BASE_URL:https://api.deepseek.com}
