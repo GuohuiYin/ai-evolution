@@ -29,6 +29,17 @@
 - MCP 在 L2 是信息管道，W6 之后升级为受控执行通道（PPT Slide 11）
 - 注入攻击素材：金融公告天然混入指令式语言——选金融域的红利之一
 
+## Harness 四核心健康度仪表盘（W8 开工盘点，每周末复查）
+
+| 核心 | 现状 | 下一阶段 |
+|---|---|---|
+| Constrain | ✅ 三红线 + 输入/输出约束成型（Disclaimers / RedLineGuard / 入参上限 / MCP 脱敏） | W8 工具解析 fail-fast；M3 外部工具白名单 |
+| Inform | ✅ RAG + 工具双通道供给（source/asOf 元数据、prompt 资产化） | W8 增量摄入 manifest；M3 外部数据源（MCP Client） |
+| Verify | ⚠️ 半截（W3 检索 Recall + W7 红队基线） | **W8 主战场**：黄金集 30-50 + 三维 eval + LLM judge；之后 CI 回归门 |
+| Correct | ❌ 只有优雅失败（检索不到拒答 / 工具未覆盖如实告知） | W9 基于 eval 失败 case 人工迭代起步；M3 系统化修正（查询改写重试 / 红线降级 / ReAct 轨迹定位） |
+
+顺序原则：先能判定对错（Verify），再谈自动修正（Correct）——没有 Verify 的 Correct 是盲人修车。
+
 ## W5 扫描遗留（W6/W7 裁决）
 
 - `ChatController` 依赖不对称：`/ai/chat` 走 `ChatService` 接口，`/ai/agent` 直注具体类 `AgentChatService`。两服务语义不同（纯 RAG 固定管道 vs 工具增强 Agent），W6/W7 引入查询理解/路由层时统一裁决：是否抽象统一的对话路由接口
