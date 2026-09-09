@@ -11,7 +11,9 @@ import org.springframework.lang.Nullable;
  * @param expectSources 期望在 Top-K 内召回的来源文件名集合，任一命中即通过（多源语料下同一问题 可能有多个正确答案来源）；{@code null}
  *     表示负例——期望检索为空（相似度阈值以下）， 是防幻觉闸门的回归用例
  * @param category 用例类别：{@code normal}（直给事实，CI 哈希向量替身可回归）、{@code boundary}（改写/间接问法，依赖真实语义向量）、{@code
- *     adversarial}（近域陷阱或越界问题，期望 不召回）
+ *     paraphrase}（同义换问敏感性，真实语义向量）、{@code literal}（关键词/原文片段式查询，真实语义向量； 用于评估混合检索的潜在价值）、{@code
+ *     adversarial}（近域陷阱或越界问题，期望 不召回）。注：in-domain-unanswerable（话题相关但语料未覆盖，应拒答）不在本文件——
+ *     检索层命中对它而言是合理行为，拒答判定属生成层黄金集（W8-4）
  */
 public record GoldenCase(String query, @Nullable List<String> expectSources, String category) {
 

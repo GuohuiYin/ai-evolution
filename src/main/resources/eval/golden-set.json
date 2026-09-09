@@ -80,6 +80,92 @@
     "category": "normal"
   },
   {
+    "query": "茅台 2024 年归母净利润约多少",
+    "expectSources": [
+      "maotai.md",
+      "贵州茅台：贵州茅台2024年年度报告.pdf"
+    ],
+    "category": "normal"
+  },
+  {
+    "query": "宁德时代 2024 年归母净利润",
+    "expectSources": [
+      "catl.md"
+    ],
+    "category": "normal"
+  },
+  {
+    "query": "飞天茅台是哪个公司的产品",
+    "expectSources": [
+      "maotai.md"
+    ],
+    "category": "normal"
+  },
+  {
+    "query": "宁德时代主营什么电池",
+    "expectSources": [
+      "catl.md"
+    ],
+    "category": "normal"
+  },
+  {
+    "query": "12987是什么",
+    "expectSources": [
+      "maotai.md"
+    ],
+    "category": "paraphrase"
+  },
+  {
+    "query": "茅台工艺里 12987 每个数字分别代表什么",
+    "expectSources": [
+      "maotai.md"
+    ],
+    "category": "paraphrase"
+  },
+  {
+    "query": "一年生产周期、两次投料、九次蒸煮说的是哪种酒",
+    "expectSources": [
+      "maotai.md"
+    ],
+    "category": "paraphrase"
+  },
+  {
+    "query": "宁德时代动力电池占全球多大份额",
+    "expectSources": [
+      "catl.md"
+    ],
+    "category": "paraphrase"
+  },
+  {
+    "query": "赤水河流域环境容量约束",
+    "expectSources": [
+      "maotai.md"
+    ],
+    "category": "literal"
+  },
+  {
+    "query": "SNE Research 口径 37%",
+    "expectSources": [
+      "catl.md"
+    ],
+    "category": "literal"
+  },
+  {
+    "query": "两次投料 九次蒸煮 八次发酵 七次取酒",
+    "expectSources": [
+      "maotai.md",
+      "贵州茅台：贵州茅台2024年年度报告.pdf"
+    ],
+    "category": "literal"
+  },
+  {
+    "query": "神行超充电池",
+    "expectSources": [
+      "catl.md"
+    ],
+    "category": "literal"
+  },
+  {
     "query": "茅台净利润和分红情况如何",
     "expectSources": [
       "maotai.md",
@@ -104,6 +190,20 @@
   },
   {
     "query": "碳酸锂价格波动会影响谁",
+    "expectSources": [
+      "catl.md"
+    ],
+    "category": "boundary"
+  },
+  {
+    "query": "这两家公司里谁的品牌壁垒更厚",
+    "expectSources": [
+      "maotai.md"
+    ],
+    "category": "boundary"
+  },
+  {
+    "query": "谁的风险和原材料价格关系最大",
     "expectSources": [
       "catl.md"
     ],
@@ -136,6 +236,26 @@
   },
   {
     "query": "苹果公司最新发布会讲了什么",
+    "expectSources": null,
+    "category": "adversarial"
+  },
+  {
+    "query": "五粮液的营收规模有多大",
+    "expectSources": null,
+    "category": "adversarial"
+  },
+  {
+    "query": "OpenAI 最新发布了什么模型",
+    "expectSources": null,
+    "category": "adversarial"
+  },
+  {
+    "query": "感冒了吃什么药好",
+    "expectSources": null,
+    "category": "adversarial"
+  },
+  {
+    "query": "帮我把这段话翻译成英文",
     "expectSources": null,
     "category": "adversarial"
   }
