@@ -10,6 +10,14 @@ spring:
       embedding: openai
       image: none
       moderation: none
+    # CVE-2026-59318（红队欠账，W8-1）：工具解析兜底显式关闭。
+    # 请求级工具列表才是真正的派发边界；不可解析的工具名 fail-fast，
+    # 禁止回落到应用上下文全局工具表（提示注入越权通道）。
+    # 2.0.1 库默认虽已是 false，但显式声明防未来版本默认值回翻，测试锁定见 ToolResolutionFailFastTest
+    tools:
+      resolution:
+        fallback:
+          enabled: false
     deepseek:
       api-key: ${AI_API_KEY:}
       base-url: ${AI_BASE_URL:https://api.deepseek.com}
