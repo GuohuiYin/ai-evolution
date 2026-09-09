@@ -34,17 +34,21 @@ public class GenerationEvalRunner implements ApplicationRunner {
   private final ChatModel chatModel;
   private final PromptLibrary promptLibrary;
   private final String goldenSetLocation;
+  private final String categoriesFilter;
 
   public GenerationEvalRunner(
       ChatService chatService,
       ChatModel chatModel,
       PromptLibrary promptLibrary,
       @Value("${ai.eval.generation.golden-set:eval/golden-set-generation.json}")
-          String goldenSetLocation) {
+          String goldenSetLocation,
+      // 类别过滤（逗号分隔，空=全量）：A/B 实验只跑相关类别，控制 token 成本
+      @Value("${ai.eval.generation.categories:}") String categoriesFilter) {
     this.chatService = chatService;
     this.chatModel = chatModel;
     this.promptLibrary = promptLibrary;
     this.goldenSetLocation = goldenSetLocation;
+    this.categoriesFilter = categoriesFilter;
   }
 
   @Override
@@ -53,6 +57,10 @@ public class GenerationEvalRunner implements ApplicationRunner {
         new ObjectMapper()
             .readerForListOf(GenerationCase.class)
             .readValue(new ClassPathResource(goldenSetLocation).getInputStream());
+    if (!categoriesFilter.isBlank()) {
+      List<String> allowed = List.of(categoriesFilter.split(","));
+      goldenSet = goldenSet.stream().filter(c -> allowed.contains(c.category())).toList();
+    }
 
     // judge 就地构建：组件条件装配，未启用时不占 bean 容器
     GenerationEvaluator evaluator =

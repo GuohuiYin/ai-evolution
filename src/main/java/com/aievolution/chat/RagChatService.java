@@ -10,6 +10,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.document.Document;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
@@ -27,8 +28,9 @@ public class RagChatService implements ChatService {
   private static final String DISCLAIMER = "\n\n" + Disclaimers.AI_GENERATED;
   private static final String NO_KNOWLEDGE_REPLY = "知识库中未找到与问题相关的资料。为避免误导，我不凭空作答；请先补充相关文档再提问。";
 
-  // prompt 是资产不是字符串常量：模板存 resources/prompts/rag-chat-v1.md，版本化随 git 管理
-  private static final String PROMPT_NAME = "rag-chat-v1";
+  // prompt 是资产不是字符串常量：模板存 resources/prompts/，版本化随 git 管理；
+  // 模板名配置化（A11）——A/B 实验（如 few-shot 对照）经配置切换，不改代码
+  private final String promptName;
 
   private final ChatClient chatClient;
   private final KnowledgeRetriever knowledgeRetriever;
@@ -37,10 +39,16 @@ public class RagChatService implements ChatService {
   public RagChatService(
       ChatClient.Builder chatClientBuilder,
       KnowledgeRetriever knowledgeRetriever,
-      PromptLibrary promptLibrary) {
+      PromptLibrary promptLibrary,
+      @Value("${ai.rag.chat-prompt:rag-chat-v1}") String promptName) {
+    if (!promptLibrary.exists(promptName)) {
+      // prompt 缺失是部署事故，启动即 fail-fast
+      throw new IllegalStateException("RAG prompt 模板不存在: " + promptName);
+    }
     this.chatClient = chatClientBuilder.build();
     this.knowledgeRetriever = knowledgeRetriever;
     this.promptLibrary = promptLibrary;
+    this.promptName = promptName;
   }
 
   @Override
@@ -50,7 +58,7 @@ public class RagChatService implements ChatService {
       return new ChatAnswer(NO_KNOWLEDGE_REPLY + DISCLAIMER, List.of());
     }
     Prompt prompt =
-        new PromptTemplate(promptLibrary.get(PROMPT_NAME))
+        new PromptTemplate(promptLibrary.get(promptName))
             .create(Map.of("context", joinContents(docs), "question", message));
     String reply = chatClient.prompt(prompt).call().content();
     return new ChatAnswer(reply + DISCLAIMER, toSources(docs));

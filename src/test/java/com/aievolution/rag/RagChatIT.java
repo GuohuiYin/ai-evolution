@@ -60,7 +60,8 @@ class RagChatIT {
           new RagChatService(
                   builder,
                   new VectorStoreKnowledgeRetriever(store, 0.0, 5),
-                  new ClasspathPromptLibrary())
+                  new ClasspathPromptLibrary(),
+                  "rag-chat-v1")
               .chat("酱香白酒的酿造工艺");
 
       // 引用的来源必须命中知识库文档

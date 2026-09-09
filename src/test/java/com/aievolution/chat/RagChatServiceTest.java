@@ -38,7 +38,9 @@ class RagChatServiceTest {
     when(requestSpec.call()).thenReturn(callSpec);
     when(callSpec.content()).thenReturn("模型回复");
 
-    service = new RagChatService(builder, knowledgeRetriever, new ClasspathPromptLibrary());
+    service =
+        new RagChatService(
+            builder, knowledgeRetriever, new ClasspathPromptLibrary(), "rag-chat-v1");
   }
 
   @Test
