@@ -73,6 +73,9 @@ ai:
     ingest:
       # 启动时摄入知识库；测试环境关闭避免打真实 Embedding API
       enabled: true
+    # W8-2 增量摄入清单：记录每文件 SHA-256 + chunkIds，未变文件零 embedding 调用
+    # 构建产物路径，不入 git；删除或损坏视为空清单，触发全量重建（可自愈）
+    manifest-path: build/knowledge-manifest.json
   eval:
     # M1 验收门阈值：正例 Recall@topK 低于此值不得进入下一阶段
     gate-threshold: 0.7

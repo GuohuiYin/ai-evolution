@@ -32,7 +32,9 @@ class KnowledgeIngestionIT {
       // initializeSchema 的建表逻辑挂在 InitializingBean 回调上；非 Spring 托管时需手动触发
       store.afterPropertiesSet();
 
-      new KnowledgeBaseIngestor(store, 800, "classpath:knowledge/*.md").run(null);
+      new KnowledgeBaseIngestor(
+              store, 800, "classpath:knowledge/*.md", "target/test-manifest-ingestion-it.json")
+          .run(null);
 
       List<Document> results =
           store.similaritySearch(SearchRequest.builder().query("酱香白酒的酿造工艺").topK(1).build());

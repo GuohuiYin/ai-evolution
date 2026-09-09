@@ -35,7 +35,9 @@ class GoldenRetrievalEvalIT {
               .initializeSchema(true)
               .build();
       store.afterPropertiesSet();
-      new KnowledgeBaseIngestor(store, 800, "classpath:knowledge/*.md").run(null);
+      new KnowledgeBaseIngestor(
+              store, 800, "classpath:knowledge/*.md", "target/test-manifest-golden-eval.json")
+          .run(null);
 
       // 只回归 normal 正例：boundary/adversarial 的判定依赖真实语义向量的距离分布，
       // 由本地 eval Runner（真实 bge-m3）覆盖；PDF 源用例同样留给本地（CI 不摄入 PDF）
