@@ -66,6 +66,10 @@ ai:
   chat:
     # 统一入口路由策略（ChatRouter）：命中股票代码或下列关键词 → Agent 工具通路；其余 → RAG 管道
     agent-keywords: 股价,行情,走势,营收,净利,利润,财务
+    prompt-logging:
+      # W8-6：日志记录模型输入 prompt 与返回 response（SimpleLoggerAdvisor，DEBUG 级）。
+      # 本地默认开；生产必须关（金融语料敏感）。该 logger 级别需同时为 DEBUG 才生效，见 logging 段
+      enabled: true
   tool:
     # 工具入参长度上限（红队基线 M3 修复：防超长 query 直达上游付费 API 的成本攻击）
     max-query-length: 2000
@@ -94,3 +98,6 @@ management:
 logging:
   pattern:
     console: "%d{HH:mm:ss.SSS} %5p [traceId=%X{traceId:--}] %-40.40logger{39}: %m%n"
+  level:
+    # W8-6：SimpleLoggerAdvisor 的 prompt/response 日志走 DEBUG；生产关闭时把 ai.chat.prompt-logging.enabled 置 false 即可
+    org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor: DEBUG

@@ -40,7 +40,10 @@ class RagChatIT {
               .build();
       store.afterPropertiesSet();
       new KnowledgeBaseIngestor(
-              store, 800, "classpath:knowledge/*.md", "target/test-manifest-rag-chat-it.json")
+              store,
+              800,
+              "classpath:knowledge/*.md",
+              java.nio.file.Files.createTempFile("test-manifest-rag-chat-it-", ".json").toString())
           .run(null);
 
       ChatClient.Builder builder = mock(ChatClient.Builder.class);

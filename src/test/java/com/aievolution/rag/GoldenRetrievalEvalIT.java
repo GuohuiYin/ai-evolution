@@ -36,7 +36,10 @@ class GoldenRetrievalEvalIT {
               .build();
       store.afterPropertiesSet();
       new KnowledgeBaseIngestor(
-              store, 800, "classpath:knowledge/*.md", "target/test-manifest-golden-eval.json")
+              store,
+              800,
+              "classpath:knowledge/*.md",
+              java.nio.file.Files.createTempFile("test-manifest-golden-eval-", ".json").toString())
           .run(null);
 
       // 只回归 normal 正例：boundary/adversarial 的判定依赖真实语义向量的距离分布，

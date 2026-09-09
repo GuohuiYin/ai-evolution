@@ -33,7 +33,10 @@ class KnowledgeIngestionIT {
       store.afterPropertiesSet();
 
       new KnowledgeBaseIngestor(
-              store, 800, "classpath:knowledge/*.md", "target/test-manifest-ingestion-it.json")
+              store,
+              800,
+              "classpath:knowledge/*.md",
+              java.nio.file.Files.createTempFile("test-manifest-ingestion-it-", ".json").toString())
           .run(null);
 
       List<Document> results =
