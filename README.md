@@ -81,8 +81,37 @@ RagChatService                     StockAnalysisService
          （LLM judge 三维评分，judge 锚定 5/5）；一页成本账（单次问答 ¥0.0054）
 ```
 
-**当前能力**：知识库问答可溯源、越界硬拒答、PDF 年报摄入与元数据过滤（"只查 2024 年报"）、Agent 工具调用（行情/财务/公告检索 + AOP 审计留痕）、结构化个股分析（CO-STAR + few-shot + schema 输出）、双模型供应商配置切换（DeepSeek 主力 / Qwen 备选，实测定稿）、集群内全链路运行、**MCP Server 对外暴露三工具**（`POST /mcp`，Streamable HTTP，Inspector 已真实调通，ADR-0009）、**对话统一入口**（`/ai/chat` 规则路由自动分发 RAG/Agent 双通路，ADR-0010）、**全链路可观测**（traceId 串链 + 路由/检索/工具/模型四级留痕）、**安全基线**（红队基线 10 用例、MCP 错误脱敏、入参上限、红线服务端告警 ADR-0011）、**token 成本账本**（含 DeepSeek 缓存命中率）。
-**MCP 接入**：任意 MCP 客户端配 `url = "http://localhost:18080/mcp"`（Codex 见 `~/.codex/config.toml` 的 `[mcp_servers.ai-evolution]`）即可发现 `getDailyQuotes` / `getFinancialSummary` / `searchAnnouncements`。
+## 当前能力
+
+**对话与检索**
+
+- 知识库问答可溯源：回答带 sources，越界硬拒答（空检索不过模型）
+- Agent 工具调用：行情 / 财务 / 公告检索三工具，AOP 审计留痕
+- 对话统一入口 `/ai/chat`：规则路由自动分发 RAG/Agent 双通路（ADR-0010）
+- 结构化个股分析 `/ai/analyze`：CO-STAR + few-shot + schema 强约束输出
+- 知识摄入：md + PDF 年报，元数据三件套过滤（"只查 2024 年报"），SHA-256 增量摄入
+
+**协议与部署**
+
+- MCP Server 对外暴露三工具：`POST /mcp`（Streamable HTTP，Inspector 已真实调通，ADR-0009）
+- 任意 MCP 客户端配 `url = "http://localhost:18080/mcp"` 即可发现 `getDailyQuotes` / `getFinancialSummary` / `searchAnnouncements`（Codex 见 `~/.codex/config.toml` 的 `[mcp_servers.ai-evolution]`）
+- 双模型供应商配置切换：DeepSeek 主力 / Qwen 备选（实测定稿）
+- 集群内全链路运行：Minikube + ConfigMap/Secret 分层 + 探针 + 优雅停机
+
+**安全与合规**
+
+- 金融三红线代码化：强制免责声明 / 禁买卖建议 / 数字必溯源（服务端告警 ADR-0011）
+- 红队基线 10 用例；MCP 错误脱敏；入参上限 2000 字符
+- CVE-2026-59318 工具解析 fail-fast（显式配置 + 测试锁定）；工具调用次数上限
+
+**可观测与评估**
+
+- 全链路 traceId 串链：路由 / 检索 / 工具 / 模型四级留痕
+- prompt/response 日志：开关受控（本地开 / 生产关）
+- token 成本账本：含 DeepSeek 缓存命中率
+- 检索黄金集 39 条（Recall@5=72% 基线）+ 生成黄金集 16 条（LLM judge 三维评分，锚定 5/5）
+- 一页成本账：单次问答 ¥0.0054，一轮生成 eval ¥0.17
+
 **路线图**：W5 工具调用（@Tool）+ M1 验收门 ✅ → M2 MCP/护栏/Eval（W6 MCP 协议贯通 ✅，W7 安全加固 ✅，W8 评估体系 ✅——检索/生成双黄金集 + LLM judge + 成本账；few-shot A/B 裁决不启用）→ M3 最小研究 Loop。
 
 ## 文档导航
