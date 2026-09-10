@@ -61,11 +61,15 @@
 ### 可复现性补强（2026-09-10 扫描差距 #6）
 
 - 黄金集版本台账：[docs/eval/golden-set-changelog.md](../../eval/golden-set-changelog.md)——数据集改动先登记再提交，报告分数与数据集版本互相对应
-- 已挂 W14+ 台账：人工反馈回路（badcase 回流黄金集）、会话记忆 L2-L5、embedding 实测对照
+- **能力地图**：[docs/capability-map.md](../../capability-map.md)——A15 差距台账活文档（2026-09-10 首次全维度扫描），后续差距统一在该图维护
+- 已挂 W14+ 台账：人工反馈回路、会话记忆 L2-L5、embedding 实测对照、语义缓存、Human-in-the-loop、LLM 可观测平台评估（ADR 候选）、内容审核论述、多 Agent/A2A、引用忠实度强化
+- **Agent 轨迹评估**（2026-09-10 扫描新增）：W10 随 ReAct 骨架同步定指标（步数/冗余调用/收敛性），W13 进 M3 验收门——没有它 Loop 质量无度量
+- **模型自动降级**（DeepSeek 故障切 Qwen）：W12 韧性主题或 W14+，W12 开工时裁决
 
 ## M3 验收门（草案，W10 开工时定稿）
 
 - [ ] 研究 Loop 可演示：一个需要多步检索的复合问题，轨迹（thought/action/observation）完整可见
+- [ ] Agent 轨迹评估指标落地：步数/冗余调用/收敛性有量化口径，Loop 质量可度量
 - [ ] 多轮追问场景生成 eval 不回归（查询改写生效的量化证据）
 - [ ] 至少一个外部 MCP 服务被我们的 Agent 真实调通
 - [ ] 混合检索上线与否由黄金集回归数据裁决（Recall@5 提升 ≥ 阈值才启用，同 few-shot 裁决机制）
