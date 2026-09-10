@@ -19,10 +19,12 @@
 | 报告 | 结论 |
 |---|---|
 | [model-selection-v1.md](selection/model-selection-v1.md) | DeepSeek vs Qwen 双模型 10 问实测（能力/延迟/token 三维）→ DeepSeek 主力、Qwen 备选 |
-| [model-selection-samples/](selection/model-selection-samples/) | 上述实测的原始响应样本与延迟记录 |
+| [embedding-selection-v1.md](selection/embedding-selection-v1.md) | 调研论证型（W9）：维持 BGE-M3；实测对照列进阶阶段（W14+） |
+| [vectorstore-selection-v1.md](selection/vectorstore-selection-v1.md) | 调研论证型（W9）：维持 Qdrant——本项目量级下选型由运维成本与生态决定；含重评触发条件 |
+| [model-selection-samples/](selection/model-selection-samples/) | 模型实测的原始响应样本与延迟记录 |
 
-> 显式缺口（承认比假装完整更有价值）：embedding（bge-m3）与向量库（Qdrant）为直接选用，
-> 未做对比选型评测。学习项目的显式取舍，非疏漏。
+> 选型方法约定：默认调研论证（需求矩阵 + 公开 benchmark + 显式约束），
+> 只有结论可能被数据推翻时才做实测（如对话模型对比）。embedding 实测对照已列 W14+ 进阶清单。
 
 ### [retrieval/](retrieval/) — 检索质量回归
 
