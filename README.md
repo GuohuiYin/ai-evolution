@@ -165,6 +165,7 @@ flowchart TB
 | [docs/notes/](docs/notes/) | 精读笔记（如 MCP 协议精读——先读懂协议再动手） |
 | [docs/security/](docs/security/) | 安全基线（W7 红队 10 用例等） |
 | [docs/journal/](docs/journal/) | 周记（PPT 机制篇约定：每周末 5 行） |
+| [docs/portfolio.md](docs/portfolio.md) | 项目亮点清单（作品集，每条挂 commit/报告证据链） |
 | [k8s/](k8s/README.md) | 部署清单与配置分层原则 |
 | [AGENTS.md](AGENTS.md) | 开发工作约定（TDD / Clean Code / 金融红线 / review 颗粒度） |
 
