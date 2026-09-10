@@ -18,8 +18,8 @@
 
 | 评估 | 命令 | 基线 |
 |---|---|---|
-| 检索黄金集（39 条） | `AI_EVAL_ENABLED=true ./mvnw spring-boot:run` | Recall@5=72%，[w8-retrieval-baseline](../../eval/w8-retrieval-baseline.md) |
-| 生成黄金集（16 条 + LLM judge） | `AI_EVAL_GENERATION_ENABLED=true ./mvnw spring-boot:run` | 总体 5.3/6，judge 锚定 5/5，[w8-generation-eval](../../eval/w8-generation-eval.md) |
+| 检索黄金集（39 条） | `AI_EVAL_ENABLED=true ./mvnw spring-boot:run` | Recall@5=72%，[w8-retrieval-baseline](../../eval/retrieval/w8-retrieval-baseline.md) |
+| 生成黄金集（16 条 + LLM judge） | `AI_EVAL_GENERATION_ENABLED=true ./mvnw spring-boot:run` | 总体 5.3/6，judge 锚定 5/5，[w8-generation-eval](../../eval/generation/w8-generation-eval.md) |
 
 支撑机制：CI 侧 `GoldenRetrievalEvalIT`（哈希替身，normal 正例回归）每次构建强制；架构决策见 ADR-0007（验收门）与 ADR-0014（judge 隔离）。
 

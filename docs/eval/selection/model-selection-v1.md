@@ -1,7 +1,7 @@
 # 模型选型笔记 v1：DeepSeek vs Qwen 接入对比
 
 > 日期：2026-09-04 · 方法：同一应用、同一 10 题电池（6 RAG 问答 + 1 跨文档综合 + 1 红线拒答 + 2 结构化分析），双模型各跑一遍
-> 原始样本：[eval/model-selection-samples/](eval/model-selection-samples/)（首轮 20 份 + 补测 `qwen2-*` 10 份 + 延迟记录）
+> 原始样本：[model-selection-samples/](model-selection-samples/)（首轮 20 份 + 补测 `qwen2-*` 10 份 + 延迟记录）
 > 状态：✅ 双模型数据完整（Qwen 首轮因 SiliconFlow 余额耗尽仅 2/10，充值后补测 10/10 全量有效；两轮有效样本一致）
 
 ## 候选与接入方式

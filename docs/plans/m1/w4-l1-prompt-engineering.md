@@ -31,7 +31,7 @@
 
 | 项 | 内容 |
 |---|---|
-| 做什么 | 用同一批 5 个分析问题，分别跑"裸 prompt"（v0，一句话指令）与"工程化 prompt"（v1），记录输出质量差异到 `docs/eval/p0-prompt-comparison.md` |
+| 做什么 | 用同一批 5 个分析问题，分别跑"裸 prompt"（v0，一句话指令）与"工程化 prompt"（v1），记录输出质量差异到 `docs/eval/generation/p0-prompt-comparison.md` |
 | 设计要点 | 这就是 L1 的退出信号实证："场景准确率达基线且优化收益递减"要能拿数据说话 |
 | 退出条件 | 对比文档含：同一输入的 v0/v1 输出并排、结构化完整率、人工点评；能讲清"few-shot 到底改善了什么" |
 
@@ -39,7 +39,7 @@
 
 | 项 | 内容 |
 |---|---|
-| 做什么 | DeepSeek vs Qwen 各跑 10 条真实业务问题（复用 Step 3 的问题集 + RAG golden-set），记录能力/延迟/token 消耗三维数据，手算成本 → 产出 `docs/model-selection-v1.md` |
+| 做什么 | DeepSeek vs Qwen 各跑 10 条真实业务问题（复用 Step 3 的问题集 + RAG golden-set），记录能力/延迟/token 消耗三维数据，手算成本 → 产出 `docs/eval/selection/model-selection-v1.md` |
 | 设计要点 | 一次实验补两个 W1 欠账；Qwen 走 DashScope 或 SiliconFlow 的 Qwen 模型（Spring AI OpenAI 兼容协议，配置切换即可，零代码改动——顺便验证多供应商抽象的价值） |
 | 退出条件 | ① 选型笔记含实测数据表格 ② 能讲清"为什么主力选 A 不选 B" ③ 列出所选模型的三类典型失效场景预判 |
 

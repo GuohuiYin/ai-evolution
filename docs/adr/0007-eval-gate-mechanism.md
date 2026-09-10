@@ -22,5 +22,5 @@ Agent 工程的传统单测无法回答"检索够不够好"；LLM 相关逻辑�
 
 ## 后果
 
-- 正：M1 验收门（Recall@5=85.7%）为首份量化证据，归档 `docs/eval/m1-gate-recall.md`；调参有了回归基线。
+- 正：M1 验收门（Recall@5=85.7%）为首份量化证据，归档 `docs/eval/retrieval/m1-gate-recall.md`；调参有了回归基线。
 - 待办：负例集分层重构（`out-of-domain` vs `in-domain-unanswerable`）列入 W6；黄金集随语料扩容增长至 30-50 条（W8）。

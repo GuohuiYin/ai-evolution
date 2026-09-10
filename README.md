@@ -24,7 +24,7 @@
 |---|---|---|
 | 语言 / 框架 | Java 25 (LTS) / Spring Boot 4.1.1 | [ADR-0001](docs/adr/0001-foundation-and-stack.md) |
 | AI 编排 | Spring AI 2.0.1 | ADR-0001 |
-| 模型供应商 | DeepSeek（对话）+ SiliconFlow bge-m3（Embedding，OpenAI 兼容协议） | [模型选型笔记 v1](docs/model-selection-v1.md)（双模型实测） |
+| 模型供应商 | DeepSeek（对话）+ SiliconFlow bge-m3（Embedding，OpenAI 兼容协议） | [模型选型笔记 v1](docs/eval/selection/model-selection-v1.md)（双模型实测） |
 | 向量数据库 | Qdrant v1.15.1 | W3 落地 |
 | 镜像构建 | Jib | [ADR-0002](docs/adr/0002-image-build-with-jib.md) |
 | 部署 | Kubernetes（本地 Minikube）——云原生第一天 | W2 落地 |
@@ -160,12 +160,11 @@ flowchart TB
 |---|---|
 | [docs/plans/](docs/plans/README.md) | 周作战计划与回顾（对 PPT 路线的执行校准版） |
 | [docs/adr/](docs/adr/) | 架构决策记录 |
-| [docs/eval/](docs/eval/) | 评估报告（检索/生成黄金集基线、prompt 对比、模型选型）与原始样本 |
+| [docs/eval/](docs/eval/README.md) | 评估体系（选型评测 / 检索·生成·红线质量回归 / 成本） |
 | [docs/cost/](docs/cost/) | 成本账（一页制，随里程碑更新） |
 | [docs/notes/](docs/notes/) | 精读笔记（如 MCP 协议精读——先读懂协议再动手） |
 | [docs/security/](docs/security/) | 安全基线（W7 红队 10 用例等） |
 | [docs/journal/](docs/journal/) | 周记（PPT 机制篇约定：每周末 5 行） |
-| [docs/model-selection-v1.md](docs/model-selection-v1.md) | 模型选型笔记（DeepSeek vs Qwen 实测） |
 | [k8s/](k8s/README.md) | 部署清单与配置分层原则 |
 | [AGENTS.md](AGENTS.md) | 开发工作约定（TDD / Clean Code / 金融红线 / review 颗粒度） |
 

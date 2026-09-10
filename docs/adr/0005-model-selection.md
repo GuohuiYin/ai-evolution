@@ -5,7 +5,7 @@
 
 ## 背景
 
-ADR-0001 约定"模型选型结论须有实测数据支撑"。W2-W3 完成实测（证据：`docs/model-selection-v1.md` 与 `docs/eval/model-selection-samples/` 原始样本）。
+ADR-0001 约定"模型选型结论须有实测数据支撑"。W2-W3 完成实测（证据：`docs/eval/selection/model-selection-v1.md` 与 `docs/eval/selection/model-selection-samples/` 原始样本）。
 
 ## 决策
 
