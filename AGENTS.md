@@ -37,6 +37,7 @@ ai_evolution：Java 架构师向 AI 应用架构师转型的实战项目。
   2. **这个新值是常量还是策略？** 需要"调优"而非"修正"的值（与模型/语料/业务场景强相关）从第一天起就是配置项，写入 `application.yml` 并按域分组，禁止以 `static final` 形态过夜；数学常量、协议字面量才允许硬编码（反例：W5 之前 `TOP_K` 散落三个类，经 `ai.rag.top-k` 收口）
   3. **这个新依赖暴露的是领域能力还是实现细节？** 构造器注入的类型应是领域接口或领域类型；若业务类直接持有基础设施类型（`VectorStore`、`RestClient` 等）并自行组装调用参数，说明封装层级错了，先收口再提交
 - **A12** 红线逻辑单点化：合规性内容（免责声明、来源标注格式、拒答话术）是全项目强一致要求，必须单点定义、处处引用，禁止复制后各自演化——审计时多处文案/格式不一致即缺陷。落地先例：免责声明统一于 `Disclaimers`；数据→文本的可溯源格式（"来源+时点"）由领域类型自带（`DailyQuote.toPromptText()` / `FinancialSummary.toPromptText()`），分析管道与工具层共用
+- **A13** prompt 资产改动的 eval 纪律门：`resources/prompts/*.md` 的任何改动（新增版本、调措辞、改示例），提交信息必须附本地生成 eval 跑批结果摘要（`AI_EVAL_GENERATION_ENABLED=true ./mvnw spring-boot:run`，至少类别均分）；未附则 review 打回。生成 eval 不进 per-commit CI（真实 API + 双盲噪声），其定时回归门在 W11 落地（见 docs/plans/w10-w13-m3-minimal-loop.md）——在此之前，纪律门是唯一防线，不靠自觉靠流程
 - **B1** Testcontainers 集成测试——W3 引入 Qdrant 时启用
 - **B2** ArchUnit 架构约束测试——已于 W5 启用：`ArchitectureTest` 以白名单表固化域间依赖方向（新增跨域依赖必须显式改表）+ 域间无环检测
 - **B3** 结构化错误返回 RFC 7807 ProblemDetail——W5 工具工程启用
