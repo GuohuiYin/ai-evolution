@@ -7,12 +7,9 @@
 
 | 周 | 文档 | 状态 |
 |---|---|---|
-| W1 工程地基与云原生基座 | [w1-foundation.md](m1/w1-foundation.md) | ✅ 已完成（含偏离记录） |
-| W2 真实模型接入与工程化配套 | [w2-real-model.md](m1/w2-real-model.md) | ✅ 已完成（L1 欠账→W4） |
-| W3 RAG 检索增强全链路 | [w3-rag.md](m1/w3-rag.md) | ✅ 已完成（M1 验收门→W5） |
-| W4 L1 Prompt 工程补课 | [w4-l1-prompt-engineering.md](m1/w4-l1-prompt-engineering.md) | ✅ 已完成 |
-| W5 Function Calling + M1 验收门 | [w5-function-calling.md](m1/w5-function-calling.md) | ✅ 已完成 |
+| 阶段索引 | [m1/README.md](m1/README.md)（含 W1-W5 各周独立文档） | ✅ 已完成 |
 | **M1 验收记录** | [m1-acceptance.md](m1/m1-acceptance.md) | ✅ Recall@5 86.7%（2026-09-05，形态补记） |
+
 
 ## M2 Harness + Eval（W6-W9）
 
