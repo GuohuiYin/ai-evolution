@@ -13,6 +13,7 @@
 
 | # | 任务 | 验收条件 |
 |---|---|---|
+| 0 | **会话记忆原语**（A14 对账补入的地基）：Spring AI `MessageChatMemoryAdvisor` 内存版接入对话链路，`conversationId` 贯穿 `/ai/chat` API 与对话页 | 同一会话内追问"它呢？"模型能看到上一轮内容；新会话互不影响；持久化记忆显式挂起 W14+ |
 | 1 | **ReAct 循环骨架**（TDD）：`ResearchLoop` 组件，显式迭代 thought/action/observation，最大步数上限（复用工具调用上限思想） | 单测覆盖：正常收敛 / 达上限退出 / 模型给终答退出三条路径 |
 | 2 | **轨迹可观测**：每步 thought/action/observation 挂 traceId 进日志（复用 W8 四级留痕模式） | 日志可还原完整研究轨迹；对话页可选展示轨迹 |
 | 3 | **接入现有通路**：`AgentChatService` 切换到 ResearchLoop 驱动（三工具原样挂载） | 现有 16 条生成黄金集回归不降级（A13 跑批摘要进 commit） |
@@ -26,4 +27,5 @@
 
 ## 顺序与节奏
 
-1 → 2 → 3 → 4。每天 1 项以内，TDD 先红后绿，逐项 review。
+0 → 1 → 2 → 3 → 4。每天 1 项以内，TDD 先红后绿，逐项 review。
+#0 是 A14 对账补入的地基（2026-09-10 复盘：多轮会话盲区），后续任务都站在它上面。
