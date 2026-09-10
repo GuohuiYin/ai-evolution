@@ -1,6 +1,6 @@
 # M2 验收记录（Harness + MCP + Eval）
 
-> 验收日：2026-09-09（W9-1）。验收门来自 docs/plans/w6-w9-m2-harness-eval.md：三件缺一件留 W9 补齐。
+> 验收日：2026-09-09（W9-1）。验收门来自 m2 阶段索引（README.md）：三件缺一件留 W9 补齐。
 > 结论：**三件全过，M2 收官**。以下逐项给出可复核证据，非口头宣布。
 
 ## 验收门①：MCP Server 被外部客户端调通 ✅
@@ -31,7 +31,7 @@
 ## M2 期间的关键演化（超出验收门的部分）
 
 - 安全基线成体系：红队 10 用例 → W7 双修复 → W8 CVE fail-fast + 调用上限（ADR-0013 显式化原则）
-- Harness 四核心盘点（docs/plans/w6-w9-m2-harness-eval.md 仪表盘）：Constrain/Inform 成型，Verify 本周补齐，Correct 待 M3
+- Harness 四核心盘点（m2 阶段索引（README.md） 仪表盘）：Constrain/Inform 成型，Verify 本周补齐，Correct 待 M3
 - 两个 eval 逮住的真实缺陷入 M3/W9 backlog：agent 数据缝合（W9-2 修复）、12987 检索盲区（M3 混合检索候选）
 
 ## 签署

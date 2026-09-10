@@ -18,16 +18,14 @@
 
 | 周 | 文档 | 状态 |
 |---|---|---|
-| W6-W9 概要 | [w6-w9-m2-harness-eval.md](m2/w6-w9-m2-harness-eval.md) | ✅ 已完成 |
-| W8 评估周 | [w8-eval-hardening.md](m2/w8-eval-hardening.md) | ✅ 全满贯 |
-| W9 缓冲周 | [w9-m2-acceptance.md](m2/w9-m2-acceptance.md) | 🔵 进行中 |
+| 阶段索引 | [m2/README.md](m2/README.md)（含 W6/W7/W8/W9 各周独立文档） | ✅ 已完成 |
 | **M2 验收记录** | [m2-acceptance.md](m2/m2-acceptance.md) | ✅ 三件全过（2026-09-09） |
 
 ## M3 最小 Loop（W10-W13）
 
 | 周 | 文档 | 状态 |
 |---|---|---|
-| W10-W13 概要 | [w10-w13-m3-minimal-loop.md](m3/w10-w13-m3-minimal-loop.md) | 📋 锚定范围 |
+| 阶段索引 | [m3/README.md](m3/README.md)（每周计划开工时独立成文） | 📋 锚定范围 |
 
 ## 对账校准记录（2026-09-03）
 
