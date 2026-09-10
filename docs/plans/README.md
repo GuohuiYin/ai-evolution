@@ -18,6 +18,9 @@
 | 周 | 文档 | 状态 |
 |---|---|---|
 | W6-W9 概要 | [w6-w9-m2-harness-eval.md](w6-w9-m2-harness-eval.md) | 📋 锚定范围 |
+| W8 评估周 | [w8-eval-hardening.md](w8-eval-hardening.md) | ✅ 全满贯 |
+| W9 缓冲周 | [w9-m2-acceptance.md](w9-m2-acceptance.md) | 📋 |
+| **M2 验收记录** | [m2-acceptance.md](m2-acceptance.md) | ✅ 三件全过（2026-09-09） |
 
 ## M3 最小 Loop（W10-W13）
 
