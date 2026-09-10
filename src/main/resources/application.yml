@@ -66,6 +66,10 @@ ai:
   stock:
     # 个股分析默认会计年度（mock 种子数据按 2024 口径）
     analysis-year: 2024
+  agent:
+    # Agent 工具通路 prompt 模板名（resources/prompts/ 下，不含后缀）。
+    # v2 起含反缝合规则（实体不匹配禁止拼接推算，W9-2）；A/B 对照经 AI_AGENT_CHAT_PROMPT 切换
+    chat-prompt: agent-chat-v2
   chat:
     # 统一入口路由策略（ChatRouter）：命中股票代码或下列关键词 → Agent 工具通路；其余 → RAG 管道
     agent-keywords: 股价,行情,走势,营收,净利,利润,财务

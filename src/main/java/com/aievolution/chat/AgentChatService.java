@@ -6,6 +6,7 @@ import com.aievolution.tool.AnnouncementTools;
 import com.aievolution.tool.StockDataTools;
 import java.util.List;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
@@ -19,7 +20,10 @@ public class AgentChatService implements ChatService {
 
   // 红线 01：免责声明引用全项目单点定义（约定 A12），不各自拷贝
   private static final String DISCLAIMER = "\n\n" + Disclaimers.AI_GENERATED;
-  private static final String PROMPT_NAME = "agent-chat-v1";
+
+  // prompt 是资产不是字符串常量：模板名配置化（A11），与 RagChatService 同模式；
+  // 反缝合规则等 prompt 迭代经配置切换版本（W9-2 起 v2），不改代码
+  private final String promptName;
 
   private final ChatClient chatClient;
   private final StockDataTools stockDataTools;
@@ -30,18 +34,24 @@ public class AgentChatService implements ChatService {
       ChatClient.Builder chatClientBuilder,
       StockDataTools stockDataTools,
       AnnouncementTools announcementTools,
-      PromptLibrary promptLibrary) {
+      PromptLibrary promptLibrary,
+      @Value("${ai.agent.chat-prompt:agent-chat-v2}") String promptName) {
+    if (!promptLibrary.exists(promptName)) {
+      // prompt 缺失是部署事故，启动即 fail-fast
+      throw new IllegalStateException("Agent prompt 模板不存在: " + promptName);
+    }
     this.chatClient = chatClientBuilder.build();
     this.stockDataTools = stockDataTools;
     this.announcementTools = announcementTools;
     this.promptLibrary = promptLibrary;
+    this.promptName = promptName;
   }
 
   public ChatAnswer chat(String message) {
     String reply =
         chatClient
             .prompt()
-            .system(promptLibrary.get(PROMPT_NAME))
+            .system(promptLibrary.get(promptName))
             .user(message)
             .tools(stockDataTools, announcementTools)
             .call()
