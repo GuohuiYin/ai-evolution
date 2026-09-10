@@ -55,7 +55,7 @@ ai_evolution：Java 架构师向 AI 应用架构师转型的实战项目。
 每步完成 = ① 编译绿 ② 测试绿（`./mvnw verify`）③ Owner review 通过 ④ 退出条件达成 ⑤ 含接口变更的步骤，OpenAPI 文档可访问且与实际行为一致。
 五者齐备才算完成，协作者不得自行宣布完成。
 
-里程碑（M1/M2/M3）达成追加一条：⑥ README 快照层（架构图 + 能力清单）已刷新至当前状态（约定 A8）。
+里程碑（M1/M2/M3）达成追加两条：⑥ README 快照层（架构图 + 能力清单）已刷新至当前状态（约定 A8）；⑦ 产出验收记录 `docs/plans/mX-acceptance.md`——逐项验收门挂可复核证据链接（报告/脚本/ADR），非口头宣布通过（先例：m1-acceptance.md / m2-acceptance.md）。
 
 ## 5. 金融域三条红线（写进 Harness，全项目生效）
 

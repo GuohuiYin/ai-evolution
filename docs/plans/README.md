@@ -21,6 +21,7 @@
 | W8 评估周 | [w8-eval-hardening.md](w8-eval-hardening.md) | ✅ 全满贯 |
 | W9 缓冲周 | [w9-m2-acceptance.md](w9-m2-acceptance.md) | 📋 |
 | **M2 验收记录** | [m2-acceptance.md](m2-acceptance.md) | ✅ 三件全过（2026-09-09） |
+| **M1 验收记录** | [m1-acceptance.md](m1-acceptance.md) | ✅ Recall@5 86.7%（2026-09-05，形态补记） |
 
 ## M3 最小 Loop（W10-W13）
 
