@@ -7,10 +7,10 @@
 
 | 证据 | 位置 |
 |---|---|
-| 协议级冒烟脚本（initialize → initialized → tools/list → tools/call 全链路断言） | [docs/scripts/mcp-smoke.sh](../scripts/mcp-smoke.sh) |
+| 协议级冒烟脚本（initialize → initialized → tools/list → tools/call 全链路断言） | [docs/scripts/mcp-smoke.sh](../../scripts/mcp-smoke.sh) |
 | Codex 客户端接入配置（`[mcp_servers.ai-evolution]`） | `~/.codex/config.toml:74` |
-| MCP 协议精读笔记（动手前先读懂协议） | [docs/notes/mcp-protocol.md](../notes/mcp-protocol.md) |
-| 架构决策 | [ADR-0009](../adr/0009-mcp-server-exposure.md)（Streamable HTTP，裸通优先） |
+| MCP 协议精读笔记（动手前先读懂协议） | [docs/notes/mcp-protocol.md](../../notes/mcp-protocol.md) |
+| 架构决策 | [ADR-0009](../../adr/0009-mcp-server-exposure.md)（Streamable HTTP，裸通优先） |
 
 复验方式：服务启动后 `docs/scripts/mcp-smoke.sh`（默认 http://localhost:18080/mcp），退出码 0 即全链路通过。
 
@@ -18,14 +18,14 @@
 
 | 评估 | 命令 | 基线 |
 |---|---|---|
-| 检索黄金集（39 条） | `AI_EVAL_ENABLED=true ./mvnw spring-boot:run` | Recall@5=72%，[w8-retrieval-baseline](../eval/w8-retrieval-baseline.md) |
-| 生成黄金集（16 条 + LLM judge） | `AI_EVAL_GENERATION_ENABLED=true ./mvnw spring-boot:run` | 总体 5.3/6，judge 锚定 5/5，[w8-generation-eval](../eval/w8-generation-eval.md) |
+| 检索黄金集（39 条） | `AI_EVAL_ENABLED=true ./mvnw spring-boot:run` | Recall@5=72%，[w8-retrieval-baseline](../../eval/w8-retrieval-baseline.md) |
+| 生成黄金集（16 条 + LLM judge） | `AI_EVAL_GENERATION_ENABLED=true ./mvnw spring-boot:run` | 总体 5.3/6，judge 锚定 5/5，[w8-generation-eval](../../eval/w8-generation-eval.md) |
 
 支撑机制：CI 侧 `GoldenRetrievalEvalIT`（哈希替身，normal 正例回归）每次构建强制；架构决策见 ADR-0007（验收门）与 ADR-0014（judge 隔离）。
 
 ## 验收门③：成本账一页纸 ✅
 
-[docs/cost/w8-cost-report.md](../cost/w8-cost-report.md)：实测 57 次调用 ¥0.31；单次问答 ¥0.0054；
+[docs/cost/w8-cost-report.md](../../cost/w8-cost-report.md)：实测 57 次调用 ¥0.31；单次问答 ¥0.0054；
 一轮生成 eval ¥0.17；月度预估 ¥37；缓存命中率 55.8%。
 
 ## M2 期间的关键演化（超出验收门的部分）

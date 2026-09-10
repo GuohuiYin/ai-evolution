@@ -7,27 +7,27 @@
 
 | 周 | 文档 | 状态 |
 |---|---|---|
-| W1 工程地基与云原生基座 | [w1-foundation.md](w1-foundation.md) | ✅ 已完成（含偏离记录） |
-| W2 真实模型接入与工程化配套 | [w2-real-model.md](w2-real-model.md) | ✅ 已完成（L1 欠账→W4） |
-| W3 RAG 检索增强全链路 | [w3-rag.md](w3-rag.md) | ✅ 已完成（M1 验收门→W5） |
-| W4 L1 Prompt 工程补课 | [w4-l1-prompt-engineering.md](w4-l1-prompt-engineering.md) | 📋 待开工 |
-| W5 Function Calling + M1 验收门 | [w5-function-calling.md](w5-function-calling.md) | 📋 草案 |
+| W1 工程地基与云原生基座 | [w1-foundation.md](m1/w1-foundation.md) | ✅ 已完成（含偏离记录） |
+| W2 真实模型接入与工程化配套 | [w2-real-model.md](m1/w2-real-model.md) | ✅ 已完成（L1 欠账→W4） |
+| W3 RAG 检索增强全链路 | [w3-rag.md](m1/w3-rag.md) | ✅ 已完成（M1 验收门→W5） |
+| W4 L1 Prompt 工程补课 | [w4-l1-prompt-engineering.md](m1/w4-l1-prompt-engineering.md) | ✅ 已完成 |
+| W5 Function Calling + M1 验收门 | [w5-function-calling.md](m1/w5-function-calling.md) | ✅ 已完成 |
+| **M1 验收记录** | [m1-acceptance.md](m1/m1-acceptance.md) | ✅ Recall@5 86.7%（2026-09-05，形态补记） |
 
 ## M2 Harness + Eval（W6-W9）
 
 | 周 | 文档 | 状态 |
 |---|---|---|
-| W6-W9 概要 | [w6-w9-m2-harness-eval.md](w6-w9-m2-harness-eval.md) | 📋 锚定范围 |
-| W8 评估周 | [w8-eval-hardening.md](w8-eval-hardening.md) | ✅ 全满贯 |
-| W9 缓冲周 | [w9-m2-acceptance.md](w9-m2-acceptance.md) | 📋 |
-| **M2 验收记录** | [m2-acceptance.md](m2-acceptance.md) | ✅ 三件全过（2026-09-09） |
-| **M1 验收记录** | [m1-acceptance.md](m1-acceptance.md) | ✅ Recall@5 86.7%（2026-09-05，形态补记） |
+| W6-W9 概要 | [w6-w9-m2-harness-eval.md](m2/w6-w9-m2-harness-eval.md) | ✅ 已完成 |
+| W8 评估周 | [w8-eval-hardening.md](m2/w8-eval-hardening.md) | ✅ 全满贯 |
+| W9 缓冲周 | [w9-m2-acceptance.md](m2/w9-m2-acceptance.md) | 🔵 进行中 |
+| **M2 验收记录** | [m2-acceptance.md](m2/m2-acceptance.md) | ✅ 三件全过（2026-09-09） |
 
 ## M3 最小 Loop（W10-W13）
 
 | 周 | 文档 | 状态 |
 |---|---|---|
-| W10-W13 概要 | [w10-w13-m3-minimal-loop.md](w10-w13-m3-minimal-loop.md) | 📋 锚定范围 |
+| W10-W13 概要 | [w10-w13-m3-minimal-loop.md](m3/w10-w13-m3-minimal-loop.md) | 📋 锚定范围 |
 
 ## 对账校准记录（2026-09-03）
 

@@ -7,9 +7,9 @@
 
 | 证据 | 位置 |
 |---|---|
-| 首跑 85.7%（12/14）过门；PDF 入库后语义评审升级 expectSources，复跑 86.7% | [docs/eval/m1-gate-recall.md](../eval/m1-gate-recall.md) |
+| 首跑 85.7%（12/14）过门；PDF 入库后语义评审升级 expectSources，复跑 86.7% | [docs/eval/m1-gate-recall.md](../../eval/m1-gate-recall.md) |
 | 黄金集与评估器（当时的雏形，W8 已扩至 39 条） | `src/main/resources/eval/golden-set.json` |
-| 架构决策 | [ADR-0007](../adr/0007-eval-gate-mechanism.md)（验收门机制） |
+| 架构决策 | [ADR-0007](../../adr/0007-eval-gate-mechanism.md)（验收门机制） |
 
 ## M1 期间的同批交付（验收门之外）
 

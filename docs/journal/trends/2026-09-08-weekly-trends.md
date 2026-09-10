@@ -68,7 +68,7 @@ MCP 现行规范版本为 **2026-07-28**（上一版 2025-11-25），官方 chan
 1. **版本测绘**（30 分钟）：查清 Spring AI 2.0.1 的 MCP server starter 实现的是哪个规范版本（看其依赖的 MCP Java SDK 版本、或用 `server/discover` / initialize 响应实测），在 `docs/notes/mcp-protocol.md` 补一节"我们实现的版本 vs 现行版本的 delta 清单"。
 2. **无状态行为实测**：给 `docs/scripts/mcp-smoke.sh` 加一条 case——不带 `Mcp-Session-Id` 直接 POST `tools/call`，观察当前实现行为，与 2026-07-28 语义对照记录差异。
 3. **鉴权设计输入**：读规范 Security Best Practices 的 token passthrough 禁令（"MCP servers MUST NOT accept any tokens that were not explicitly issued for the MCP server"），为 W6 遗留的"MCP 端点无鉴权"缺口写一份最小设计方案（可只做设计文档，不动代码）。
-4. **W10 拍板输入**：把"规范已无状态化 + tasks/elicitation 扩展化"记入 M3 候选评估（docs/plans/w10-w13-m3-minimal-loop.md 的 MCP Client 节），spike 时顺手验证官方 everything server 的协议版本。
+4. **W10 拍板输入**：把"规范已无状态化 + tasks/elicitation 扩展化"记入 M3 候选评估（docs/plans/m3/w10-w13-m3-minimal-loop.md 的 MCP Client 节），spike 时顺手验证官方 everything server 的协议版本。
 
 ## 精选动态三：Agent 评估方法论收敛——路由与参数抽取要拆开评，"越权"成为新评估维度
 
