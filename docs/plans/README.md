@@ -18,11 +18,12 @@
 | 阶段索引 | [m2/README.md](m2/README.md)（含 W6/W7/W8/W9 各周独立文档） | ✅ 已完成 |
 | **M2 验收记录** | [m2-acceptance.md](m2/m2-acceptance.md) | ✅ 三件全过（2026-09-09） |
 
-## M3 最小 Loop（W10-W13）
+## M3 最小研究 Loop（W10-W13）
 
 | 周 | 文档 | 状态 |
 |---|---|---|
-| 阶段索引 | [m3/README.md](m3/README.md)（每周计划开工时独立成文） | 📋 锚定范围 |
+| 阶段索引 | [m3/README.md](m3/README.md)（W9-5 裁决：ReAct→查询改写→MCP Client→混合检索全纳入） | 🔵 进行中 |
+| W10 | [m3/w10-react-loop.md](m3/w10-react-loop.md) | 🔵 待开工 |
 
 ## 对账校准记录（2026-09-03）
 
