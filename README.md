@@ -55,31 +55,71 @@ minikube image load ai-evolution:0.2.0-m2-SNAPSHOT
 kubectl apply -f k8s/
 ```
 
-## 架构快照（截至 W8 · 2026-09-09）
+## 架构图（截至 W9 · 2026-09-10）
 
-```
-通路一（知识问答）                    通路二（结构化分析）
-/ai/chat                            /ai/analyze?code=600519
-   │                                   │
-   ▼                                   ▼
-RagChatService                     StockAnalysisService
-（手动编排，非 Advisor 黑盒）         （拉数据 → 拼 prompt → .entity()）
-   │                                   │
-   │  bge-m3 向量化 ──► Qdrant          │  StockDataClient（mock 先行，W5 换真源）
-   │  空检索 → 硬拒答                    │  未知代码 → 404（空数据不过模型）
-   ▼                                   ▼
-回答 + sources + 免责声明            StockAnalysisReport(JSON) + 免责声明
+```mermaid
+flowchart TB
+    subgraph clients["接入层"]
+        UI["对话页 / Swagger UI"]
+        MCPClient["MCP 客户端<br/>（Codex / Inspector）"]
+    end
 
-共享底座：PromptLibrary（prompts/*.md 版本化资产）· ChatExceptionHandler（502/503 语义化）
-部署形态：ai-evolution + Qdrant 同集群（Minikube），ConfigMap/Secret 分层，
-         探针 + 优雅停机 + Jib 镜像
-知识摄入：增量摄入（SHA-256 manifest，未变文件零 embedding 调用），
-         md + PDF，元数据三件套（source/docType/asOf）进 payload 支持过滤检索
-安全基线：CVE-2026-59318 工具解析 fail-fast（显式配置 + 测试锁定）+ 工具调用次数上限
-可观测：traceId 串链 + 四级留痕 + prompt/response 日志（开关受控）+ token 账本
-评估体系：检索黄金集 39 条（Recall@5=72% 基线）+ 生成黄金集 16 条
-         （LLM judge 三维评分，judge 锚定 5/5）；一页成本账（单次问答 ¥0.0054）
+    subgraph entry["入口层"]
+        Ctrl["ChatController<br/>POST /ai/chat · /ai/analyze"]
+        MCPServer["MCP Server<br/>POST /mcp（Streamable HTTP）"]
+    end
+
+    Router["ChatRouter 规则路由<br/>命中股票代码/关键词 → Agent，否则 → RAG<br/>（ADR-0010）"]
+
+    subgraph services["服务层（按领域分包 · 面向接口）"]
+        RAG["RagChatService<br/>知识问答通路"]
+        Agent["AgentChatService<br/>工具增强对话通路"]
+        Analyze["StockAnalysisService<br/>结构化分析通路"]
+    end
+
+    subgraph capability["能力层"]
+        Retriever["KnowledgeRetriever<br/>bge-m3 向量化 → 检索"]
+        Qdrant[("Qdrant 向量库<br/>md + PDF 增量摄入<br/>元数据三件套过滤")]
+        Tools["StockDataTools / AnnouncementTools<br/>行情 · 财务 · 公告检索（@Tool）"]
+        StockClient["StockDataClient<br/>mock 先行 → W5 换真源"]
+        Prompts["PromptLibrary<br/>prompts/*.md 版本化资产<br/>模板名配置化（A11）"]
+    end
+
+    subgraph models["模型层（OpenAI 兼容协议，配置切换）"]
+        LLM["DeepSeek<br/>对话 / judge"]
+        Embed["SiliconFlow bge-m3<br/>Embedding"]
+    end
+
+    UI --> Ctrl
+    MCPClient --> MCPServer
+    MCPServer --> Tools
+    Ctrl --> Router
+    Router --> RAG & Agent
+    Ctrl --> Analyze
+    RAG --> Retriever --> Qdrant
+    RAG --> Prompts
+    Agent --> Tools --> StockClient
+    Agent --> Prompts
+    Analyze --> StockClient
+    Retriever --> Embed
+    RAG & Agent & Analyze --> LLM
+
+    subgraph cross["横切关注点（全链路生效）"]
+        RedLines["金融三红线代码化<br/>免责声明 · 拒买卖建议 · 数字溯源"]
+        Obs["可观测：traceId 四级留痕<br/>prompt/response 日志 · token 账本"]
+        Eval["评估：检索黄金集 39 条 + 生成黄金集 16 条<br/>（LLM judge，A13 prompt 纪律门）"]
+        Sec["安全：CVE-2026-59318 fail-fast<br/>MCP 脱敏 · 入参上限 · 工具调用上限"]
+    end
+    services -.-> cross
 ```
+
+**部署形态**：ai-evolution + Qdrant 同集群（Minikube），ConfigMap/Secret 分层，探针 + 优雅停机 + Jib 镜像。
+
+**关键数据流**：
+
+- **通路一（RAG）**：问题 → bge-m3 向量化 → Qdrant 检索（topK/阈值/元数据过滤，配置集中 `ai.rag.*`）→ 空检索硬拒答，命中则上下文 + prompt 模板 → DeepSeek → 回答 + sources + 免责声明
+- **通路二（Agent）**：问题 → 模型自主决策调用三工具（AOP 审计留痕）→ 数据回注 prompt → 回答 + 免责声明；数据与问题实体不匹配时禁止拼接推算（agent-chat-v2 反缝合规则）
+- **通路三（Analyze）**：股票代码 → StockDataClient 取数（未知代码 404，空数据不过模型）→ CO-STAR + few-shot + `.entity()` schema 强约束 → `StockAnalysisReport` JSON
 
 ## 当前能力
 
