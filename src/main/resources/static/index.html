@@ -346,8 +346,14 @@
         const events = buffer.split('\n\n');
         buffer = events.pop(); // 最后一段可能不完整，留到下一轮
         for (const raw of events) {
-          const ev = /(^|\n)event:(.+)/.exec(raw)?.[2]?.trim();
-          const data = /(^|\n)data:([\s\S]*)/.exec(raw)?.[2] ?? '';
+          // SSE 规范：事件内可有多条 data: 行（服务端把换行拆行），须逐行收集后以换行拼接
+          let ev = null;
+          const dataLines = [];
+          for (const line of raw.split('\n')) {
+            if (line.startsWith('event:')) ev = line.slice(6).trim();
+            else if (line.startsWith('data:')) dataLines.push(line.slice(5));
+          }
+          const data = dataLines.join('\n');
           if (ev === 'delta') handlers.onDelta?.(data);
           if (ev === 'complete') handlers.onComplete?.(JSON.parse(data));
         }
