@@ -20,7 +20,7 @@
 
 | # | 任务 | 验收条件 | 状态 |
 |---|---|---|---|
-| 1 | **ReAct 循环骨架**（TDD）：`ResearchLoop` 组件，显式迭代 thought/action/observation，最大步数上限（复用工具调用上限思想） | 单测覆盖：正常收敛 / 达上限退出 / 模型给终答退出三条路径 | ⬜ |
+| 1 | **ReAct 循环骨架**（TDD）：`ResearchLoop` 组件，显式迭代 thought/action/observation，最大步数上限（复用工具调用上限思想） | 单测覆盖：正常收敛 / 达上限退出 / 模型给终答退出三条路径 | ✅ 2026-09-11（`3285a16`，4 条单测含 maxSteps 非法值 fail-fast） |
 | 2 | **轨迹可观测**：每步 thought/action/observation 挂 traceId 进日志（复用 W8 四级留痕模式）；SSE 通道推送轨迹（W10 地基致用） | 日志可还原完整研究轨迹；对话页可选展示轨迹 | ⬜ |
 | 3 | **接入现有通路**：`AgentChatService` 切换到 ResearchLoop 驱动（三工具原样挂载） | 现有 16 条生成黄金集回归不降级（A13 跑批摘要进 commit） | ⬜ |
 | 4 | **M3 验收门定稿**：把 m3/README 的验收门草案逐条确认为可执行口径 | 验收门每项有可跑的命令或可看的证据 | ⬜ |
