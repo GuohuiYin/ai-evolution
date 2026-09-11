@@ -2,6 +2,9 @@
 
 > 源头：《Agent 工程化实战路线（完整版）.pptx》（27 周：13 周实战 + 14 周进阶）。
 > 本目录是按实际执行校准后的落地版——每周开工前细化当周计划，收官后补录回顾。
+>
+> - 蓝图蒸馏版（仓库内单一事实源）：[blueprint/README.md](blueprint/README.md)
+> - 里程碑规划方法论（新会话凭此制定后续计划）：[planning-playbook.md](planning-playbook.md)
 
 ## M1 地基 + RAG（W1-W5）
 
