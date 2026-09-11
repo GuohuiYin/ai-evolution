@@ -26,10 +26,10 @@ public class RoutingChatService implements ChatService {
   }
 
   @Override
-  public ChatAnswer chat(String message) {
+  public ChatAnswer chat(String message, String conversationId) {
     return switch (chatRouter.route(message)) {
-      case AGENT -> agentChatService.chat(message);
-      case RAG -> ragChatService.chat(message);
+      case AGENT -> agentChatService.chat(message, conversationId);
+      case RAG -> ragChatService.chat(message, conversationId);
     };
   }
 }

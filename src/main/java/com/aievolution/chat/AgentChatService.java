@@ -6,6 +6,7 @@ import com.aievolution.tool.AnnouncementTools;
 import com.aievolution.tool.StockDataTools;
 import java.util.List;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -47,12 +48,13 @@ public class AgentChatService implements ChatService {
     this.promptName = promptName;
   }
 
-  public ChatAnswer chat(String message) {
+  public ChatAnswer chat(String message, String conversationId) {
     String reply =
         chatClient
             .prompt()
             .system(promptLibrary.get(promptName))
             .user(message)
+            .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId))
             .tools(stockDataTools, announcementTools)
             .call()
             .content();

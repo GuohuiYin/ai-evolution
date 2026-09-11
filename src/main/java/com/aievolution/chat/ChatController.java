@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.UUID;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -54,8 +55,13 @@ public class ChatController {
   })
   @PostMapping("/chat")
   public ChatResponse chat(@Valid @RequestBody ChatRequest request) {
-    ChatAnswer answer = routingChatService.chat(request.message());
-    return new ChatResponse(answer.reply(), answer.sources());
+    // conversationId 缺省时服务端生成：会话身份从入口层就是一等公民（W10）
+    String conversationId =
+        request.conversationId() == null || request.conversationId().isBlank()
+            ? UUID.randomUUID().toString()
+            : request.conversationId();
+    ChatAnswer answer = routingChatService.chat(request.message(), conversationId);
+    return new ChatResponse(answer.reply(), conversationId, answer.sources());
   }
 
   @Operation(summary = "Agent 对话（工具增强）", description = "模型可自主调用行情/财务工具取数后作答；涉及数字时必先调工具，禁止凭记忆报数")
@@ -67,7 +73,12 @@ public class ChatController {
   })
   @PostMapping("/agent")
   public ChatResponse agent(@Valid @RequestBody ChatRequest request) {
-    ChatAnswer answer = agentChatService.chat(request.message());
-    return new ChatResponse(answer.reply(), answer.sources());
+    // 调试旁路：不接会话记忆，保持单轮纯净（conversationId 回传但不产生记忆）
+    String conversationId =
+        request.conversationId() == null || request.conversationId().isBlank()
+            ? UUID.randomUUID().toString()
+            : request.conversationId();
+    ChatAnswer answer = agentChatService.chat(request.message(), conversationId);
+    return new ChatResponse(answer.reply(), conversationId, answer.sources());
   }
 }

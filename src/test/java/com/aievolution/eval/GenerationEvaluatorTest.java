@@ -16,7 +16,8 @@ class GenerationEvaluatorTest {
   @Test
   void evaluatesAnswerThroughProductionEntryThenJudges() {
     // 评的就是用的：回答必须来自生产统一入口（ChatService），不是旁路
-    ChatService chatService = message -> new ChatAnswer("被测回答：" + message, List.of());
+    ChatService chatService =
+        (message, conversationId) -> new ChatAnswer("被测回答：" + message, List.of());
     EvalJudge judge = (c, answer) -> new EvalJudge.JudgeScore(2, 2, 1, "理由");
     GenerationEvaluator evaluator = new GenerationEvaluator(chatService, judge);
 

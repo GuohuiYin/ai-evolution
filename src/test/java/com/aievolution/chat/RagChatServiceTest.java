@@ -35,6 +35,7 @@ class RagChatServiceTest {
 
     when(builder.build()).thenReturn(chatClient);
     when(chatClient.prompt(any(Prompt.class))).thenReturn(requestSpec);
+    when(requestSpec.advisors(any(java.util.function.Consumer.class))).thenReturn(requestSpec);
     when(requestSpec.call()).thenReturn(callSpec);
     when(callSpec.content()).thenReturn("模型回复");
 
@@ -50,7 +51,7 @@ class RagChatServiceTest {
             List.of(
                 new Document("id1", "营业总收入约1740亿元（数据时点：2024年年报）", Map.of("source", "maotai.md"))));
 
-    ChatAnswer answer = service.chat("茅台营收多少？");
+    ChatAnswer answer = service.chat("茅台营收多少？", "conv-t");
 
     assertThat(answer.reply()).startsWith("模型回复").endsWith("不构成投资建议。");
     assertThat(answer.sources())
@@ -63,7 +64,7 @@ class RagChatServiceTest {
     when(knowledgeRetriever.retrieve("酿造工艺是什么？"))
         .thenReturn(List.of(new Document("id1", "酱香型白酒 12987 工艺", Map.of("source", "maotai.md"))));
 
-    service.chat("酿造工艺是什么？");
+    service.chat("酿造工艺是什么？", "conv-t");
 
     ArgumentCaptor<Prompt> captor = ArgumentCaptor.forClass(Prompt.class);
     verify(chatClient).prompt(captor.capture());
@@ -74,7 +75,7 @@ class RagChatServiceTest {
   void refusesWithoutCallingModelWhenNoKnowledgeFound() {
     when(knowledgeRetriever.retrieve("特斯拉怎么样？")).thenReturn(List.of());
 
-    ChatAnswer answer = service.chat("特斯拉怎么样？");
+    ChatAnswer answer = service.chat("特斯拉怎么样？", "conv-t");
 
     verify(chatClient, never()).prompt(any(Prompt.class)); // 无资料不幻觉：根本不调用模型
     assertThat(answer.sources()).isEmpty();

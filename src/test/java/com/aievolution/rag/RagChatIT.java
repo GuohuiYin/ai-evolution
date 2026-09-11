@@ -52,6 +52,7 @@ class RagChatIT {
       ChatClient.CallResponseSpec callSpec = mock(ChatClient.CallResponseSpec.class);
       when(builder.build()).thenReturn(chatClient);
       when(chatClient.prompt(any(Prompt.class))).thenReturn(requestSpec);
+      when(requestSpec.advisors(any(java.util.function.Consumer.class))).thenReturn(requestSpec);
       when(requestSpec.call()).thenReturn(callSpec);
       when(callSpec.content()).thenReturn("基于资料的回答");
 
@@ -62,7 +63,7 @@ class RagChatIT {
                   new VectorStoreKnowledgeRetriever(store, 0.0, 5),
                   new ClasspathPromptLibrary(),
                   "rag-chat-v1")
-              .chat("酱香白酒的酿造工艺");
+              .chat("酱香白酒的酿造工艺", "conv-it");
 
       // 引用的来源必须命中知识库文档
       assertThat(answer.sources()).anySatisfy(s -> assertThat(s.source()).isEqualTo("maotai.md"));

@@ -22,11 +22,11 @@ class RoutingChatServiceTest {
   void agentRouteDelegatesToAgentChatService() {
     when(router.route("600519 营收")).thenReturn(Route.AGENT);
     ChatAnswer expected = new ChatAnswer("工具回答", List.of());
-    when(agentChatService.chat("600519 营收")).thenReturn(expected);
+    when(agentChatService.chat("600519 营收", "conv-1")).thenReturn(expected);
 
-    service.chat("600519 营收");
+    service.chat("600519 营收", "conv-1");
 
-    verify(agentChatService).chat("600519 营收");
+    verify(agentChatService).chat("600519 营收", "conv-1");
     verifyNoInteractions(ragChatService);
   }
 
@@ -34,11 +34,11 @@ class RoutingChatServiceTest {
   void ragRouteDelegatesToRagChatService() {
     when(router.route("酿造工艺")).thenReturn(Route.RAG);
     ChatAnswer expected = new ChatAnswer("检索回答", List.of());
-    when(ragChatService.chat("酿造工艺")).thenReturn(expected);
+    when(ragChatService.chat("酿造工艺", "conv-2")).thenReturn(expected);
 
-    service.chat("酿造工艺");
+    service.chat("酿造工艺", "conv-2");
 
-    verify(ragChatService).chat("酿造工艺");
+    verify(ragChatService).chat("酿造工艺", "conv-2");
     verifyNoInteractions(agentChatService);
   }
 }

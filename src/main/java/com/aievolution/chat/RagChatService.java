@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.document.Document;
@@ -52,7 +53,7 @@ public class RagChatService implements ChatService {
   }
 
   @Override
-  public ChatAnswer chat(String message) {
+  public ChatAnswer chat(String message, String conversationId) {
     List<Document> docs = knowledgeRetriever.retrieve(message);
     if (docs.isEmpty()) {
       return new ChatAnswer(NO_KNOWLEDGE_REPLY + DISCLAIMER, List.of());
@@ -60,7 +61,12 @@ public class RagChatService implements ChatService {
     Prompt prompt =
         new PromptTemplate(promptLibrary.get(promptName))
             .create(Map.of("context", joinContents(docs), "question", message));
-    String reply = chatClient.prompt(prompt).call().content();
+    String reply =
+        chatClient
+            .prompt(prompt)
+            .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId))
+            .call()
+            .content();
     return new ChatAnswer(reply + DISCLAIMER, toSources(docs));
   }
 

@@ -2,6 +2,7 @@ package com.aievolution.eval;
 
 import com.aievolution.chat.ChatService;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * 生成层评估器（W8-4）：黄金集问题 → 生产统一入口（{@link ChatService}，含路由）取回答 → {@link EvalJudge}
@@ -22,7 +23,8 @@ public class GenerationEvaluator {
   }
 
   private GenEvalResult evaluateOne(GenerationCase c) {
-    String answer = chatService.chat(c.query()).reply();
+    // 每条用例独立会话：eval 测单轮能力，记忆不串题（多轮评测集 W11 另行设计）
+    String answer = chatService.chat(c.query(), "eval-" + UUID.randomUUID()).reply();
     return new GenEvalResult(c, answer, judge.judge(c, answer));
   }
 
