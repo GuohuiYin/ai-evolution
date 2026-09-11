@@ -125,6 +125,8 @@ flowchart TB
 
 **对话与检索**
 
+- 多轮会话记忆 L1：`MessageWindowChatMemory` 滑动窗口（`ai.chat.memory.window:20`），同会话追问可见上下文
+- SSE 流式对话：`POST /ai/chat/stream` 逐 token 下发，对话页流式渲染 + 会话管理
 - 知识库问答可溯源：回答带 sources，越界硬拒答（空检索不过模型）
 - Agent 工具调用：行情 / 财务 / 公告检索三工具，AOP 审计留痕
 - 对话统一入口 `/ai/chat`：规则路由自动分发 RAG/Agent 双通路（ADR-0010）
