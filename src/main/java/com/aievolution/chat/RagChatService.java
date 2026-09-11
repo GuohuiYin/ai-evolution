@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
@@ -41,12 +42,17 @@ public class RagChatService implements ChatService {
       ChatClient.Builder chatClientBuilder,
       KnowledgeRetriever knowledgeRetriever,
       PromptLibrary promptLibrary,
-      @Value("${ai.rag.chat-prompt:rag-chat-v1}") String promptName) {
+      @Value("${ai.rag.chat-prompt:rag-chat-v1}") String promptName,
+      ChatMemory chatMemory) {
     if (!promptLibrary.exists(promptName)) {
       // prompt 缺失是部署事故，启动即 fail-fast
       throw new IllegalStateException("RAG prompt 模板不存在: " + promptName);
     }
-    this.chatClient = chatClientBuilder.build();
+    // 会话记忆定点挂载（对话域专属，不全局织入——分析与 eval 通路不共享）
+    this.chatClient =
+        chatClientBuilder
+            .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
+            .build();
     this.knowledgeRetriever = knowledgeRetriever;
     this.promptLibrary = promptLibrary;
     this.promptName = promptName;

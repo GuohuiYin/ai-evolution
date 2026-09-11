@@ -50,6 +50,9 @@ class RagChatIT {
       ChatClient chatClient = mock(ChatClient.class);
       ChatClient.ChatClientRequestSpec requestSpec = mock(ChatClient.ChatClientRequestSpec.class);
       ChatClient.CallResponseSpec callSpec = mock(ChatClient.CallResponseSpec.class);
+      when(builder.defaultAdvisors(
+              any(org.springframework.ai.chat.client.advisor.api.Advisor.class)))
+          .thenReturn(builder);
       when(builder.build()).thenReturn(chatClient);
       when(chatClient.prompt(any(Prompt.class))).thenReturn(requestSpec);
       when(requestSpec.advisors(any(java.util.function.Consumer.class))).thenReturn(requestSpec);
@@ -62,7 +65,12 @@ class RagChatIT {
                   builder,
                   new VectorStoreKnowledgeRetriever(store, 0.0, 5),
                   new ClasspathPromptLibrary(),
-                  "rag-chat-v1")
+                  "rag-chat-v1",
+                  org.springframework.ai.chat.memory.MessageWindowChatMemory.builder()
+                      .chatMemoryRepository(
+                          new org.springframework.ai.chat.memory.InMemoryChatMemoryRepository())
+                      .maxMessages(10)
+                      .build())
               .chat("酱香白酒的酿造工艺", "conv-it");
 
       // 引用的来源必须命中知识库文档

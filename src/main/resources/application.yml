@@ -73,6 +73,10 @@ ai:
   chat:
     # 统一入口路由策略（ChatRouter）：命中股票代码或下列关键词 → Agent 工具通路；其余 → RAG 管道
     agent-keywords: 股价,行情,走势,营收,净利,利润,财务
+    memory:
+      # 会话记忆滑动窗口（条数）：超出后最旧消息淘汰。L1 内存版——重启失忆、多副本断片，
+      # L2 持久化挂 W14+（五级路线见 docs/plans/m3/README.md）
+      window: 20
     prompt-logging:
       # W8-6：日志记录模型输入 prompt 与返回 response（SimpleLoggerAdvisor，DEBUG 级）。
       # 本地默认开；生产必须关（金融语料敏感）。该 logger 级别需同时为 DEBUG 才生效，见 logging 段

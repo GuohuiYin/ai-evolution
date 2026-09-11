@@ -6,6 +6,7 @@ import com.aievolution.tool.AnnouncementTools;
 import com.aievolution.tool.StockDataTools;
 import java.util.List;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -36,12 +37,17 @@ public class AgentChatService implements ChatService {
       StockDataTools stockDataTools,
       AnnouncementTools announcementTools,
       PromptLibrary promptLibrary,
-      @Value("${ai.agent.chat-prompt:agent-chat-v2}") String promptName) {
+      @Value("${ai.agent.chat-prompt:agent-chat-v2}") String promptName,
+      ChatMemory chatMemory) {
     if (!promptLibrary.exists(promptName)) {
       // prompt 缺失是部署事故，启动即 fail-fast
       throw new IllegalStateException("Agent prompt 模板不存在: " + promptName);
     }
-    this.chatClient = chatClientBuilder.build();
+    // 会话记忆定点挂载（对话域专属）
+    this.chatClient =
+        chatClientBuilder
+            .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
+            .build();
     this.stockDataTools = stockDataTools;
     this.announcementTools = announcementTools;
     this.promptLibrary = promptLibrary;
