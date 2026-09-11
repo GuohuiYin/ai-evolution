@@ -49,14 +49,29 @@
     }
     .title { font-size: 15px; font-weight: 600; letter-spacing: 0.2px; }
     .badge {
-      margin-left: auto;
       font-size: 12px;
       color: var(--text-2nd);
       border: 1px solid var(--border);
       border-radius: 999px;
       padding: 3px 12px;
       background: var(--panel);
+      max-width: 260px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
+    .new-chat {
+      margin-left: auto;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      font-size: 12.5px;
+      border-radius: 999px;
+      padding: 5px 14px;
+      cursor: pointer;
+      transition: all .18s ease;
+    }
+    .new-chat:hover { border-color: var(--accent); color: var(--accent); }
 
     /* ── 消息区 ───────────────────────── */
     main {
@@ -204,18 +219,19 @@
   <header>
     <div class="logo">AI</div>
     <div class="title">AI Evolution</div>
-    <div class="badge">deepseek-chat</div>
+    <button class="new-chat" id="newChatBtn" title="开启新会话">＋ 新会话</button>
+    <div class="badge" id="convBadge" title="会话标识（续聊凭据）">未开始会话</div>
   </header>
 
   <main id="scroll">
     <div class="thread" id="thread">
       <div class="welcome" id="welcome">
         <h1>你好，我是你的 AI 研究助手</h1>
-        <p>由 DeepSeek 驱动 · ai-evolution W2 测试台</p>
+        <p>由 DeepSeek 驱动 · 多轮会话 + SSE 流式（W10）</p>
         <div class="chips">
-          <button class="chip" onclick="ask(this)">什么是 RAG，用三句话解释</button>
-          <button class="chip" onclick="ask(this)">Spring AI 和 LangChain4j 怎么选</button>
-          <button class="chip" onclick="ask(this)">Java 25 有哪些值得关注的新特性</button>
+          <button class="chip" onclick="ask(this)">茅台的酿造工艺是什么</button>
+          <button class="chip" onclick="ask(this)">600519 2024 年营收多少？顺便查年报里的工艺描述</button>
+          <button class="chip" onclick="ask(this)">茅台冰淇淋业务的营收占比是多少</button>
         </div>
       </div>
     </div>
@@ -234,6 +250,36 @@
     const scrollBox = document.getElementById('scroll');
     const input = document.getElementById('input');
     const sendBtn = document.getElementById('sendBtn');
+    const convBadge = document.getElementById('convBadge');
+
+    /* ── 会话状态：conversationId 是续聊凭据（W10 一等公民） ── */
+    let conversationId = null;
+
+    function updateBadge() {
+      convBadge.textContent = conversationId ? `会话 ${conversationId.slice(0, 8)}…` : '未开始会话';
+      convBadge.title = conversationId ? `conversationId: ${conversationId}` : '会话标识（续聊凭据）';
+    }
+
+    function newConversation() {
+      conversationId = null;
+      thread.innerHTML = '';
+      thread.appendChild(buildWelcome());
+      updateBadge();
+      input.focus();
+    }
+
+    function buildWelcome() {
+      const w = document.createElement('div');
+      w.className = 'welcome'; w.id = 'welcome';
+      w.innerHTML = `<h1>你好，我是你的 AI 研究助手</h1>
+        <p>由 DeepSeek 驱动 · 多轮会话 + SSE 流式（W10）</p>
+        <div class="chips">
+          <button class="chip" onclick="ask(this)">茅台的酿造工艺是什么</button>
+          <button class="chip" onclick="ask(this)">600519 2024 年营收多少？顺便查年报里的工艺描述</button>
+          <button class="chip" onclick="ask(this)">茅台冰淇淋业务的营收占比是多少</button>
+        </div>`;
+      return w;
+    }
 
     /* ── 视图层：气泡渲染 ─────────────────────────── */
     function addBubble(role, text, sources) {
@@ -277,22 +323,35 @@
       return box;
     }
 
-    function showTyping() {
-      const bubble = addBubble('ai', '');
-      bubble.innerHTML = '<span class="typing"><i></i><i></i><i></i></span>';
-      return bubble.closest('.msg'); // 返回整条消息节点，移除时连头像一起带走
-    }
-
-    /* ── 服务层：唯一的后端出口，后续改 SSE 流式只动这里 ── */
-    async function callChat(message) {
-      const resp = await fetch('/ai/chat', {
+    /* ── 服务层：SSE 流式（fetch ReadableStream——EventSource 不支持 POST） ──
+       事件协议：event:delta data:<文本增量>；event:complete data:<{conversationId, sources} JSON> */
+    async function streamChat(message, handlers) {
+      const resp = await fetch('/ai/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message })
+        body: JSON.stringify(conversationId ? { message, conversationId } : { message })
       });
-      if (resp.ok) { const d = await resp.json(); return { reply: d.reply, sources: d.sources }; }
-      const hint = { 400: '请求参数不合法', 502: '模型服务异常（不可重试）', 503: '模型繁忙，请稍后重试' };
-      return { error: `⚠️ ${hint[resp.status] || '服务异常'}（HTTP ${resp.status}）` };
+      if (!resp.ok) {
+        const hint = { 400: '请求参数不合法', 502: '模型服务异常（不可重试）', 503: '模型繁忙，请稍后重试' };
+        throw new Error(`⚠️ ${hint[resp.status] || '服务异常'}（HTTP ${resp.status}）`);
+      }
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let buffer = '';
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        // SSE 事件以空行分隔；逐事件解析 event 与 data 行
+        const events = buffer.split('\n\n');
+        buffer = events.pop(); // 最后一段可能不完整，留到下一轮
+        for (const raw of events) {
+          const ev = /(^|\n)event:(.+)/.exec(raw)?.[2]?.trim();
+          const data = /(^|\n)data:([\s\S]*)/.exec(raw)?.[2] ?? '';
+          if (ev === 'delta') handlers.onDelta?.(data);
+          if (ev === 'complete') handlers.onComplete?.(JSON.parse(data));
+        }
+      }
     }
 
     /* ── 控制层：交互编排 ─────────────────────────── */
@@ -305,14 +364,26 @@
       input.value = ''; input.style.height = 'auto';
 
       addBubble('user', text);
-      const typing = showTyping();
+      const bubble = addBubble('ai', ''); // 先立空气泡，delta 增量填充（流式渲染）
+      bubble.innerHTML = '<span class="typing"><i></i><i></i><i></i></span>';
+      let accumulated = '';
       try {
-        const { reply, error, sources } = await callChat(text);
-        typing.remove();
-        error ? addBubble('error', error) : addBubble('ai', reply, sources);
+        await streamChat(text, {
+          onDelta: d => {
+            accumulated += d;
+            bubble.textContent = accumulated; // 首个 delta 到达即覆盖打字指示器
+            scrollBox.scrollTop = scrollBox.scrollHeight;
+          },
+          onComplete: c => {
+            conversationId = c.conversationId;
+            updateBadge();
+            if (c.sources && c.sources.length) bubble.appendChild(renderSources(c.sources));
+            scrollBox.scrollTop = scrollBox.scrollHeight;
+          }
+        });
       } catch (e) {
-        typing.remove();
-        addBubble('error', '⚠️ 网络异常：无法连接服务，请确认应用已启动');
+        bubble.closest('.msg').remove();
+        addBubble('error', e.message?.startsWith('⚠️') ? e.message : '⚠️ 网络异常：无法连接服务，请确认应用已启动');
       } finally {
         pending = false; sendBtn.disabled = false; input.focus();
       }
@@ -329,6 +400,7 @@
       input.style.height = Math.min(input.scrollHeight, 140) + 'px';
     });
     sendBtn.addEventListener('click', send);
+    document.getElementById('newChatBtn').addEventListener('click', newConversation);
     input.focus();
   </script>
 </body>
