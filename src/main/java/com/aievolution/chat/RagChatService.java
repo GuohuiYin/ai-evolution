@@ -76,6 +76,31 @@ public class RagChatService implements ChatService {
     return new ChatAnswer(reply + DISCLAIMER, toSources(docs));
   }
 
+  @Override
+  public reactor.core.publisher.Flux<ChatStreamPart> chatStream(
+      String message, String conversationId) {
+    List<Document> docs = knowledgeRetriever.retrieve(message);
+    if (docs.isEmpty()) {
+      // 空检索硬拒答语义流式化：单条拒答 delta + 收尾
+      return reactor.core.publisher.Flux.just(
+          new ChatStreamPart.Delta(NO_KNOWLEDGE_REPLY + DISCLAIMER),
+          new ChatStreamPart.Complete(conversationId, List.of()));
+    }
+    Prompt prompt =
+        new PromptTemplate(promptLibrary.get(promptName))
+            .create(Map.of("context", joinContents(docs), "question", message));
+    return chatClient
+        .prompt(prompt)
+        .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId))
+        .stream()
+        .content()
+        .map(d -> (ChatStreamPart) new ChatStreamPart.Delta(d))
+        .concatWithValues(
+            // 红线 01：免责声明作为最后一个 delta 并入流尾
+            new ChatStreamPart.Delta(DISCLAIMER),
+            new ChatStreamPart.Complete(conversationId, toSources(docs)));
+  }
+
   private String joinContents(List<Document> docs) {
     return docs.stream().map(Document::getText).collect(Collectors.joining("\n---\n"));
   }

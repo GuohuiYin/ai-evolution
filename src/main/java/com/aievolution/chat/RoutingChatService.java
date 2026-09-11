@@ -32,4 +32,14 @@ public class RoutingChatService implements ChatService {
       case RAG -> ragChatService.chat(message, conversationId);
     };
   }
+
+  @Override
+  public reactor.core.publisher.Flux<ChatStreamPart> chatStream(
+      String message, String conversationId) {
+    // 路由决策先行，流式委派给命中的通路——路由语义与同步入口完全一致
+    return switch (chatRouter.route(message)) {
+      case AGENT -> agentChatService.chatStream(message, conversationId);
+      case RAG -> ragChatService.chatStream(message, conversationId);
+    };
+  }
 }

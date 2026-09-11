@@ -66,4 +66,22 @@ public class AgentChatService implements ChatService {
             .content();
     return new ChatAnswer(reply + DISCLAIMER, List.of());
   }
+
+  @Override
+  public reactor.core.publisher.Flux<ChatStreamPart> chatStream(
+      String message, String conversationId) {
+    // 工具调用在 Spring AI 流式模式下同样生效（内部循环完成后流式输出最终回答）
+    return chatClient
+        .prompt()
+        .system(promptLibrary.get(promptName))
+        .user(message)
+        .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId))
+        .tools(stockDataTools, announcementTools)
+        .stream()
+        .content()
+        .map(d -> (ChatStreamPart) new ChatStreamPart.Delta(d))
+        .concatWithValues(
+            new ChatStreamPart.Delta(DISCLAIMER),
+            new ChatStreamPart.Complete(conversationId, List.of()));
+  }
 }
