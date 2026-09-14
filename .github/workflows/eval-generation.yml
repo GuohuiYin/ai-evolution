@@ -1,0 +1,81 @@
+name: eval-generation
+
+# W11 #7：生成 eval 定时回归门。每天 UTC 21:23（北京 05:23，错峰）跑全量生成黄金集，
+# 类别均分低于阈值即失败并开 issue。只做定时回归，不做 per-commit 阻塞
+#（真实 API 有噪声，per-commit 防线仍是 A13 纪律门 + ci.yml 的 verify）。
+#
+# 需要的 repo secrets（Owner 配置，Settings → Secrets and variables → Actions）：
+#   AI_API_KEY / AI_BASE_URL / AI_MODEL            —— DeepSeek 生成 + judge
+#   SILICONFLOW_API_KEY / SILICONFLOW_BASE_URL     —— bge-m3 嵌入（全新 Qdrant 全量摄入用）
+on:
+  schedule:
+    - cron: "23 21 * * *"
+  workflow_dispatch:
+
+jobs:
+  generation-eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: 预检 secrets（缺失时 fail-fast，不打 API）
+        env:
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+          SILICONFLOW_API_KEY: ${{ secrets.SILICONFLOW_API_KEY }}
+        run: |
+          for v in AI_API_KEY SILICONFLOW_API_KEY; do
+            if [ -z "${!v}" ]; then
+              echo "::error::repo secret $v 未配置（Settings → Secrets and variables → Actions）"
+              exit 1
+            fi
+          done
+
+      # 与本地常驻容器同版本（v1.15.1）；initialize-schema=true，集合自动建
+      - name: 启动 Qdrant（全新空库，启动时全量摄入语料）
+        run: |
+          docker run -d --name qdrant -p 6333:6333 -p 6334:6334 qdrant/qdrant:v1.15.1
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:6333/healthz && break || sleep 2
+          done
+
+      # 阈值 4.5/6：近期跑批各类别 5.0~6.0，留 API 噪声余量，抓 3.x 级塌方（W11 #3 教训）
+      # exit-after-run：跑完即退，门禁违约退出码 1 → step 失败
+      - name: 生成 eval 回归门
+        env:
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+          AI_BASE_URL: ${{ secrets.AI_BASE_URL }}
+          AI_MODEL: ${{ secrets.AI_MODEL }}
+          SILICONFLOW_API_KEY: ${{ secrets.SILICONFLOW_API_KEY }}
+          SILICONFLOW_BASE_URL: ${{ secrets.SILICONFLOW_BASE_URL }}
+          AI_EVAL_GENERATION_ENABLED: "true"
+          AI_EVAL_GENERATION_GATE_MIN_CATEGORY_AVERAGE: "4.5"
+          AI_EVAL_GENERATION_EXIT_AFTER_RUN: "true"
+        run: timeout 20m ./mvnw -B spring-boot:run
+
+      # 失败可见性：复用既有 open issue 追加评论，避免每天一个新 issue 刷屏
+      - name: 门禁违约时开 issue（仅定时触发）
+        if: failure() && github.event_name == 'schedule'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const runUrl = `${context.payload.repository.html_url}/actions/runs/${context.runId}`;
+            const body = `生成 eval 回归门违约（类别均分 < 4.5/6 或跑批失败）：${runUrl}`;
+            const { data: open } = await github.rest.issues.listForRepo({
+              owner, repo, state: "open", labels: "eval-regression", per_page: 1,
+            });
+            if (open.length > 0) {
+              await github.rest.issues.createComment({ owner, repo, issue_number: open[0].number, body });
+            } else {
+              await github.rest.issues.create({
+                owner, repo, labels: ["eval-regression"],
+                title: `生成 eval 回归门违约（${new Date().toISOString().slice(0, 10)}）`,
+                body,
+              });
+            }

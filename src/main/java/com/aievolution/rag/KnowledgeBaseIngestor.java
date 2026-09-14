@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
@@ -43,7 +44,9 @@ import org.springframework.stereotype.Component;
  */
 // 开关语义：默认开启摄入；测试环境通过 ai.knowledge.ingest.enabled=false 关闭，
 // 避免 @SpringBootTest 执行 ApplicationRunner 时打真实 Embedding API
+// @Order(1)：摄入必须先于 eval Runner（W11 #7 CI 起全新 Qdrant，顺序未定会导致 eval 在空库上跑）
 @Component
+@Order(1)
 @ConditionalOnProperty(
     name = "ai.knowledge.ingest.enabled",
     havingValue = "true",

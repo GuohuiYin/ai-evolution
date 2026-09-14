@@ -13,7 +13,10 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.ApplicationContext;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
@@ -26,6 +29,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @ConditionalOnProperty(name = "ai.eval.generation.enabled", havingValue = "true")
+@Order(3) // 摄入（1）→ 检索 eval（2）→ 生成 eval（3）：生成最慢最贵，压轴跑
 public class GenerationEvalRunner implements ApplicationRunner {
 
   private static final Logger log = LoggerFactory.getLogger(GenerationEvalRunner.class);
@@ -33,22 +37,33 @@ public class GenerationEvalRunner implements ApplicationRunner {
   private final ChatService chatService;
   private final ChatModel chatModel;
   private final PromptLibrary promptLibrary;
+  private final ApplicationContext applicationContext;
   private final String goldenSetLocation;
   private final String categoriesFilter;
+  private final double gateMinCategoryAverage;
+  private final boolean exitAfterRun;
 
   public GenerationEvalRunner(
       ChatService chatService,
       ChatModel chatModel,
       PromptLibrary promptLibrary,
+      ApplicationContext applicationContext,
       @Value("${ai.eval.generation.golden-set:eval/golden-set-generation.json}")
           String goldenSetLocation,
       // 类别过滤（逗号分隔，空=全量）：A/B 实验只跑相关类别，控制 token 成本
-      @Value("${ai.eval.generation.categories:}") String categoriesFilter) {
+      @Value("${ai.eval.generation.categories:}") String categoriesFilter,
+      // CI 回归门（W11 #7）：类别均分下限，0=不启用门禁；违约类别记日志并影响退出码
+      @Value("${ai.eval.generation.gate.min-category-average:0}") double gateMinCategoryAverage,
+      // CI 场景跑完即退（本地手动跑批保持 web 服务在线，沿用 pkill 套路）
+      @Value("${ai.eval.generation.exit-after-run:false}") boolean exitAfterRun) {
     this.chatService = chatService;
     this.chatModel = chatModel;
     this.promptLibrary = promptLibrary;
+    this.applicationContext = applicationContext;
     this.goldenSetLocation = goldenSetLocation;
     this.categoriesFilter = categoriesFilter;
+    this.gateMinCategoryAverage = gateMinCategoryAverage;
+    this.exitAfterRun = exitAfterRun;
   }
 
   @Override
@@ -86,12 +101,24 @@ public class GenerationEvalRunner implements ApplicationRunner {
             .collect(
                 Collectors.groupingBy(
                     r -> r.goldenCase().category(), TreeMap::new, Collectors.toList()));
+    Map<String, Double> categoryAverages = new TreeMap<>();
     byCategory.forEach(
         (category, rs) -> {
           double avg = rs.stream().mapToInt(r -> r.score().total()).average().orElse(0);
+          categoryAverages.put(category, avg);
           log.info("类别 {}：平均总分 {}/6（{} 条）", category, String.format("%.1f", avg), rs.size());
         });
     double overall = results.stream().mapToInt(r -> r.score().total()).average().orElse(0);
     log.info("════════ 总体平均：{}/6 ════════", String.format("%.1f", overall));
+
+    // 回归门（W11 #7）：违约必须可见——warn 日志 + 退出码，静默降级是故障放大器（W11 #3 教训）
+    List<String> breaches = EvalGate.breaches(categoryAverages, gateMinCategoryAverage);
+    if (!breaches.isEmpty()) {
+      log.warn("回归门违约（阈值 {}）：{}", String.format("%.1f", gateMinCategoryAverage), breaches);
+    }
+    if (exitAfterRun) {
+      int exitCode = breaches.isEmpty() ? 0 : 1;
+      System.exit(SpringApplication.exit(applicationContext, () -> exitCode));
+    }
   }
 }

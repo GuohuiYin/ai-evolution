@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @ConditionalOnProperty(name = "ai.eval.enabled", havingValue = "true")
+@Order(2) // 摄入（1）完成后才评，检索先于生成（生成最贵，压轴）
 public class RetrievalEvalRunner implements ApplicationRunner {
 
   private static final Logger log = LoggerFactory.getLogger(RetrievalEvalRunner.class);
