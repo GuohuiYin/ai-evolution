@@ -28,8 +28,9 @@ class ArchitectureTest {
           // W8-4 生成层评估：eval 必须驱动生产对话通路（chat）与 prompt 资产（judge 模板），
           // 属"评的就是用的"的正当依赖——白名单显式登记即本次架构决策的 review 记录
           Map.entry("eval", List.of("rag", "chat", "prompt")),
-          // W11 ReAct 研究循环：loop → infra（LogSummaries）+ tool（#3a ToolRegistry 桥接三工具）
-          Map.entry("loop", List.of("infra", "tool")),
+          // W11 ReAct 研究循环：loop → infra（LogSummaries）+ tool（#3a ToolRegistry）
+          // + prompt（#3b DeepSeekResearchModel 加载 ReAct 协议模板）
+          Map.entry("loop", List.of("infra", "tool", "prompt")),
           // 以下为零出度域：基础域不依赖任何兄弟域
           Map.entry("infra", List.of()),
           Map.entry("rag", List.of()),
