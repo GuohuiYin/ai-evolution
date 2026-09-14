@@ -19,20 +19,23 @@ class ArchitectureTest {
 
   /** 域间依赖白名单：key 域只允许依赖 value 列出的兄弟域（领域类型/接口/数据契约）。 */
   private static final Map<String, List<String>> ALLOWED_DEPENDENCIES =
-      Map.of(
-          "chat", List.of("compliance", "prompt", "rag", "tool"),
-          "analysis", List.of("compliance", "prompt", "stock"),
-          "tool", List.of("rag", "stock"),
-          "mcp", List.of("tool"),
+      Map.ofEntries(
+          Map.entry("chat", List.of("compliance", "prompt", "rag", "tool")),
+          Map.entry("analysis", List.of("compliance", "prompt", "stock")),
+          // W11 日志摘要收口：tool → infra（LogSummaries 单点，A11 两次即收口首例）
+          Map.entry("tool", List.of("rag", "stock", "infra")),
+          Map.entry("mcp", List.of("tool")),
           // W8-4 生成层评估：eval 必须驱动生产对话通路（chat）与 prompt 资产（judge 模板），
           // 属"评的就是用的"的正当依赖——白名单显式登记即本次架构决策的 review 记录
-          "eval", List.of("rag", "chat", "prompt"),
+          Map.entry("eval", List.of("rag", "chat", "prompt")),
+          // W11 ReAct 研究循环：loop → infra（LogSummaries）；对 chat/tool 的桥接在 #3 登记
+          Map.entry("loop", List.of("infra")),
           // 以下为零出度域：基础域不依赖任何兄弟域
-          "infra", List.of(),
-          "rag", List.of(),
-          "stock", List.of(),
-          "prompt", List.of(),
-          "compliance", List.of());
+          Map.entry("infra", List.of()),
+          Map.entry("rag", List.of()),
+          Map.entry("stock", List.of()),
+          Map.entry("prompt", List.of()),
+          Map.entry("compliance", List.of()));
 
   @Test
   void domainDependenciesFollowAllowlist() {

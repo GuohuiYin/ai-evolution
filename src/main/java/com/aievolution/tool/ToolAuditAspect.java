@@ -1,5 +1,6 @@
 package com.aievolution.tool;
 
+import com.aievolution.infra.LogSummaries;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -14,13 +15,14 @@ import org.springframework.stereotype.Component;
  *
  * <p>金融合规刚需（Harness Verify 层）：模型触发的每一次数据访问都要可回放。 雏形落地为专用 logger（{@code
  * tool-audit}），生产可无缝切换到审计表/ES——切面无入侵。
+ *
+ * <p>摘要策略引用 {@link LogSummaries} 单点定义（A11 两次即收口），不各自持有。
  */
 @Aspect
 @Component
 public class ToolAuditAspect {
 
   private static final Logger auditLog = LoggerFactory.getLogger("tool-audit");
-  private static final int RESULT_SUMMARY_MAX = 100;
 
   @Around("@annotation(org.springframework.ai.tool.annotation.Tool)")
   public Object around(ProceedingJoinPoint pjp) throws Throwable {
@@ -36,7 +38,7 @@ public class ToolAuditAspect {
           tool,
           args,
           elapsedMillis(startNanos),
-          summarize(result));
+          LogSummaries.summarize(result));
       return result;
     } catch (Throwable e) {
       auditLog.warn(
@@ -51,10 +53,5 @@ public class ToolAuditAspect {
 
   private long elapsedMillis(long startNanos) {
     return (System.nanoTime() - startNanos) / 1_000_000;
-  }
-
-  private String summarize(Object result) {
-    String text = String.valueOf(result).replaceAll("\\s+", " ");
-    return text.length() <= RESULT_SUMMARY_MAX ? text : text.substring(0, RESULT_SUMMARY_MAX) + "…";
   }
 }

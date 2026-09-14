@@ -1,5 +1,6 @@
 package com.aievolution.loop;
 
+import com.aievolution.infra.LogSummaries;
 import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
@@ -18,7 +19,6 @@ import org.slf4j.LoggerFactory;
 public class ResearchLoop {
 
   private static final Logger traceLog = LoggerFactory.getLogger("research-trace");
-  private static final int SUMMARY_MAX = 100;
 
   private final ResearchModel model;
   private final ToolExecutor toolExecutor;
@@ -61,10 +61,10 @@ public class ResearchLoop {
     traceLog.info(
         "step={} thought={} tool={} input={} observation={} elapsedMs={}",
         index,
-        summarize(act.thought()),
+        LogSummaries.summarize(act.thought()),
         act.tool(),
-        summarize(act.input()),
-        summarize(observation),
+        LogSummaries.summarize(act.input()),
+        LogSummaries.summarize(observation),
         (System.nanoTime() - startNanos) / 1_000_000);
     listener.onStep(step);
     return step;
@@ -74,17 +74,5 @@ public class ResearchLoop {
     traceLog.info("exit stopReason={} steps={}", result.stopReason(), result.steps().size());
     listener.onComplete(result);
     return result;
-  }
-
-  // 日志摘要策略：空白归一 + 截断。与 ToolAuditAspect 同款（第二处副本）——
-  // 第三处出现时立即收口到 infra（规则三是最后期限，不是许可证）
-  private static String summarize(String text) {
-    if (text == null) {
-      return "";
-    }
-    String normalized = text.replaceAll("\\s+", " ");
-    return normalized.length() <= SUMMARY_MAX
-        ? normalized
-        : normalized.substring(0, SUMMARY_MAX) + "…";
   }
 }
