@@ -93,16 +93,18 @@ public class ChatController {
                 switch (part) {
                   case ChatStreamPart.Delta d ->
                       ServerSentEvent.<String>builder().event("delta").data(d.text()).build();
+                  case ChatStreamPart.Trajectory t ->
+                      ServerSentEvent.<String>builder().event("trajectory").data(toJson(t)).build();
                   case ChatStreamPart.Complete c ->
                       ServerSentEvent.<String>builder().event("complete").data(toJson(c)).build();
                 });
   }
 
-  private String toJson(ChatStreamPart.Complete complete) {
+  private String toJson(ChatStreamPart part) {
     try {
-      return OBJECT_MAPPER.writeValueAsString(complete);
+      return OBJECT_MAPPER.writeValueAsString(part);
     } catch (JsonProcessingException e) {
-      throw new IllegalStateException("complete 事件序列化失败", e);
+      throw new IllegalStateException("SSE 事件负载序列化失败: " + part.getClass().getSimpleName(), e);
     }
   }
 

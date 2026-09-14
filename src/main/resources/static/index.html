@@ -158,6 +158,13 @@
       overflow: hidden;
     }
 
+    /* 研究轨迹卡片（W11 #2）：ReAct 步骤可选展示，默认折叠 */
+    .trace { margin-bottom: 10px; padding: 8px 12px; background: #f4f5f9; border: 1px solid var(--border); border-radius: 10px; font-size: 12.5px; }
+    .trace summary { cursor: pointer; font-weight: 600; color: var(--text-2nd); user-select: none; }
+    .trace-step { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); line-height: 1.6; }
+    .trace-thought { color: var(--text); }
+    .trace-io { color: var(--text-2nd); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; word-break: break-all; }
+
     /* 打字指示器 */
     .typing { display: inline-flex; gap: 5px; padding: 4px 2px; }
     .typing i {
@@ -323,8 +330,25 @@
       return box;
     }
 
+    /* 研究轨迹：每步 thought/action/observation 一行，<details> 默认折叠——可选展示 */
+    function renderTraceStep(box, t) {
+      const summary = box.querySelector('summary');
+      summary.textContent = `🔍 研究轨迹（${t.index + 1} 步）`;
+      const step = document.createElement('div');
+      step.className = 'trace-step';
+      const thought = document.createElement('div');
+      thought.className = 'trace-thought';
+      thought.textContent = `💭 ${t.thought}`;
+      const io = document.createElement('div');
+      io.className = 'trace-io';
+      io.textContent = `🔧 ${t.tool}(${t.input}) → ${t.observation}`;
+      step.append(thought, io);
+      box.appendChild(step);
+    }
+
     /* ── 服务层：SSE 流式（fetch ReadableStream——EventSource 不支持 POST） ──
-       事件协议：event:delta data:<文本增量>；event:complete data:<{conversationId, sources} JSON> */
+       事件协议：event:delta data:<文本增量>；event:trajectory data:<{index,thought,tool,input,observation} JSON>；
+       event:complete data:<{conversationId, sources} JSON> */
     async function streamChat(message, handlers) {
       const resp = await fetch('/ai/chat/stream', {
         method: 'POST',
@@ -355,6 +379,7 @@
           }
           const data = dataLines.join('\n');
           if (ev === 'delta') handlers.onDelta?.(data);
+          if (ev === 'trajectory') handlers.onTrajectory?.(JSON.parse(data));
           if (ev === 'complete') handlers.onComplete?.(JSON.parse(data));
         }
       }
@@ -373,11 +398,28 @@
       const bubble = addBubble('ai', ''); // 先立空气泡，delta 增量填充（流式渲染）
       bubble.innerHTML = '<span class="typing"><i></i><i></i><i></i></span>';
       let accumulated = '';
+      let textSpan = null; // delta 专用文本节点：与轨迹块分离，防 textContent 覆盖互相误伤
+      let traceBox = null;
       try {
         await streamChat(text, {
+          onTrajectory: t => {
+            if (!traceBox) {
+              traceBox = document.createElement('details');
+              traceBox.className = 'trace';
+              traceBox.appendChild(document.createElement('summary'));
+              bubble.prepend(traceBox);
+            }
+            renderTraceStep(traceBox, t);
+            scrollBox.scrollTop = scrollBox.scrollHeight;
+          },
           onDelta: d => {
+            if (!textSpan) {
+              bubble.querySelector('.typing')?.remove(); // 首个 delta 到达即撤打字指示器
+              textSpan = document.createElement('span');
+              bubble.appendChild(textSpan);
+            }
             accumulated += d;
-            bubble.textContent = accumulated; // 首个 delta 到达即覆盖打字指示器
+            textSpan.textContent = accumulated;
             scrollBox.scrollTop = scrollBox.scrollHeight;
           },
           onComplete: c => {

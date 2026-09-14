@@ -36,5 +36,7 @@ class ChatPageTest {
     assertThat(response.headers().firstValue("Content-Type"))
         .hasValueSatisfying(v -> assertThat(v).contains("text/html"));
     assertThat(response.body()).contains("AI Evolution");
+    // W11 #2：SSE trajectory 事件的页面挂钩必须在位（可选展示研究轨迹）
+    assertThat(response.body()).contains("onTrajectory").contains("研究轨迹");
   }
 }
