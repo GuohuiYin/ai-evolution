@@ -71,10 +71,27 @@
 - **Agent 轨迹评估**（2026-09-10 扫描新增）：W10 随 ReAct 骨架同步定指标（步数/冗余调用/收敛性），W13 进 M3 验收门——没有它 Loop 质量无度量
 - **模型自动降级**（DeepSeek 故障切 Qwen）：W12 韧性主题或 W14+，W12 开工时裁决
 
-## M3 验收门（草案，W10 开工时定稿）
+## M3 验收门（2026-09-14 定稿，W11 #4）
 
-- [ ] 研究 Loop 可演示：一个需要多步检索的复合问题，轨迹（thought/action/observation）完整可见
-- [ ] Agent 轨迹评估指标落地：步数/冗余调用/收敛性有量化口径，Loop 质量可度量
-- [ ] 多轮追问场景生成 eval 不回归（查询改写生效的量化证据）
-- [ ] 至少一个外部 MCP 服务被我们的 Agent 真实调通
-- [ ] 混合检索上线与否由黄金集回归数据裁决（Recall@5 提升 ≥ 阈值才启用，同 few-shot 裁决机制）
+> 每条 = 口径 + 可跑命令/可看证据 + 阈值 + 落位周。验收时逐项挂证据链接进 m3-acceptance.md（非口头宣布）。
+
+- [ ] **研究 Loop 可演示**：复合问题（数字+文本双查，如"600519 2024 营收多少？顺便查年报工艺描述"）轨迹完整可见
+  - 口径：trajectory 事件 ≥2 步、每步 thought/action/observation 齐全、exit=FINAL_ANSWER、终答双要素都作答
+  - 命令：`./mvnw spring-boot:run` 后 `curl -N -X POST localhost:18080/ai/chat/stream -d '{"message":"..."}' -H 'Content-Type: application/json'`，或对话页直接提问看轨迹卡片
+  - 证据：research-trace 日志段 + SSE 事件流摘录（入 m3-acceptance.md）｜落位：W11 #3 已具备，W13 验收时实录
+- [ ] **Agent 轨迹评估指标落地**：三指标有量化口径且可采集
+  - 口径（2026-09-14 定）：**步数** = LoopResult.steps().size()；**冗余调用** = 同 tool + 同归一化 input 的重复次数；**收敛率** = 一批运行中 stopReason=FINAL_ANSWER 的占比
+  - 采集点：`LoopListener.onComplete`（#2 预留的观测端口，零入侵）；数据源同时可离线解析 research-trace 日志
+  - 命令：W13 落地批量采集脚本（docs/scripts/），对黄金集 agent 路由用例输出三指标
+  - 阈值：收敛率 = 100%（允许 MAX_STEPS 但须显式登记理由）、冗余调用 = 0｜落位：W13
+- [ ] **多轮追问场景生成 eval 不回归**（查询改写生效的量化证据）
+  - 口径：改写开/关两轮跑批 multi-turn 类别（W11 #6 新增 ≥6 条），开启轮均分严格高于关闭轮；其余类别不降级
+  - 命令：`AI_EVAL_GENERATION_ENABLED=true AI_EVAL_GENERATION_CATEGORIES=multi-turn ./mvnw spring-boot:run`（两轮差 `AI_REWRITE_ENABLED`——该开关随 W11 #5 落地）
+  - 证据：两轮对比表入 docs/eval/generation/w11-multi-turn.md｜落位：W11 #5/#6
+- [ ] **至少一个外部 MCP 服务被我们的 Agent 真实调通**
+  - 口径：Agent 以 MCP Client 身份调用外部 MCP 服务取到真实数据并用于回答，回答含溯源
+  - 证据：调用日志（tool-audit）+ 回答摘录；候选服务 W12 开工时定（公开行情/财经 MCP 优先）｜落位：W12
+- [ ] **混合检索 / rerank 上线与否由黄金集回归数据裁决**（同 few-shot 裁决机制：事先写死标准）
+  - 口径：检索黄金集全量，dense 基线 vs 混合检索 vs 混合+rerank 三轮 Recall@5
+  - 阈值（2026-09-14 写死）：启用条件 = Recall@5 ≥ 80%（基线 72% +8pp）且五条失分用例无一恶化；不达标则不启用并记录 why-not
+  - 命令：`./mvnw test -Dtest=GoldenRetrievalEvalIT`（配置切换检索模式）｜落位：W13
