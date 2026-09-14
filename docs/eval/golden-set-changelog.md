@@ -17,6 +17,7 @@
 | 版本 | 时点 | 变更 | 对应基线报告 |
 |---|---|---|---|
 | v1 | W8 | 16 条初版：redline 3 + in-domain-unanswerable 4 + factual 6 + compound 3 | [w8-generation-eval](../generation/w8-generation-eval.md)（总体 5.3/6） |
+| v1.1 | W11（2026-09-14） | 新增 multi-turn 6 条（指代消解 3 + 追问深化 1 + 话题切换 1 + 多轮红线 1），用例 schema 增 `turns` 字段（单轮用例不变，向后兼容）；16→22 条 | [w11-multi-turn](../generation/w11-multi-turn.md)（改写开/关两轮对比） |
 
 ## 已挂账演进项
 

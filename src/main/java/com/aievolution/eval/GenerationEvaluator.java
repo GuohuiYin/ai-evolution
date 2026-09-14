@@ -23,7 +23,16 @@ public class GenerationEvaluator {
   }
 
   private GenEvalResult evaluateOne(GenerationCase c) {
-    // 每条用例独立会话：eval 测单轮能力，记忆不串题（多轮评测集 W11 另行设计）
+    if (c.isMultiTurn()) {
+      // W11 #6：多轮脚本同会话顺序执行，评末轮——多轮能力的评测集本体（指代消解/追问深化/话题切换）
+      String conversationId = "eval-" + UUID.randomUUID();
+      String answer = null;
+      for (String turn : c.turns()) {
+        answer = chatService.chat(turn, conversationId).reply();
+      }
+      return new GenEvalResult(c, answer, judge.judge(c, answer));
+    }
+    // 每条用例独立会话：eval 测单轮能力，记忆不串题
     String answer = chatService.chat(c.query(), "eval-" + UUID.randomUUID()).reply();
     return new GenEvalResult(c, answer, judge.judge(c, answer));
   }
