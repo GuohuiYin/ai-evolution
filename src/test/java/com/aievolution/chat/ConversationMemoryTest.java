@@ -57,7 +57,8 @@ class ConversationMemoryTest {
             retriever,
             new ClasspathPromptLibrary(),
             "rag-chat-v1",
-            memory);
+            memory,
+            (query, history) -> query); // 直通改写：本测试聚焦记忆链路
   }
 
   @Test

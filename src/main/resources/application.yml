@@ -63,6 +63,12 @@ ai:
     # RAG 通路 prompt 模板名（resources/prompts/ 下，不含后缀）。A/B 实验经配置切换：
     # AI_RAG_CHAT_PROMPT=rag-chat-v2-fewshot 跑 few-shot 对照（W8-4）
     chat-prompt: rag-chat-v1
+    # W11 #5 查询改写 prompt 模板名
+    rewrite-prompt: query-rewrite-v1
+  rewrite:
+    # W11 #5 查询改写总开关：false 时切直通实现（#6 改写开/关两轮 eval 对比的对照组）
+    # 环境变量 AI_REWRITE_ENABLED=false 即关闭
+    enabled: true
   stock:
     # 个股分析默认会计年度（mock 种子数据按 2024 口径）
     analysis-year: 2024

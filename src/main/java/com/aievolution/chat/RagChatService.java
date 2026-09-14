@@ -3,6 +3,7 @@ package com.aievolution.chat;
 import com.aievolution.compliance.Disclaimers;
 import com.aievolution.prompt.PromptLibrary;
 import com.aievolution.rag.KnowledgeRetriever;
+import com.aievolution.rag.QueryRewriter;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -37,13 +38,16 @@ public class RagChatService implements ChatService {
   private final ChatClient chatClient;
   private final KnowledgeRetriever knowledgeRetriever;
   private final PromptLibrary promptLibrary;
+  private final QueryRewriter queryRewriter;
+  private final ChatMemory chatMemory;
 
   public RagChatService(
       ChatClient.Builder chatClientBuilder,
       KnowledgeRetriever knowledgeRetriever,
       PromptLibrary promptLibrary,
       @Value("${ai.rag.chat-prompt:rag-chat-v1}") String promptName,
-      ChatMemory chatMemory) {
+      ChatMemory chatMemory,
+      QueryRewriter queryRewriter) {
     if (!promptLibrary.exists(promptName)) {
       // prompt 缺失是部署事故，启动即 fail-fast
       throw new IllegalStateException("RAG prompt 模板不存在: " + promptName);
@@ -55,12 +59,14 @@ public class RagChatService implements ChatService {
             .build();
     this.knowledgeRetriever = knowledgeRetriever;
     this.promptLibrary = promptLibrary;
+    this.chatMemory = chatMemory;
+    this.queryRewriter = queryRewriter;
     this.promptName = promptName;
   }
 
   @Override
   public ChatAnswer chat(String message, String conversationId) {
-    List<Document> docs = knowledgeRetriever.retrieve(message);
+    List<Document> docs = retrieveWithRewrite(message, conversationId);
     if (docs.isEmpty()) {
       return new ChatAnswer(NO_KNOWLEDGE_REPLY + DISCLAIMER, List.of());
     }
@@ -79,7 +85,7 @@ public class RagChatService implements ChatService {
   @Override
   public reactor.core.publisher.Flux<ChatStreamPart> chatStream(
       String message, String conversationId) {
-    List<Document> docs = knowledgeRetriever.retrieve(message);
+    List<Document> docs = retrieveWithRewrite(message, conversationId);
     if (docs.isEmpty()) {
       // 空检索硬拒答语义流式化：单条拒答 delta + 收尾
       return reactor.core.publisher.Flux.just(
@@ -103,6 +109,12 @@ public class RagChatService implements ChatService {
 
   private String joinContents(List<Document> docs) {
     return docs.stream().map(Document::getText).collect(Collectors.joining("\n---\n"));
+  }
+
+  /** 检索前改写（W11 #5）：追问先经指代消解成自足查询再向量化——证据 #4 的修复点 */
+  private List<Document> retrieveWithRewrite(String message, String conversationId) {
+    String retrievalQuery = queryRewriter.rewrite(message, chatMemory.get(conversationId));
+    return knowledgeRetriever.retrieve(retrievalQuery);
   }
 
   private List<SourceDocument> toSources(List<Document> docs) {

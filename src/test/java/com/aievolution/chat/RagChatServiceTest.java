@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import com.aievolution.prompt.ClasspathPromptLibrary;
 import com.aievolution.rag.KnowledgeRetriever;
+import com.aievolution.rag.QueryRewriter;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,7 +52,34 @@ class RagChatServiceTest {
 
     service =
         new RagChatService(
-            builder, knowledgeRetriever, new ClasspathPromptLibrary(), "rag-chat-v1", chatMemory);
+            builder,
+            knowledgeRetriever,
+            new ClasspathPromptLibrary(),
+            "rag-chat-v1",
+            chatMemory,
+            (query, history) -> query); // 默认直通：检索行为测试聚焦检索本身
+  }
+
+  @Test
+  void retrievalUsesRewrittenQuery() {
+    // W11 #5：检索拿改写后的自足查询去向量化，而非原始追问（证据 #4 修复点）
+    QueryRewriter rewriter = mock(QueryRewriter.class);
+    when(rewriter.rewrite(org.mockito.ArgumentMatchers.eq("其中的 12987 是什么含义"), any()))
+        .thenReturn("茅台 12987 工艺的含义");
+    RagChatService rewritingService =
+        new RagChatService(
+            mock(ChatClient.Builder.class, org.mockito.Mockito.RETURNS_DEEP_STUBS),
+            knowledgeRetriever,
+            new ClasspathPromptLibrary(),
+            "rag-chat-v1",
+            chatMemory,
+            rewriter);
+    when(knowledgeRetriever.retrieve("茅台 12987 工艺的含义")).thenReturn(List.of());
+
+    rewritingService.chat("其中的 12987 是什么含义", "conv-rw");
+
+    verify(knowledgeRetriever).retrieve("茅台 12987 工艺的含义");
+    verify(knowledgeRetriever, never()).retrieve("其中的 12987 是什么含义");
   }
 
   @Test

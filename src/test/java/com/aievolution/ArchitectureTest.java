@@ -34,7 +34,8 @@ class ArchitectureTest {
           Map.entry("loop", List.of("infra", "tool", "prompt")),
           // 以下为零出度域：基础域不依赖任何兄弟域
           Map.entry("infra", List.of()),
-          Map.entry("rag", List.of()),
+          // W11 #5：rag → prompt（DeepSeekQueryRewriter 加载改写模板）
+          Map.entry("rag", List.of("prompt")),
           Map.entry("stock", List.of()),
           Map.entry("prompt", List.of()),
           Map.entry("compliance", List.of()));
