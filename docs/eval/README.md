@@ -22,6 +22,7 @@
 | [model-selection-v1.md](selection/model-selection-v1.md) | DeepSeek vs Qwen 双模型 10 问实测（能力/延迟/token 三维）→ DeepSeek 主力、Qwen 备选 |
 | [embedding-selection-v1.md](selection/embedding-selection-v1.md) | 调研论证型（W9）：维持 BGE-M3；实测对照列进阶阶段（W14+） |
 | [vectorstore-selection-v1.md](selection/vectorstore-selection-v1.md) | 调研论证型（W9）：维持 Qdrant——本项目量级下选型由运维成本与生态决定；含重评触发条件 |
+| [hyde-query-expansion-v1.md](selection/hyde-query-expansion-v1.md) | 调研论证型（W11）：不采纳 HyDE/查询扩展——病灶错位（指代消解已由改写解决），收益被 W13 混合检索覆盖；含重评触发条件 |
 | [model-selection-samples/](selection/model-selection-samples/) | 模型实测的原始响应样本与延迟记录 |
 
 > 选型方法约定：默认调研论证（需求矩阵 + 公开 benchmark + 显式约束），

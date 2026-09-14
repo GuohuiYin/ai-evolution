@@ -27,7 +27,7 @@
 | 5 | **查询改写器**（TDD）：`QueryRewriter` 接口（IOP）——基于会话历史把追问改写为自足查询（"其中的 12987"→"茅台 12987 工艺的含义"）；DeepSeek 实现 + 直通实现（首轮零成本直通）；检索侧改走改写后查询 | 单测：追问改写含主语补全 / 首轮直通零调用；冒烟：证据 #4 场景复测，追问检索 hits>0 且回答命中 12987 工艺 | ✅ 2026-09-14（`2c0710a`；冒烟复测：改写→hits=1，回答命中 12987 五要素） |
 | 6 | **多轮评测集**：生成黄金集新增 `multi-turn` 类别（指代消解 / 追问深化 / 话题切换 ≥6 条），含多轮对话脚本；eval Runner 支持按脚本顺序同会话执行 | 新用例进 golden-set-generation（先登记 changelog 再提交）；改写开启/关闭两轮跑批对比入报告 | ✅ 2026-09-14（`a78dbde`：黄金集 v1.1 16→22 条 + 同会话执行器；改写开 6.0/6 vs 关 4.5/6，严格高于达成，报告见 docs/eval/generation/w11-multi-turn.md） |
 | 7 | **生成 eval CI 定时回归门**：GitHub Actions 定时任务跑生成黄金集，类别均分阈值告警；repo secrets 由 Owner 配置 | workflow 文件入仓 + 一次成功运行记录；失败时 issue/通知可见 | ✅ 2026-09-14（`52c5728`：EvalGate 阈值判定 + exit-after-run + Runner 显式定序 + eval-generation.yml 每天 UTC 21:23；secrets 待 Owner 配置后手动触发一次补运行记录） |
-| 8 | **HyDE/查询扩展评估**（能力地图挂账项）：调研论证是否引入，不动代码 | 结论写入能力地图（采纳 → 挂 W14+；不采纳 → 记录 why-not） | ⬜ |
+| 8 | **HyDE/查询扩展评估**（能力地图挂账项）：调研论证是否引入，不动代码 | 结论写入能力地图（采纳 → 挂 W14+；不采纳 → 记录 why-not） | ✅ 2026-09-14（不采纳：病灶错位 + 标识符类查询不适用 + 收益被 W13 混合检索覆盖 + 成本延迟相冲；调研报告 [hyde-query-expansion-v1](../../eval/selection/hyde-query-expansion-v1.md)（vectorstore-selection 同款，why-not + 重评触发在案），能力地图索引指向） |
 
 ## 明确不做
 
