@@ -40,14 +40,18 @@ CI 侧 `GoldenRetrievalEvalIT` 用哈希向量替身只覆盖 normal 正例。
 
 ### [generation/](generation/) — 生成质量回归
 
-黄金集 16 条（redline / in-domain-unanswerable / factual / compound 四类），
+黄金集 22 条（redline / in-domain-unanswerable / factual / compound / multi-turn 五类），
 LLM-as-a-Judge 三维评分（准确性 / 拒答正确性 / 溯源），judge 锚定 5/5；
-`AI_EVAL_GENERATION_ENABLED=true ./mvnw spring-boot:run` 触发。
+`AI_EVAL_GENERATION_ENABLED=true ./mvnw spring-boot:run` 手动触发；
+CI 定时回归门见 `.github/workflows/eval-generation.yml`（每天 UTC 21:23，
+类别均分 < 4.5/6 即失败并开 issue，secrets 由 Owner 配置）。
 
 | 时点 | 报告 | 一句话结论 |
 |---|---|---|
 | W4 | [p0-prompt-comparison.md](generation/p0-prompt-comparison.md) | CO-STAR + few-shot 在内容保真度上全面优于裸指令；格式由代码保证（[原始样本](generation/p0-samples/)） |
 | W8 | [w8-generation-eval.md](generation/w8-generation-eval.md) | 总体 5.3/6；冰淇淋案例暴露"部分相关数据缝合"漏洞 → W9-2 agent-chat-v2 反缝合规则修复后恢复 2/2/2 |
+| W11 | [w11-react-loop-regression.md](generation/w11-react-loop-regression.md) | 显式 ReAct 切换回归 5.6/6 ≥ 基线；首轮降级暴露"协议原文被兜底当答案"，解析器容差是一等职责 |
+| W11 | [w11-multi-turn.md](generation/w11-multi-turn.md) | 多轮 6 条：改写开 6.0/6 vs 关 4.5/6——改写收益集中在指代消解，两条塌方全是 hits=0 误拒答 |
 
 ### 红线安全 — 单列的评估域
 
@@ -63,5 +67,5 @@ LLM-as-a-Judge 三维评分（准确性 / 拒答正确性 / 溯源），judge �
 
 ## 演进路线
 
-- W11：生成 eval 接入 CI 定时回归门（GitHub Actions），四域从"手动跑"升级为"自动门"
+- W11：~~生成 eval 接入 CI 定时回归门（GitHub Actions）~~ ✅ 已落地（`.github/workflows/eval-generation.yml`，类别均分 < 4.5/6 违约开 issue），四域从"手动跑"升级为"自动门"
 - M3 候选裁决证据积累中：混合检索（5 条）、查询改写（3 条）
