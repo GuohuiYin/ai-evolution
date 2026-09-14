@@ -108,4 +108,20 @@ class ReactProtocolParserTest {
     assertThat(act.thought()).isEmpty();
     assertThat(act.tool()).isEqualTo("searchAnnouncements");
   }
+
+  @Test
+  void toleratesInlineJsonArgsOnActionLine() {
+    // 格式漂移实锤（W11 #3c 首轮 eval）：模型把入参内联进 Action 行——
+    // 不容忍则直通兜底把协议原文当答案（五粮液/冰淇淋/净利润三案归零的根因）
+    String raw =
+        """
+        Thought: 改用 2023 会计年度再查
+        Action: getFinancialSummary({"code": "000858", "fiscalYear": 2023})
+        """;
+
+    ModelTurn.Act act = (ModelTurn.Act) parser.parse(raw).orElseThrow();
+
+    assertThat(act.tool()).isEqualTo("getFinancialSummary");
+    assertThat(act.input()).contains("\"code\": \"000858\"").contains("\"fiscalYear\": 2023");
+  }
 }

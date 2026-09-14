@@ -20,7 +20,8 @@ class ArchitectureTest {
   /** 域间依赖白名单：key 域只允许依赖 value 列出的兄弟域（领域类型/接口/数据契约）。 */
   private static final Map<String, List<String>> ALLOWED_DEPENDENCIES =
       Map.ofEntries(
-          Map.entry("chat", List.of("compliance", "prompt", "rag", "tool")),
+          // W11 #3：chat → loop（AgentChatService 切 ResearchLoop 驱动）+ infra（SSE 异步线程 traceId 交接）
+          Map.entry("chat", List.of("compliance", "prompt", "rag", "tool", "loop", "infra")),
           Map.entry("analysis", List.of("compliance", "prompt", "stock")),
           // W11 日志摘要收口：tool → infra（LogSummaries 单点，A11 两次即收口首例）
           Map.entry("tool", List.of("rag", "stock", "infra")),

@@ -3,6 +3,7 @@ package com.aievolution.loop;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.springframework.stereotype.Component;
 
 /**
  * ReAct 文本协议解析器（W11 #3b-1）：把模型的原始输出解析为 {@link ModelTurn}。
@@ -19,6 +20,7 @@ import java.util.regex.Pattern;
  *
  * <p>容错：标记行允许 Markdown 加粗（{@code **Thought:**}）与全角冒号—— 模型的格式漂移是常态，解析器严进宽出；仍不合协议则返回空，处置权交调用方。
  */
+@Component
 public class ReactProtocolParser {
 
   private static final Pattern MARKER =
@@ -60,6 +62,14 @@ public class ReactProtocolParser {
 
     if (finalAnswer != null && !finalAnswer.isEmpty()) {
       return Optional.of(new ModelTurn.Final(thought, finalAnswer));
+    }
+    // 格式漂移容差：Action 行内联 JSON 入参（"Action: tool({...})"）——拆出工具名与入参
+    if (action != null && actionInput == null) {
+      int brace = action.indexOf('{');
+      if (brace > 0) {
+        actionInput = action.substring(brace).replaceAll("\\)$", "").trim();
+        action = action.substring(0, brace).replaceAll("\\($", "").trim();
+      }
     }
     if (action != null && !action.isEmpty() && actionInput != null && !actionInput.isEmpty()) {
       return Optional.of(new ModelTurn.Act(thought, action, actionInput));

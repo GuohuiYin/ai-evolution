@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
+import org.springframework.stereotype.Component;
 
 /**
  * Loop 工具注册表（W11 #3a）：把现有三工具（W5 起模型自主调用的那套）按名桥接进显式循环， 实现 {@link ToolExecutor} 端口。
@@ -16,6 +17,7 @@ import java.util.List;
  * <p>失败哲学：不可派发（未知工具/JSON 畸形/缺参）一律降级为错误观察喂回模型， 让模型自我纠正；不抛异常击穿循环（同 {@code RETURN_ERROR_RESPONSE}
  * 不击穿思想）。
  */
+@Component
 public class ToolRegistry implements ToolExecutor {
 
   /** 工具手册条目：名称 + 用途 + 入参 schema 说明，供 #3b 拼系统 prompt */

@@ -1,8 +1,11 @@
 package com.aievolution.loop;
 
+import com.aievolution.infra.LogSummaries;
 import com.aievolution.prompt.PromptLibrary;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.Message;
 
@@ -16,6 +19,7 @@ import org.springframework.ai.chat.messages.Message;
  */
 public class DeepSeekResearchModel implements ResearchModel {
 
+  private static final Logger log = LoggerFactory.getLogger(DeepSeekResearchModel.class);
   private static final String TOOL_MANUAL_PLACEHOLDER = "{TOOL_MANUAL}";
 
   private final ChatClient chatClient;
@@ -52,7 +56,15 @@ public class DeepSeekResearchModel implements ResearchModel {
             .user(buildUserMessage(question, history))
             .call()
             .content();
-    return parser.parse(raw).orElseGet(() -> new ModelTurn.Final("", raw));
+    return parser
+        .parse(raw)
+        .orElseGet(
+            () -> {
+              // 协议违背必须可见（W11 #3c 教训：静默直通曾把协议原文当答案，首轮 eval 三案归零才发现）
+              log.warn(
+                  "protocol violation, degrade to direct answer: {}", LogSummaries.summarize(raw));
+              return new ModelTurn.Final("", raw);
+            });
   }
 
   private String buildUserMessage(String question, List<LoopStep> history) {
