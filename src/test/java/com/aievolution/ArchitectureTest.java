@@ -25,7 +25,8 @@ class ArchitectureTest {
           Map.entry("analysis", List.of("compliance", "prompt", "stock")),
           // W11 日志摘要收口：tool → infra（LogSummaries 单点，A11 两次即收口首例）
           Map.entry("tool", List.of("rag", "stock", "infra")),
-          Map.entry("mcp", List.of("tool")),
+          // W12 #1：mcp → infra（McpExternalToolClient 审计摘要复用 LogSummaries 单点，A11 两次即收口）
+          Map.entry("mcp", List.of("tool", "infra")),
           // W8-4 生成层评估：eval 必须驱动生产对话通路（chat）与 prompt 资产（judge 模板），
           // 属"评的就是用的"的正当依赖——白名单显式登记即本次架构决策的 review 记录
           Map.entry("eval", List.of("rag", "chat", "prompt")),

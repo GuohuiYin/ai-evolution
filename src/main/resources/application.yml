@@ -115,6 +115,10 @@ ai:
   tool:
     # 工具入参长度上限（红队基线 M3 修复：防超长 query 直达上游付费 API 的成本攻击）
     max-query-length: 2000
+  mcp:
+    fetch:
+      # 抓取正文喂回模型前的长度上限：网页原文无界，防单页烧爆上下文与 token 账本（A11 策略外置）
+      max-content-length: 8000
   knowledge:
     ingest:
       # 启动时摄入知识库；测试环境关闭避免打真实 Embedding API
