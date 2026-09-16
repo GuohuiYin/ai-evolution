@@ -23,6 +23,15 @@ spring:
       limits:
         max-total-tool-calls: 10
         on-limit-exceeded: RETURN_ERROR_RESPONSE
+    # 内部重试只覆盖瞬时抖动：库默认 10 次指数退避（上限 3min/次），供应商级故障会被拖成
+    # 十分钟级挂起，应急降级形同虚设（W12 #4c 故障注入实测抓获，线程栈停在 RetryTemplate.sleep）。
+    # 快速失败后交给 FailoverChatModel 切备用供应商
+    retry:
+      max-attempts: ${AI_RETRY_MAX_ATTEMPTS:2}
+      backoff:
+        initial-interval: ${AI_RETRY_BACKOFF_INITIAL:1s}
+        multiplier: 2
+        max-interval: 5s
     deepseek:
       api-key: ${AI_API_KEY:}
       base-url: ${AI_BASE_URL:https://api.deepseek.com}

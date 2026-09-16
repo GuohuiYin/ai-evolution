@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.retry.NonTransientAiException;
 import org.springframework.ai.retry.TransientAiException;
@@ -46,6 +47,19 @@ public class FailoverChatModel implements ChatModel {
   }
 
   @Override
+  public ChatOptions getOptions() {
+    // ChatClient 装配从 getOptions() 取默认选项；接口默认实现返回通用 DefaultChatOptions，
+    // 而 DeepSeekChatModel.createRequest 会把 Prompt.options 强转 DeepSeekChatOptions——
+    // 不透传主力同型选项则正常路径直接炸（W12 #4c 故障注入实测抓获）
+    return primary.getOptions();
+  }
+
+  @Override
+  public ChatOptions getDefaultOptions() {
+    return primary.getDefaultOptions();
+  }
+
+  @Override
   public ChatResponse call(Prompt prompt) {
     try {
       return primary.call(prompt);
@@ -54,7 +68,7 @@ public class FailoverChatModel implements ChatModel {
         throw e;
       }
       alert(e);
-      return fallback.call(prompt);
+      return fallback.call(toFallbackPrompt(prompt));
     }
   }
 
@@ -69,8 +83,17 @@ public class FailoverChatModel implements ChatModel {
                 return Flux.error(err);
               }
               alert(err);
-              return fallback.stream(prompt);
+              return fallback.stream(toFallbackPrompt(prompt));
             });
+  }
+
+  /**
+   * 降级路径重建 Prompt：options 换成备用模型的默认选项（携带正确的模型名与供应商专有字段）， 主力专有 options 不可跨供应商复用（双方 createRequest
+   * 均强转具体类型）。降级是应急通道， 保可用性优先于保逐请求调参一致性——本工程对话/分析/judge 链路均走默认 options，无实际损失；
+   * 若未来引入按请求调参（温度等），需在此补可移植字段映射。
+   */
+  private Prompt toFallbackPrompt(Prompt prompt) {
+    return new Prompt(prompt.getInstructions(), fallback.getDefaultOptions());
   }
 
   /** 切换判据单点：沿 cause 链识别。先排 4xx（包装层在上游时必须优先命中"不切"）， 再认 5xx/超时。两层语义冲突时宁可不切——误切掩盖病灶，误不切只是维持现状报错。 */
