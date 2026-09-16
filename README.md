@@ -139,7 +139,9 @@ flowchart TB
 
 - MCP Server 对外暴露三工具：`POST /mcp`（Streamable HTTP，Inspector 已真实调通，ADR-0009）
 - 任意 MCP 客户端配 `url = "http://localhost:18080/mcp"` + 请求头 `X-API-Key`（W12 #2 起强制）即可发现 `getDailyQuotes` / `getFinancialSummary` / `searchAnnouncements`（Codex 见 `~/.codex/config.toml` 的 `[mcp_servers.ai-evolution]`）
-- 双模型供应商配置切换：DeepSeek 主力 / Qwen 备选（实测定稿）
+- 双模型供应商配置：DeepSeek 主力 / Qwen 备选（实测定稿）；**模型自动降级**（W12 #4）：
+  主力超时/5xx 自动切 Qwen（FailoverChatModel 装饰器，@Primary 全链路透明），
+  4xx 不切防掩盖病灶；WARN 告警日志 + `model.failover.total` 计数器可见
 - 集群内全链路运行：Minikube + ConfigMap/Secret 分层 + 探针 + 优雅停机
 
 **安全与合规**
