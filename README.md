@@ -129,6 +129,8 @@ flowchart TB
 - SSE 流式对话：`POST /ai/chat/stream` 逐 token 下发，对话页流式渲染 + 会话管理
 - 知识库问答可溯源：回答带 sources，越界硬拒答（空检索不过模型）
 - Agent 工具调用：行情 / 财务 / 公告检索三工具，AOP 审计留痕
+- MCP Client 出向取数（W12 #1）：ReAct 面板第 4 工具 `fetchWebPage` 经官方 `mcp-server-fetch`
+  抓网页正文（stdio/uvx，白名单派发，ADR-0016），审计走 tool-audit 同一通道
 - 对话统一入口 `/ai/chat`：规则路由自动分发 RAG/Agent 双通路（ADR-0010）
 - 结构化个股分析 `/ai/analyze`：CO-STAR + few-shot + schema 强约束输出
 - 知识摄入：md + PDF 年报，元数据三件套过滤（"只查 2024 年报"），SHA-256 增量摄入

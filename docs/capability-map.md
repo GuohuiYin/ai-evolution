@@ -39,7 +39,7 @@
 | 维度 | 现状 | 处置 |
 |---|---|---|
 | 规划 | ✅ ReAct 显式化 W11 落地（ResearchLoop + 协议解析 + ADR-0015，回归 5.6/6 ≥ 基线） | — |
-| 工具 | ✅ 三工具 + MCP Server；🔵 MCP Client W12 | 已排 |
+| 工具 | ✅ 三工具 + MCP Server + MCP Client（W12 #1 fetchWebPage 真实调通，ADR-0016） | — |
 | Human-in-the-loop | ❌ 高风险动作人工确认（金融域正当性足） | W14+（ReAct 轨迹成型后加确认节点） |
 | 多 Agent / A2A | ❌ | W14+ 进阶（单 Agent 扎实后） |
 
