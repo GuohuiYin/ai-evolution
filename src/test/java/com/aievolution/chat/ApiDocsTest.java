@@ -55,6 +55,7 @@ class ApiDocsTest {
         .contains("\"securitySchemes\"")
         .contains("apiKey")
         .contains("X-API-Key")
-        .contains("\"security\""); // 全局安全要求
+        .contains("\"security\"") // 全局安全要求
+        .contains("\"429\""); // W12 #3：限流响应码全端点声明
   }
 }

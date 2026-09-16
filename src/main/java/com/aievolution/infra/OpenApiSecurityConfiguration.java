@@ -4,7 +4,9 @@ import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
+import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -29,5 +31,27 @@ public class OpenApiSecurityConfiguration {
   @Bean
   public OpenAPI aiEvolutionOpenAPI() {
     return new OpenAPI().addSecurityItem(new SecurityRequirement().addList("apiKey"));
+  }
+
+  /** W12 #3（A7 全部错误码）：每个端点统一补 429 声明——限流是横切行为，不该逐控制器手抄 */
+  @Bean
+  public OpenApiCustomizer tooManyRequestsCustomizer() {
+    return openApi ->
+        openApi
+            .getPaths()
+            .values()
+            .forEach(
+                pathItem ->
+                    pathItem
+                        .readOperations()
+                        .forEach(
+                            operation ->
+                                operation
+                                    .getResponses()
+                                    .addApiResponse(
+                                        "429",
+                                        new ApiResponse()
+                                            .description(
+                                                "请求频率超限（每身份每分钟限额；RFC 7807 ProblemDetail + Retry-After 头）"))));
   }
 }

@@ -7,12 +7,23 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 
 /**
- * 安全接线（W12 #2）：API Key 过滤器全路径注册（/*），放行逻辑在过滤器内部显式声明。
+ * 安全接线（W12 #2/#3）：过滤器顺序 = TraceId（HIGHEST_PRECEDENCE）→ 限流（+1）→ 鉴权（+2）。
  *
- * <p>顺序约定：排在 {@link TraceIdFilter}（HIGHEST_PRECEDENCE）之后——401 拒绝日志也带 traceId， 排查"谁的请求被拒"有据可查。
+ * <p>限流排在鉴权前：撞库与无凭证试探同样吃额度，401 不是免费通道； 401/429 拒绝日志均带 traceId，排查"谁的请求被拒"有据可查。
  */
 @Configuration
 public class SecurityConfiguration {
+
+  @Bean
+  public FilterRegistrationBean<RateLimitFilter> rateLimitFilter(
+      @Value("${ai.security.rate-limit.per-minute:60}") int maxPerMinute) {
+    FilterRegistrationBean<RateLimitFilter> registration = new FilterRegistrationBean<>();
+    registration.setFilter(
+        new RateLimitFilter(maxPerMinute, () -> System.currentTimeMillis() / 1000));
+    registration.addUrlPatterns("/*");
+    registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
+    return registration;
+  }
 
   @Bean
   public FilterRegistrationBean<ApiKeyAuthFilter> apiKeyAuthFilter(
@@ -20,7 +31,7 @@ public class SecurityConfiguration {
     FilterRegistrationBean<ApiKeyAuthFilter> registration = new FilterRegistrationBean<>();
     registration.setFilter(new ApiKeyAuthFilter(apiKey));
     registration.addUrlPatterns("/*");
-    registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
+    registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 2);
     return registration;
   }
 }

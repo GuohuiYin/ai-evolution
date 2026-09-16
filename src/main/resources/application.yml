@@ -121,8 +121,12 @@ ai:
     max-query-length: 2000
   security:
     # W12 #2：API Key 鉴权（强制项，请求头 X-API-Key）。空值启动 fail-fast——
-    # 鉴权没有"忘记开"的静默中间态。放行清单见 ApiKeyAuthFilter（测试锁定）
+    # 鉴权没有"忘记开"的静默中间态。放行清单见 SecurityAllowlist（测试锁定）
     api-key: ${AI_EVOLUTION_API_KEY:}
+    rate-limit:
+      # W12 #3：固定窗口限流，每身份（API Key，无凭证按 IP）每分钟次数上限。
+      # 单实例内存实现；多副本场景待 L2 持久化一起谈（周计划"明确不做"）
+      per-minute: 60
   mcp:
     fetch:
       # 抓取正文喂回模型前的长度上限：网页原文无界，防单页烧爆上下文与 token 账本（A11 策略外置）
