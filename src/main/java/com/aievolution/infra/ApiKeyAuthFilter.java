@@ -8,11 +8,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
-import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
@@ -34,19 +32,6 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
 
   public static final String API_KEY_HEADER = "X-API-Key";
 
-  /** 放行清单（显式决策，测试锁定）：精确匹配 / 与 /index.html；前缀匹配文档与健康探针 */
-  private static final List<String> ALLOWLIST =
-      List.of(
-          "/",
-          "/index.html",
-          "/favicon.ico",
-          "/swagger-ui/**",
-          "/v3/api-docs",
-          "/v3/api-docs.yaml",
-          "/v3/api-docs/**",
-          "/actuator/health/**");
-
-  private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   private final byte[] expectedKey;
@@ -65,8 +50,7 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
       HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {
     String path = request.getRequestURI();
-    boolean allowed = ALLOWLIST.stream().anyMatch(p -> PATH_MATCHER.match(p, path));
-    if (allowed) {
+    if (SecurityAllowlist.isPublic(path)) {
       filterChain.doFilter(request, response);
       return;
     }
