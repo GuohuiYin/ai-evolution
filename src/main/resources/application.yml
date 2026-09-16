@@ -48,6 +48,26 @@ spring:
         version: 0.2.0-m2-SNAPSHOT
         protocol: STREAMABLE
         type: SYNC
+      # W12 #1：MCP Client（协议栈的另一半）——Agent 持证调外部服务取数。
+      # stdio 拉起官方 mcp-server-fetch（uvx 常驻子进程，启动时建立连接）
+      client:
+        # 测试上下文显式关闭（外部子进程不进测试）；本地/部署默认开，AI_MCP_CLIENT_ENABLED 可覆盖
+        enabled: ${AI_MCP_CLIENT_ENABLED:true}
+        type: SYNC
+        name: ai-evolution-mcp-client
+        # 协议级超时：外部网页慢响应不拖死研究 Loop（A11 策略外置）
+        request-timeout: 30s
+        # MCP 工具不自动注册为全局 ToolCallback——只经 ExternalToolClient 白名单派发，
+        # 与 tools.resolution.fallback.enabled=false 同一安全立场（显式边界，防注入越权通道）
+        toolcallback:
+          enabled: false
+        stdio:
+          connections:
+            fetch:
+              # uvx 路径走环境变量（开发机 PATH 各异，CI 不需要）；args 无 --ignore-robots-txt：
+              # 尊重目标站 robots 是默认正确姿态，抓取演示选无争议页面
+              command: ${MCP_FETCH_COMMAND:uvx}
+              args: mcp-server-fetch
 
 server:
   port: 18080

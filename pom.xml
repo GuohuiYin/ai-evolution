@@ -82,6 +82,12 @@
       <groupId>org.springframework.ai</groupId>
       <artifactId>spring-ai-starter-mcp-server-webmvc</artifactId>
     </dependency>
+    <!-- W12 #1：MCP Client（stdio），Agent 以标准协议调用外部 MCP 服务取数（首个接入：官方
+         mcp-server-fetch）。版本由 spring-ai-bom 管理，与 server 侧同 BOM 天然兼容 -->
+    <dependency>
+      <groupId>org.springframework.ai</groupId>
+      <artifactId>spring-ai-starter-mcp-client</artifactId>
+    </dependency>
     <!-- OpenAPI 3 文档（约定 A7）：注解生成契约 + 内嵌 Swagger UI，Boot 4 兼容线从 3.x 开始 -->
     <dependency>
       <groupId>org.springdoc</groupId>

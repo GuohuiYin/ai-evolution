@@ -10,7 +10,9 @@ import org.springframework.boot.test.context.SpringBootTest;
       "spring.ai.deepseek.api-key=test-key",
       "spring.ai.openai.api-key=test-key",
       "spring.ai.vectorstore.qdrant.initialize-schema=false",
-      "ai.knowledge.ingest.enabled=false"
+      "ai.knowledge.ingest.enabled=false",
+      // W12 #1：测试上下文不起 uvx 外部子进程（CI 无 uvx），MCP Client 链路由专门测试覆盖
+      "spring.ai.mcp.client.enabled=false"
     })
 class AiEvolutionApplicationTests {
 
