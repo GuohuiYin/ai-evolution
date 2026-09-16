@@ -13,3 +13,6 @@ data:
   AI_RAG_TOP_K: "5"
   AI_RAG_SIMILARITY_THRESHOLD: "0.5"
   AI_RAG_CHUNK_SIZE: "800"
+  # 容器镜像内无 uvx，MCP Client 子进程起不来——K8s 部署显式关闭出向 MCP
+  #（ADR-0016 观察项：要开启需镜像内置 uv，另行评估镜像体积成本）
+  AI_MCP_CLIENT_ENABLED: "false"
