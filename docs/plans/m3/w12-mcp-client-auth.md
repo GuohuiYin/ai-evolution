@@ -15,7 +15,7 @@
 |---|---|---|
 | 1 ✅ | **MCP Client 接入**（TDD）：Spring AI MCP Client 连接一个真实外部 MCP 服务（候选：官方 fetch/time 等公开服务，开工时选型）；封装为 `ExternalToolClient` 接口（IOP），挂入 Agent 工具面板 | 我们的 Agent 通过 MCP 协议真实调通外部服务一次，日志可见调用链（traceId 串联）；单测 mock 协议层<br>**完成 2026-09-16**：`8f7deb1`+#1a 补丁 `b72c0a5`（依赖/配置/镜像）→ `2c9a349`（契约+实现 TDD 7 条）→ `b8bd552`（面板挂入，A13 eval 5.5/6 ≥ 基线 5.3/6）→ `b6dd1d5`（spotless 收口）；真实调通实录见周记 2026-09-16，选型与派发立场见 ADR-0016 |
 | 2 ✅ | **API Key 鉴权**：`/ai/**` 与 `/mcp` 加 API Key 校验（Filter 实现，key 走环境变量配置 A5）；Swagger UI/对话页/actuator 健康探针的放行策略显式决策 | 无 key 401；合法 key 正常；放行清单测试锁定；OpenAPI 标注安全方案（A7）<br>**完成 2026-09-16**：`d053395`——默认拒绝 + 显式放行清单（13 条单测锁定）；401 ProblemDetail；常量时间比对；空 key fail-fast；OpenAPI apiKey 方案 + ApiDocsTest 断言；McpServerIT 401 集成锁定；八场景真实冒烟全过 |
-| 3 | **频率限制**：简单令牌桶/固定窗口（每 key 每分钟 N 次，配置化 A11） | 超限 429 + ProblemDetail（B3）；测试锁定阈值行为 |
+| 3 ✅ | **频率限制**：简单令牌桶/固定窗口（每 key 每分钟 N 次，配置化 A11） | 超限 429 + ProblemDetail（B3）；测试锁定阈值行为<br>**完成 2026-09-16**：`4e681da`（放行清单收口 SecurityAllowlist，A11 两次即收口）→ `ed7db9b`（固定窗口实现 + 7 条单测 + OpenAPI 429 横切声明）；真实冒烟：错误 key 连发，第 61 次起 429 + Retry-After（阈值翻转实测） |
 | 4 | **模型自动降级裁决**（能力地图挂账）：DeepSeek 故障自动切 Qwen 是否本周做 | 裁决记录：做 → TDD 落地（超时/5xx 触发切换 + 告警日志）；挂 W14+ → 记录理由与触发条件 |
 
 ## 明确不做
