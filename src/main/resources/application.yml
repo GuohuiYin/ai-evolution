@@ -68,6 +68,10 @@ spring:
               # 尊重目标站 robots 是默认正确姿态，抓取演示选无争议页面
               command: ${MCP_FETCH_COMMAND:uvx}
               args: mcp-server-fetch
+              env:
+                # uv 解析走镜像（2026-09-16 实测：默认 PyPI 源 7s+/请求且缓存按 index 分桶，
+                # 冷启动远超 20s 初始化握手超时；镜像 ~5s）。环境已配 UV_INDEX_URL 时透传覆盖
+                UV_INDEX_URL: ${UV_INDEX_URL:https://pypi.tuna.tsinghua.edu.cn/simple}
 
 server:
   port: 18080
