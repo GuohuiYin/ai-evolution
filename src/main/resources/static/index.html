@@ -262,6 +262,24 @@
     /* ── 会话状态：conversationId 是续聊凭据（W10 一等公民） ── */
     let conversationId = null;
 
+    /* ── API Key（W12 #2）：页面放行但 API 持证。首次发送时提示输入，
+       存 sessionStorage（仅当前标签页，关页即清）；401 时清除并重新询问 ── */
+    let apiKey = sessionStorage.getItem('ai-evolution-api-key') || '';
+
+    function ensureApiKey() {
+      while (!apiKey) {
+        apiKey = (prompt('本服务已启用 API Key 鉴权（W12 #2），请输入 X-API-Key：') || '').trim();
+        if (!apiKey) return false; // 用户取消
+      }
+      sessionStorage.setItem('ai-evolution-api-key', apiKey);
+      return true;
+    }
+
+    function handleUnauthorized() {
+      sessionStorage.removeItem('ai-evolution-api-key');
+      apiKey = '';
+    }
+
     function updateBadge() {
       convBadge.textContent = conversationId ? `会话 ${conversationId.slice(0, 8)}…` : '未开始会话';
       convBadge.title = conversationId ? `conversationId: ${conversationId}` : '会话标识（续聊凭据）';
@@ -352,11 +370,12 @@
     async function streamChat(message, handlers) {
       const resp = await fetch('/ai/chat/stream', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
         body: JSON.stringify(conversationId ? { message, conversationId } : { message })
       });
       if (!resp.ok) {
-        const hint = { 400: '请求参数不合法', 502: '模型服务异常（不可重试）', 503: '模型繁忙，请稍后重试' };
+        if (resp.status === 401) handleUnauthorized(); // key 失效：清除，下次发送重新询问
+        const hint = { 400: '请求参数不合法', 401: 'API Key 缺失或无效', 502: '模型服务异常（不可重试）', 503: '模型繁忙，请稍后重试' };
         throw new Error(`⚠️ ${hint[resp.status] || '服务异常'}（HTTP ${resp.status}）`);
       }
       const reader = resp.body.getReader();
@@ -390,6 +409,7 @@
     async function send() {
       const text = input.value.trim();
       if (!text || pending) return;
+      if (!ensureApiKey()) return; // 用户取消输入 key：不发送、不占待回状态
       document.getElementById('welcome')?.remove();
       pending = true; sendBtn.disabled = true;
       input.value = ''; input.style.height = 'auto';

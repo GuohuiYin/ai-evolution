@@ -19,7 +19,9 @@ import org.springframework.boot.test.context.SpringBootTest;
       "spring.ai.vectorstore.qdrant.initialize-schema=false",
       "ai.knowledge.ingest.enabled=false",
       // W12 #1：测试上下文不起 uvx 外部子进程（CI 无 uvx），MCP Client 链路由专门测试覆盖
-      "spring.ai.mcp.client.enabled=false"
+      "spring.ai.mcp.client.enabled=false",
+      // W12 #2：鉴权为强制项（空 key 启动 fail-fast），测试上下文配测试 key
+      "ai.security.api-key=test-key"
     })
 class ChatPageTest {
 

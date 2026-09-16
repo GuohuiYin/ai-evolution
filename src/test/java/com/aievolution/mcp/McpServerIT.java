@@ -24,7 +24,9 @@ import org.springframework.boot.test.context.SpringBootTest;
       "spring.ai.vectorstore.qdrant.initialize-schema=false",
       "ai.knowledge.ingest.enabled=false",
       // W12 #1：测试上下文不起 uvx 外部子进程（CI 无 uvx），MCP Client 链路由专门测试覆盖
-      "spring.ai.mcp.client.enabled=false"
+      "spring.ai.mcp.client.enabled=false",
+      // W12 #2：鉴权为强制项（空 key 启动 fail-fast），测试上下文配测试 key
+      "ai.security.api-key=test-key"
     })
 class McpServerIT {
 
@@ -35,10 +37,32 @@ class McpServerIT {
 
   private HttpRequest.Builder mcpPost(String body) {
     // Streamable HTTP 规范：客户端必须同时接受 JSON 与 SSE 流两种响应形态
+    // W12 #2：/mcp 属保护端点，请求必须持证（X-API-Key）
     return HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/mcp"))
         .header("Content-Type", "application/json")
         .header("Accept", "application/json, text/event-stream")
+        .header("X-API-Key", "test-key")
         .POST(HttpRequest.BodyPublishers.ofString(body));
+  }
+
+  @Test
+  void mcpWithoutApiKeyReturns401() throws Exception {
+    // W12 #2 集成锁定：MCP 端点无凭证 = 401 ProblemDetail（真实 HTTP 层验证，非单测模拟）
+    HttpRequest request =
+        HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/mcp"))
+            .header("Content-Type", "application/json")
+            .header("Accept", "application/json, text/event-stream")
+            .POST(
+                HttpRequest.BodyPublishers.ofString(
+                    "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{}}"))
+            .build();
+
+    HttpResponse<String> resp = http.send(request, HttpResponse.BodyHandlers.ofString());
+
+    assertThat(resp.statusCode()).isEqualTo(401);
+    assertThat(resp.headers().firstValue("Content-Type"))
+        .hasValueSatisfying(ct -> assertThat(ct).startsWith("application/problem+json"));
+    assertThat(resp.body()).contains("Unauthorized");
   }
 
   @Test

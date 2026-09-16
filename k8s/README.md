@@ -16,6 +16,7 @@ set -a && source .env && set +a
 kubectl create secret generic ai-evolution-secret \
   --from-literal=AI_API_KEY="$AI_API_KEY" \
   --from-literal=SILICONFLOW_API_KEY="$SILICONFLOW_API_KEY" \
+  --from-literal=AI_EVOLUTION_API_KEY="$AI_EVOLUTION_API_KEY" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 kubectl rollout status deploy/qdrant

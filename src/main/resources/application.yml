@@ -119,6 +119,10 @@ ai:
   tool:
     # 工具入参长度上限（红队基线 M3 修复：防超长 query 直达上游付费 API 的成本攻击）
     max-query-length: 2000
+  security:
+    # W12 #2：API Key 鉴权（强制项，请求头 X-API-Key）。空值启动 fail-fast——
+    # 鉴权没有"忘记开"的静默中间态。放行清单见 ApiKeyAuthFilter（测试锁定）
+    api-key: ${AI_EVOLUTION_API_KEY:}
   mcp:
     fetch:
       # 抓取正文喂回模型前的长度上限：网页原文无界，防单页烧爆上下文与 token 账本（A11 策略外置）

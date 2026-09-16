@@ -138,7 +138,7 @@ flowchart TB
 **协议与部署**
 
 - MCP Server 对外暴露三工具：`POST /mcp`（Streamable HTTP，Inspector 已真实调通，ADR-0009）
-- 任意 MCP 客户端配 `url = "http://localhost:18080/mcp"` 即可发现 `getDailyQuotes` / `getFinancialSummary` / `searchAnnouncements`（Codex 见 `~/.codex/config.toml` 的 `[mcp_servers.ai-evolution]`）
+- 任意 MCP 客户端配 `url = "http://localhost:18080/mcp"` + 请求头 `X-API-Key`（W12 #2 起强制）即可发现 `getDailyQuotes` / `getFinancialSummary` / `searchAnnouncements`（Codex 见 `~/.codex/config.toml` 的 `[mcp_servers.ai-evolution]`）
 - 双模型供应商配置切换：DeepSeek 主力 / Qwen 备选（实测定稿）
 - 集群内全链路运行：Minikube + ConfigMap/Secret 分层 + 探针 + 优雅停机
 

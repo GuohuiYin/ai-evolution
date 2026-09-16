@@ -56,6 +56,11 @@ jobs:
           AI_EVAL_GENERATION_ENABLED: "true"
           AI_EVAL_GENERATION_GATE_MIN_CATEGORY_AVERAGE: "4.5"
           AI_EVAL_GENERATION_EXIT_AFTER_RUN: "true"
+          # W12 #1：CI runner 无 uvx，MCP Client 必须关（eval 不经外部抓取取数）
+          AI_MCP_CLIENT_ENABLED: "false"
+          # W12 #2：鉴权强制（空 key 启动 fail-fast）。eval 走内部服务调用不过 HTTP，
+          # 临时 CI 实例用非敏感占位值即可，不占用 secret
+          AI_EVOLUTION_API_KEY: ci-ephemeral-key
         run: timeout 20m ./mvnw -B spring-boot:run
 
       # 失败可见性：复用既有 open issue 追加评论，避免每天一个新 issue 刷屏
