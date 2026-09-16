@@ -93,6 +93,12 @@ ai:
     # W11 #5 查询改写总开关：false 时切直通实现（#6 改写开/关两轮 eval 对比的对照组）
     # 环境变量 AI_REWRITE_ENABLED=false 即关闭
     enabled: true
+  model:
+    failover:
+      # W12 #4：DeepSeek 故障（超时/5xx）自动切 Qwen（SiliconFlow 托管，复用 SILICONFLOW 凭证零新增密钥面）。
+      # 降级期延迟显著升高（选型实测 30-60x），告警日志 + model.failover.total 计数器可见
+      enabled: ${AI_MODEL_FAILOVER_ENABLED:true}
+      model: ${AI_MODEL_FAILOVER_MODEL:Qwen/Qwen3.5-35B-A3B}
   stock:
     # 个股分析默认会计年度（mock 种子数据按 2024 口径）
     analysis-year: 2024
