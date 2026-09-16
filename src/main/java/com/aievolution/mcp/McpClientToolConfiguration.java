@@ -9,8 +9,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * MCP Client 工具接线（W12 #1b）：从自动装配的 sync client 列表中挑出 fetch 连接，
- * 封装为 tool 域 {@link ExternalToolClient} 契约 Bean——协议选型与连接识别不出 mcp 域。
+ * MCP Client 工具接线（W12 #1b）：从自动装配的 sync client 列表中挑出 fetch 连接， 封装为 tool 域 {@link ExternalToolClient}
+ * 契约 Bean——协议选型与连接识别不出 mcp 域。
  *
  * <p>仅在 MCP Client 启用时注册（测试上下文关闭，不起 uvx 子进程）；启用而连接缺失 属于配置错误，启动 fail-fast 而非运行期才发现。
  */
@@ -24,7 +24,8 @@ public class McpClientToolConfiguration {
       @Value("${ai.mcp.fetch.max-content-length:8000}") int maxContentLength) {
     McpSyncClient fetchClient =
         mcpSyncClients.stream()
-            // Spring AI 连接命名约定：<client-name> - <connection-key>（见 application.yml stdio.connections.fetch）
+            // Spring AI 连接命名约定：<client-name> - <connection-key>（见 application.yml
+            // stdio.connections.fetch）
             .filter(client -> client.getClientInfo().name().endsWith(" - fetch"))
             .findFirst()
             .orElseThrow(

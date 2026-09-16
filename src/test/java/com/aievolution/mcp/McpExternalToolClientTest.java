@@ -17,8 +17,8 @@ import org.mockito.ArgumentCaptor;
 /**
  * W12 #1b：MCP 外部工具客户端单测——协议层（{@link McpSyncClient}）mock 化。
  *
- * <p>锁定的契约：① 请求形状（fetch 工具 + url 入参）② 多段文本聚合 ③ 超长截断带标记
- * ④ 错误一律降级为观察文本喂回模型，不抛异常击穿研究 Loop（ToolRegistry 失败哲学的延伸）。
+ * <p>锁定的契约：① 请求形状（fetch 工具 + url 入参）② 多段文本聚合 ③ 超长截断带标记 ④ 错误一律降级为观察文本喂回模型，不抛异常击穿研究 Loop（ToolRegistry
+ * 失败哲学的延伸）。
  */
 class McpExternalToolClientTest {
 
@@ -85,8 +85,7 @@ class McpExternalToolClientTest {
 
   @Test
   void emptyContentReturnsExplicitEmptyObservation() {
-    when(mcpClient.callTool(any()))
-        .thenReturn(new CallToolResult(List.of(), false, null, null));
+    when(mcpClient.callTool(any())).thenReturn(new CallToolResult(List.of(), false, null, null));
 
     // 空结果也要显式——"无输出"与"抓到了空页面"对模型是两个意思
     assertThat(client.fetchWebPage("https://example.com")).isEqualTo("抓取结果为空");

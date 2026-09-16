@@ -14,8 +14,8 @@ import org.slf4j.LoggerFactory;
 /**
  * {@link ExternalToolClient} 的 MCP 协议实现（W12 #1b）：Agent 以 MCP Client 身份调外部服务取数。
  *
- * <p>封装边界：JSON-RPC/stdio/内容类型全部不出本类，对外只有"URL → 文本"。 审计走 {@code tool-audit} 专用 logger（ToolAuditAspect 同一通道——模型触发的
- * 每一次数据访问都要可回放，出向调用同标准）；traceId 由控制台 pattern 经 MDC 自动带出。
+ * <p>封装边界：JSON-RPC/stdio/内容类型全部不出本类，对外只有"URL → 文本"。 审计走 {@code tool-audit} 专用
+ * logger（ToolAuditAspect 同一通道——模型触发的 每一次数据访问都要可回放，出向调用同标准）；traceId 由控制台 pattern 经 MDC 自动带出。
  *
  * <p>失败哲学：协议错误（isError）、传输异常、参数非法一律返回「抓取失败：…」观察文本， 让模型自我纠正或换工具，不抛异常击穿研究 Loop。
  */
