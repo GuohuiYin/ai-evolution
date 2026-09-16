@@ -6,7 +6,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.aievolution.tool.AnnouncementTools;
+import com.aievolution.tool.ExternalToolClient;
 import com.aievolution.tool.StockDataTools;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -91,5 +93,55 @@ class ToolRegistryTest {
               assertThat(s.paramsSchema()).contains("code").contains("from").contains("to");
             });
     assertThat(registry.specs()).hasSize(3);
+  }
+
+  // ===== W12 #1c：第 4 工具 fetchWebPage（外部 MCP 取数端口挂入工具面板）=====
+
+  @Test
+  void dispatchesFetchWebPageToExternalToolClient() {
+    ExternalToolClient externalToolClient = mock(ExternalToolClient.class);
+    when(externalToolClient.fetchWebPage("https://example.com/notice")).thenReturn("公告正文摘录");
+    ToolRegistry withExternal =
+        new ToolRegistry(stockDataTools, announcementTools, Optional.of(externalToolClient));
+
+    String observation =
+        withExternal.execute("fetchWebPage", "{\"url\":\"https://example.com/notice\"}");
+
+    assertThat(observation).contains("公告正文摘录");
+    verify(externalToolClient).fetchWebPage("https://example.com/notice");
+  }
+
+  @Test
+  void fetchWebPageAbsentWhenNoExternalToolClient() {
+    // MCP Client 关闭场景（两参构造）：面板与派发边界同步收窄，fetchWebPage 视为未知工具
+    String observation = registry.execute("fetchWebPage", "{\"url\":\"https://example.com\"}");
+
+    assertThat(observation).contains("未知工具");
+    assertThat(registry.specs()).noneMatch(s -> s.name().equals("fetchWebPage"));
+  }
+
+  @Test
+  void externalToolSpecAppearsInManualWhenPresent() {
+    ToolRegistry withExternal =
+        new ToolRegistry(
+            stockDataTools, announcementTools, Optional.of(mock(ExternalToolClient.class)));
+
+    assertThat(withExternal.specs()).hasSize(4);
+    assertThat(withExternal.specs())
+        .anySatisfy(
+            s -> {
+              assertThat(s.name()).isEqualTo("fetchWebPage");
+              assertThat(s.paramsSchema()).contains("url");
+            });
+  }
+
+  @Test
+  void unknownToolMessageListsAvailableToolsFromSpecs() {
+    // 可用工具清单与 specs 同源：挂上外部端口后错误观察自动含第 4 工具
+    ToolRegistry withExternal =
+        new ToolRegistry(
+            stockDataTools, announcementTools, Optional.of(mock(ExternalToolClient.class)));
+
+    assertThat(withExternal.execute("hackTool", "{}")).contains("fetchWebPage");
   }
 }
