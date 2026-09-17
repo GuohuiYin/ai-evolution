@@ -13,7 +13,7 @@
 
 | # | 任务 | 验收条件 |
 |---|---|---|
-| 0 | **设计先行**：检索管线两阶段改造设计稿——`ai.rag.*` 配置结构调整（recall-top-k / rerank-top-n）、`KnowledgeRetriever` 返回语义、RRF 融合策略、reranker 供应商（bge-reranker-v2-m3，SiliconFlow 同族）；评审通过才动代码 | 设计稿入 ADR；配置项清单评审通过<br>**设计稿已提交评审 2026-09-17**：[ADR-0017](../../adr/0017-retrieval-two-stage-design.md)——含 jar 层实证（Spring AI 零 sparse 支持）、sparse 路三候选对照（推荐全文索引+RRF）、配置互斥规则、五个评审关注点 |
+| 0 ✅ | **设计先行**：检索管线两阶段改造设计稿——`ai.rag.*` 配置结构调整（recall-top-k / rerank-top-n）、`KnowledgeRetriever` 返回语义、RRF 融合策略、reranker 供应商（bge-reranker-v2-m3，SiliconFlow 同族）；评审通过才动代码 | 设计稿入 ADR；配置项清单评审通过<br>**完成 2026-09-17**：[ADR-0017](../../adr/0017-retrieval-two-stage-design.md) 已接受（`5325b3e` 初稿 → `59ba48c` 业界标尺修订：recall-top-k 小语料适配口径、sparse B 诚实标注为轻量近似）；jar 层实证 Spring AI 零 sparse 支持、qdrant client 原生 API 齐备 |
 | 1 | **分块对照实验**（能力地图挂账）：chunk-size 400/800/1200 三轮黄金集回归 | 数据报告；最优值入配置；changelog 登记 |
 | 2 | **混合检索**（TDD）：dense + sparse 双路召回 + RRF 融合 | 黄金集回归报告；Recall@5 提升 ≥5pp 才默认启用，否则配置保留默认关（裁决记录） |
 | 3 | **Reranking 精排**（TDD）：召回 topK 放大 → reranker 重排取前 5 | 黄金集回归报告；同上数据裁决；成本账更新（rerank 调用单价进一页账） |
