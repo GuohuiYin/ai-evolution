@@ -89,6 +89,13 @@ ai:
     # W13 #2 两阶段召回：召回放大倍数（召回侧 topK），直接决定后续 rerank 计费量。
     # 20/40 两档黄金集实测无差异（小语料适配，非对标业界 50-200），定稿 20
     recall-top-k: 20
+    rerank:
+      # W13 #3 精排段（bge-reranker-v2-m3，SiliconFlow /rerank）总开关：默认关，
+      # 黄金集 Recall@5 提升 ≥5pp 才翻 true（数据裁决同 hybrid 机制）
+      enabled: false
+      model: BAAI/bge-reranker-v2-m3
+      # 精排后保留条数：rerank 开时接管最终返回口径（top-k 仅全关时生效）
+      top-n: 5
     hybrid:
       # 混合检索（dense + sparse 字面路，RRF 融合）总开关。
       # W13 #2 数据裁决（2026-09-17）：黄金集 Recall@5 72%→93%（+21pp ≥ 5pp 达标线），

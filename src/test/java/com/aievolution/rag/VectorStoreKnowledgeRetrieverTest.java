@@ -105,4 +105,55 @@ class VectorStoreKnowledgeRetrieverTest {
     verify(vectorStore).similaritySearch(captor.capture());
     assertThat(captor.getValue().getTopK()).isEqualTo(5);
   }
+
+  @Test
+  void rerankOnUsesRecallPoolAndReturnsRerankerOrder() {
+    RerankerClient reranker = mock(RerankerClient.class);
+    List<Document> pool = List.of(doc("d1"), doc("d2"), doc("d3"));
+    when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(pool);
+    when(reranker.rerank(eq("茅台工艺"), eq(pool), eq(3)))
+        .thenReturn(
+            List.of(doc("d2").mutate().score(0.9).build(), doc("d1").mutate().score(0.7).build()));
+    KnowledgeRetriever retriever =
+        new VectorStoreKnowledgeRetriever(
+            vectorStore, 0.5, 5, Optional.empty(), false, 20, 60, Optional.of(reranker), true, 3);
+
+    List<Document> hits = retriever.retrieve("茅台工艺");
+
+    // 精排后顺序与分数由 reranker 决定；召回侧用放大口径
+    assertThat(hits).extracting(Document::getId).containsExactly("d2", "d1");
+    assertThat(hits.getFirst().getScore()).isEqualTo(0.9);
+    ArgumentCaptor<SearchRequest> captor = ArgumentCaptor.forClass(SearchRequest.class);
+    verify(vectorStore).similaritySearch(captor.capture());
+    assertThat(captor.getValue().getTopK()).isEqualTo(20);
+  }
+
+  @Test
+  void rerankFailureDegradesToRecallPoolCappedAtTopN() {
+    RerankerClient reranker = mock(RerankerClient.class);
+    List<Document> pool = List.of(doc("d1"), doc("d2"), doc("d3"), doc("d4"));
+    when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(pool);
+    when(reranker.rerank(any(), any(), eq(3)))
+        .thenThrow(new RerankerClient.RerankException("供应商 5xx", null));
+    KnowledgeRetriever retriever =
+        new VectorStoreKnowledgeRetriever(
+            vectorStore, 0.5, 5, Optional.empty(), false, 20, 60, Optional.of(reranker), true, 3);
+
+    List<Document> hits = retriever.retrieve("茅台工艺");
+
+    // 故障降级回召回结果（截 topN），不报错、不穿底
+    assertThat(hits).extracting(Document::getId).containsExactly("d1", "d2", "d3");
+  }
+
+  @Test
+  void emptyRecallSkipsRerankCall() {
+    RerankerClient reranker = mock(RerankerClient.class);
+    when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(List.of());
+    KnowledgeRetriever retriever =
+        new VectorStoreKnowledgeRetriever(
+            vectorStore, 0.5, 5, Optional.empty(), false, 20, 60, Optional.of(reranker), true, 5);
+
+    assertThat(retriever.retrieve("茅台工艺")).isEmpty();
+    verifyNoInteractions(reranker);
+  }
 }

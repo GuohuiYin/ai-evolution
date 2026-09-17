@@ -30,14 +30,48 @@ public class VectorStoreKnowledgeRetriever implements KnowledgeRetriever {
   private final VectorStore vectorStore;
   private final double similarityThreshold;
   private final int topK;
-  private final SparseRecall sparseRecall; // null = 无 sparse 路（单阶段）
+  private final SparseRecall sparseRecall; // null = 无 sparse 路（单阶段召回）
   private final int recallTopK;
   private final RrfFuser rrfFuser;
+  private final RerankerClient reranker; // null = 无精排段
+  private final int rerankTopN;
 
-  /** 单阶段构造（hybrid 关闭语义）：测试与回退路径共用。 */
+  /** 单阶段构造（hybrid/rerank 全关语义）：测试与回退路径共用。 */
   public VectorStoreKnowledgeRetriever(
       VectorStore vectorStore, double similarityThreshold, int topK) {
-    this(vectorStore, similarityThreshold, topK, Optional.empty(), false, 20, 60);
+    this(
+        vectorStore,
+        similarityThreshold,
+        topK,
+        Optional.empty(),
+        false,
+        20,
+        60,
+        Optional.empty(),
+        false,
+        5);
+  }
+
+  /** hybrid 接线构造（rerank 关语义）：#2 测试与回退路径共用。 */
+  public VectorStoreKnowledgeRetriever(
+      VectorStore vectorStore,
+      double similarityThreshold,
+      int topK,
+      Optional<SparseRecall> sparseRecall,
+      boolean hybridEnabled,
+      int recallTopK,
+      int rrfK) {
+    this(
+        vectorStore,
+        similarityThreshold,
+        topK,
+        sparseRecall,
+        hybridEnabled,
+        recallTopK,
+        rrfK,
+        Optional.empty(),
+        false,
+        5);
   }
 
   @Autowired
@@ -48,13 +82,18 @@ public class VectorStoreKnowledgeRetriever implements KnowledgeRetriever {
       Optional<SparseRecall> sparseRecall,
       @Value("${ai.rag.hybrid.enabled:false}") boolean hybridEnabled,
       @Value("${ai.rag.recall-top-k:20}") int recallTopK,
-      @Value("${ai.rag.hybrid.rrf-k:60}") int rrfK) {
+      @Value("${ai.rag.hybrid.rrf-k:60}") int rrfK,
+      Optional<RerankerClient> reranker,
+      @Value("${ai.rag.rerank.enabled:false}") boolean rerankEnabled,
+      @Value("${ai.rag.rerank.top-n:5}") int rerankTopN) {
     this.vectorStore = vectorStore;
     this.similarityThreshold = similarityThreshold;
     this.topK = topK;
     this.sparseRecall = hybridEnabled ? sparseRecall.orElse(null) : null;
     this.recallTopK = recallTopK;
     this.rrfFuser = new RrfFuser(rrfK);
+    this.reranker = rerankEnabled ? reranker.orElse(null) : null;
+    this.rerankTopN = rerankTopN;
   }
 
   @Override
@@ -64,7 +103,7 @@ public class VectorStoreKnowledgeRetriever implements KnowledgeRetriever {
 
   @Override
   public List<Document> retrieve(String query, KnowledgeFilter filter) {
-    if (sparseRecall == null) {
+    if (sparseRecall == null && reranker == null) {
       List<Document> hits = denseSearch(query, filter, topK);
       // 检索判罚依据单点留痕：hits=0 即拒答现场；topScore 即"差多少命中"的标尺
       log.info(
@@ -77,21 +116,58 @@ public class VectorStoreKnowledgeRetriever implements KnowledgeRetriever {
           abbreviate(query));
       return hits;
     }
-    // 混合检索：dense 放大召回 + sparse 字面路，RRF 融合后截回线上口径
+    // 两阶段：召回段（可选混合检索）宽松过取 → 精排段（可选）重排取前 N
+    List<Document> recalled = recall(query, filter);
+    if (reranker == null) {
+      List<Document> hits = recalled.stream().limit(topK).toList();
+      log.info(
+          "stage=RETRIEVE mode=hybrid recallHits={} returnTop={} recallTopK={} filter={} query={}",
+          recalled.size(),
+          hits.size(),
+          recallTopK,
+          filter,
+          abbreviate(query));
+      return hits;
+    }
+    if (recalled.isEmpty()) {
+      // 空召回即拒答的现有语义不变（越界硬拒答是红线）；零候选不打 rerank 计费电话
+      log.info(
+          "stage=RETRIEVE mode=rerank recallHits=0 rerank=skipped filter={} query={}",
+          filter,
+          abbreviate(query));
+      return List.of();
+    }
+    try {
+      List<Document> reranked = reranker.rerank(query, recalled, rerankTopN);
+      log.info(
+          "stage=RETRIEVE mode=rerank recallHits={} rerankTop={} rerankTopScore={} filter={} query={}",
+          recalled.size(),
+          reranked.size(),
+          topScore(reranked),
+          filter,
+          abbreviate(query));
+      return reranked;
+    } catch (RerankerClient.RerankException e) {
+      // rerank 是增强段不是必经段（ADR-0017）：供应商故障降级回召回结果，不报错、不穿底
+      List<Document> degraded = recalled.stream().limit(rerankTopN).toList();
+      log.warn(
+          "stage=RETRIEVE mode=rerank 精排故障降级回召回结果（{}），returnTop={} filter={} query={}",
+          e.getMessage(),
+          degraded.size(),
+          filter,
+          abbreviate(query));
+      return degraded;
+    }
+  }
+
+  /** 召回段：hybrid 在场则 dense+sparse 双路 RRF 融合，否则 dense 单路；统一按 recall-top-k 过取。 */
+  private List<Document> recall(String query, KnowledgeFilter filter) {
     List<Document> dense = denseSearch(query, filter, recallTopK);
+    if (sparseRecall == null) {
+      return dense;
+    }
     List<Document> sparse = sparseRecall.recall(query, filter, recallTopK);
-    List<Document> fused = rrfFuser.fuse(dense, sparse);
-    List<Document> hits = fused.stream().limit(topK).toList();
-    log.info(
-        "stage=RETRIEVE mode=hybrid denseHits={} sparseHits={} fused={} returnTop={} recallTopK={} filter={} query={}",
-        dense.size(),
-        sparse.size(),
-        fused.size(),
-        hits.size(),
-        recallTopK,
-        filter,
-        abbreviate(query));
-    return hits;
+    return rrfFuser.fuse(dense, sparse);
   }
 
   private List<Document> denseSearch(String query, KnowledgeFilter filter, int k) {
