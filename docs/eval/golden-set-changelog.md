@@ -12,6 +12,12 @@
 | v2 | W5 | PDF 年报入库后 expectSources 语义升级（多源） | 同上（复跑 86.7%） |
 | v3 | W8 | 扩充至 39 条：normal 15 + boundary 6 + paraphrase 4 + literal 4 + adversarial 10 | [w8-retrieval-baseline](../retrieval/w8-retrieval-baseline.md)（Recall@5 72%） |
 
+v3 数据集下的对照实验档案（数据集不变，参数回归）：
+
+| 时点 | 实验 | 结论 | 报告 |
+|---|---|---|---|
+| W13（2026-09-17） | chunk-size 400/800/1200 三轮全量回归 | 三轮 Recall@5 均 21/29（72%），维持 800 | [w13-chunk-size-comparison](../retrieval/w13-chunk-size-comparison.md) |
+
 ## 生成黄金集 `src/main/resources/eval/golden-set-generation.json`
 
 | 版本 | 时点 | 变更 | 对应基线报告 |

@@ -27,7 +27,7 @@
 
 | 阶段 | 现状 | 处置 |
 |---|---|---|
-| 分块 | ⚠️ chunk-size=800 拍值，无对照 | W13 对照实验 |
+| 分块 | ✅ chunk-size=800 经 400/800/1200 三轮对照数据裁决维持（三轮 Recall@5 均 72%） | [w13-chunk-size-comparison](eval/retrieval/w13-chunk-size-comparison.md) |
 | 召回 | 🔵 单路 dense → 混合检索 W13 | 已排 |
 | 查询理解 | ✅ 改写 W11 落地（多轮 eval 6.0/6 vs 关闭 4.5/6 量化收益）；HyDE/查询扩展 ⛔ 现阶段不采纳（W11 #8） | 调研裁决：[hyde-query-expansion-v1](../eval/selection/hyde-query-expansion-v1.md)，重评触发条件在案 |
 | 精排 | 🔵 rerank W13（bge-reranker-v2-m3 候选） | 已排 |
