@@ -33,9 +33,13 @@ class KnowledgeBaseIngestorIncrementalTest {
   @TempDir Path stateDir;
 
   private KnowledgeBaseIngestor newIngestor(VectorStore vectorStore) {
+    return newIngestor(vectorStore, 800);
+  }
+
+  private KnowledgeBaseIngestor newIngestor(VectorStore vectorStore, int chunkSize) {
     return new KnowledgeBaseIngestor(
         vectorStore,
-        800,
+        chunkSize,
         "file:" + knowledgeDir.toAbsolutePath() + "/*",
         stateDir.resolve("manifest.json").toString());
   }
@@ -112,5 +116,32 @@ class KnowledgeBaseIngestorIncrementalTest {
 
     verify(vectorStore).delete(oldIdsOfA);
     verify(vectorStore, times(2)).add(anyList()); // 无新增/变更，不再写入
+  }
+
+  @Test
+  void changedChunkSizeTriggersFullReingestDespiteUnchangedFiles() throws Exception {
+    Files.writeString(knowledgeDir.resolve("a.md"), LONG_A);
+    Files.writeString(knowledgeDir.resolve("b.md"), LONG_B);
+    VectorStore vectorStore = mock(VectorStore.class);
+
+    newIngestor(vectorStore, 800).run(null);
+    List<String> oldIdsOfA = idsOf(allAddedDocs(vectorStore, 2), "a.md");
+    assertThat(oldIdsOfA).isNotEmpty();
+
+    // 文件内容未变、仅分块参数变：旧块全部作废删除，全量重摄入
+    newIngestor(vectorStore, 400).run(null);
+    verify(vectorStore).delete(oldIdsOfA);
+    verify(vectorStore, times(4)).add(anyList());
+  }
+
+  @Test
+  void sameChunkSizeKeepsIncrementalSkip() throws Exception {
+    Files.writeString(knowledgeDir.resolve("a.md"), LONG_A);
+    VectorStore vectorStore = mock(VectorStore.class);
+
+    newIngestor(vectorStore, 400).run(null);
+    newIngestor(vectorStore, 400).run(null); // 参数一致：未变文件零 embedding 调用
+    verify(vectorStore, times(1)).add(anyList());
+    verify(vectorStore, never()).delete(anyList());
   }
 }

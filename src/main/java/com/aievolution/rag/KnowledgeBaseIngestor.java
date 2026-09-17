@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -41,6 +42,9 @@ import org.springframework.stereotype.Component;
  * <p>W8-2 增量摄入：按文件内容 SHA-256 对比 {@link KnowledgeManifest}——未变文件整块跳过（零 embedding
  * 调用），新增/变更文件整删重写（同时修复"分块数变少导致旧块残留"），磁盘上消失的文件清理对应向量。 文档 ID 仍由 {@code 文件名#块序号} 确定性生成（UUIDv3
  * 语义），同内容重写不产生新 ID。
+ *
+ * <p>W13-1 增补：判变键并入分块参数哈希（{@link KnowledgeManifest#chunkSignature()}）。chunk-size 变更不改变文件
+ * SHA，单靠内容哈希会拿旧分块服务（W13 #1 对照实验实测坑）——签名不符即全量重建， 旧块按 manifest 记录的 chunkIds 逐文件清理，无需手工清库。
  */
 // 开关语义：默认开启摄入；测试环境通过 ai.knowledge.ingest.enabled=false 关闭，
 // 避免 @SpringBootTest 执行 ApplicationRunner 时打真实 Embedding API
@@ -65,6 +69,7 @@ public class KnowledgeBaseIngestor implements ApplicationRunner {
   private final ObjectMapper objectMapper = new ObjectMapper();
   // 分块大小是 RAG 最经典的调参项（与检索质量直接相关），显式配置化而非吃库默认值（约定 A11-2）
   private final TextSplitter textSplitter;
+  private final int chunkSize;
 
   public KnowledgeBaseIngestor(
       VectorStore vectorStore,
@@ -74,6 +79,7 @@ public class KnowledgeBaseIngestor implements ApplicationRunner {
     this.vectorStore = vectorStore;
     this.knowledgeLocation = knowledgeLocation;
     this.manifestPath = Path.of(manifestPath);
+    this.chunkSize = chunkSize;
     this.textSplitter = TokenTextSplitter.builder().withChunkSize(chunkSize).build();
   }
 
@@ -85,6 +91,12 @@ public class KnowledgeBaseIngestor implements ApplicationRunner {
             .toArray(Resource[]::new);
 
     KnowledgeManifest manifest = new KnowledgeManifest(manifestPath);
+    // 分块参数并入判变键：签名不符说明旧向量是按另一组参数切的，全部作废重建
+    String signature = splitterSignature();
+    boolean splitterChanged = !signature.equals(manifest.chunkSignature());
+    if (splitterChanged && !manifest.entries().isEmpty()) {
+      log.info("分块参数变更（当前 chunk-size={}），已有向量全部作废，执行全量重建", chunkSize);
+    }
     Set<String> present = new HashSet<>();
     int skipped = 0;
     int reIngested = 0;
@@ -94,7 +106,7 @@ public class KnowledgeBaseIngestor implements ApplicationRunner {
       present.add(filename);
       String sha256 = sha256(resource);
       KnowledgeManifest.Entry old = manifest.entries().get(filename);
-      if (old != null && old.sha256().equals(sha256)) {
+      if (old != null && !splitterChanged && old.sha256().equals(sha256)) {
         skipped++;
         continue;
       }
@@ -125,6 +137,7 @@ public class KnowledgeBaseIngestor implements ApplicationRunner {
       }
     }
 
+    manifest.chunkSignature(signature);
     manifest.save();
     if (reIngested == 0 && removed == 0) {
       log.info("知识库摄入完成：{} 个文件全部未变更，跳过向量化（零 embedding 调用）", skipped);
@@ -165,8 +178,25 @@ public class KnowledgeBaseIngestor implements ApplicationRunner {
         digest.update(buffer, 0, read);
       }
     }
+    return toHex(digest.digest());
+  }
+
+  /**
+   * 分块参数签名：参数元组的 SHA-256，入 manifest 顶层作判变键。 未来 splitter 新增参数（overlap 等）并入同一元组即可，格式不自描述（hash
+   * 不可读属有意—— 参数值在 application.yml，签名只回答"变没变"）。
+   */
+  private String splitterSignature() {
+    try {
+      MessageDigest digest = MessageDigest.getInstance("SHA-256");
+      return toHex(digest.digest(("chunk-size:" + chunkSize).getBytes(StandardCharsets.UTF_8)));
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException("SHA-256 不可用", e);
+    }
+  }
+
+  private static String toHex(byte[] bytes) {
     StringBuilder hex = new StringBuilder();
-    for (byte b : digest.digest()) {
+    for (byte b : bytes) {
       hex.append(String.format("%02x", b));
     }
     return hex.toString();

@@ -58,4 +58,27 @@ class KnowledgeManifestTest {
     org.junit.jupiter.api.Assertions.assertThrows(UnsupportedOperationException.class, view::clear);
     assertThat(manifest.entries()).containsOnlyKeys("a.pdf");
   }
+
+  @Test
+  void roundTripPreservesChunkSignature() {
+    Path file = tempDir.resolve("manifest.json");
+    KnowledgeManifest manifest = new KnowledgeManifest(file);
+    manifest.chunkSignature("sig-800");
+    manifest.put("a.md", new KnowledgeManifest.Entry("h", List.of("id-1")));
+    manifest.save();
+
+    KnowledgeManifest reloaded = new KnowledgeManifest(file);
+    assertThat(reloaded.chunkSignature()).isEqualTo("sig-800");
+    assertThat(reloaded.entries()).containsOnlyKeys("a.md");
+  }
+
+  @Test
+  void legacyFlatFormatWithoutEntriesNodeYieldsEmptyForRebuild() throws Exception {
+    // W8-2 旧格式（顶层即文件条目、无分块签名）：视为空清单全量重建，签名置空触发判变
+    Path file = tempDir.resolve("manifest.json");
+    Files.writeString(file, "{\"a.md\":{\"sha256\":\"h\",\"chunkIds\":[\"id-1\"]}}");
+    KnowledgeManifest manifest = new KnowledgeManifest(file);
+    assertThat(manifest.entries()).isEmpty();
+    assertThat(manifest.chunkSignature()).isNull();
+  }
 }

@@ -13,8 +13,11 @@ import java.util.Map;
  *
  * <p>职责单一：清单的读、写、增删。比对与决策逻辑在 {@link KnowledgeBaseIngestor}。
  *
- * <p>持久化为 JSON 文件（默认 {@code build/knowledge-manifest.json}，不入 git）。文件缺失或损坏时
- * 视为空清单——语义等价于"全部重新摄入"，保证可从零自愈。
+ * <p>W13-1 增补：顶层携带 {@code chunkSignature}（分块参数哈希）。chunk-size 等分块参数变更后 文件内容 SHA
+ * 不变，单靠条目哈希会拿旧块服务——签名不符即全量重建（W13 #1 对照实验实测坑）。
+ *
+ * <p>持久化为 JSON 文件（默认 {@code build/knowledge-manifest.json}，不入 git）。文件缺失、损坏或 为旧版平铺格式（无 entries
+ * 节点）时视为空清单——语义等价于"全部重新摄入"，保证可从零自愈。
  */
 class KnowledgeManifest {
 
@@ -24,6 +27,7 @@ class KnowledgeManifest {
   private final Path file;
   private final ObjectMapper objectMapper = new ObjectMapper();
   private final Map<String, Entry> entries = new LinkedHashMap<>();
+  private String chunkSignature;
 
   KnowledgeManifest(Path file) {
     this.file = file;
@@ -35,18 +39,36 @@ class KnowledgeManifest {
       return;
     }
     try {
-      Map<String, Map<String, Object>> raw = objectMapper.readValue(file.toFile(), Map.class);
-      raw.forEach(
-          (name, v) ->
-              entries.put(
-                  name,
-                  new Entry(
-                      String.valueOf(v.get("sha256")),
-                      ((List<?>) v.get("chunkIds")).stream().map(String::valueOf).toList())));
+      Map<String, Object> raw = objectMapper.readValue(file.toFile(), Map.class);
+      Object node = raw.get("entries");
+      if (!(node instanceof Map)) {
+        // 旧版平铺格式或缺节点：同损坏处理，全量重建自愈
+        throw new IllegalStateException("清单缺少 entries 节点");
+      }
+      chunkSignature =
+          raw.get("chunkSignature") == null ? null : String.valueOf(raw.get("chunkSignature"));
+      ((Map<String, Map<String, Object>>) node)
+          .forEach(
+              (name, v) ->
+                  entries.put(
+                      name,
+                      new Entry(
+                          String.valueOf(v.get("sha256")),
+                          ((List<?>) v.get("chunkIds")).stream().map(String::valueOf).toList())));
     } catch (Exception e) {
-      // 损坏清单 = 空清单：不抛错阻断启动，让摄入器走全量重建
+      // 损坏清单 = 空清单：不抛错阻断启动，让摄入器走全量重建；签名一并置空确保判变
       entries.clear();
+      chunkSignature = null;
     }
+  }
+
+  /** 分块参数哈希（如 chunk-size）：null 表示清单缺失/损坏/旧格式，摄入器按全量重建处理。 */
+  String chunkSignature() {
+    return chunkSignature;
+  }
+
+  void chunkSignature(String signature) {
+    this.chunkSignature = signature;
   }
 
   void put(String source, Entry entry) {
@@ -65,7 +87,10 @@ class KnowledgeManifest {
   void save() {
     try {
       Files.createDirectories(file.getParent());
-      objectMapper.writerWithDefaultPrettyPrinter().writeValue(file.toFile(), entries);
+      Map<String, Object> out = new LinkedHashMap<>();
+      out.put("chunkSignature", chunkSignature);
+      out.put("entries", entries);
+      objectMapper.writerWithDefaultPrettyPrinter().writeValue(file.toFile(), out);
     } catch (IOException e) {
       throw new IllegalStateException("知识库摄入清单写入失败: " + file, e);
     }
