@@ -86,13 +86,15 @@ ai:
     # 分块大小（token）：与检索质量直接相关，调整需以黄金集全量回归为前提
     # W13 #1 三轮对照（400/800/1200）数据裁决维持 800
     chunk-size: 800
-    # W13 #2 两阶段召回：召回放大倍数（召回侧 topK），直接决定后续 rerank 计费量
+    # W13 #2 两阶段召回：召回放大倍数（召回侧 topK），直接决定后续 rerank 计费量。
+    # 20/40 两档黄金集实测无差异（小语料适配，非对标业界 50-200），定稿 20
     recall-top-k: 20
     hybrid:
-      # 混合检索（dense + sparse 字面路，RRF 融合）总开关：默认关，
-      # 黄金集 Recall@5 提升 ≥5pp 才翻 true（W13 #2 数据裁决记录）
-      enabled: false
-      # RRF 融合常数（论文经典值 60）：配置化防拍值（A11），实验可覆盖
+      # 混合检索（dense + sparse 字面路，RRF 融合）总开关。
+      # W13 #2 数据裁决（2026-09-17）：黄金集 Recall@5 72%→93%（+21pp ≥ 5pp 达标线），
+      # 负例拒答率 7/10 零回归——翻 true。报告 docs/eval/retrieval/w13-hybrid-eval.md
+      enabled: true
+      # RRF 融合常数：k=30/60/100 三档敏感性实测无差异（<1pp），锁经典值 60
       rrf-k: 60
     # RAG 通路 prompt 模板名（resources/prompts/ 下，不含后缀）。A/B 实验经配置切换：
     # AI_RAG_CHAT_PROMPT=rag-chat-v2-fewshot 跑 few-shot 对照（W8-4）
