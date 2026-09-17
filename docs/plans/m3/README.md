@@ -21,7 +21,7 @@
 |---|---|---|---|
 | W10 | 对话链路地基（会话记忆 + SSE 流式；ReAct 任务 2026-09-11 移入 W11） | [w10-react-loop.md](w10-react-loop.md) | ✅ 完成（2026-09-11） |
 | W11 | ReAct 骨架 + 查询改写 + 多轮评测集 + 生成 eval CI 定时回归门 | [w11-query-rewrite-eval-gate.md](w11-query-rewrite-eval-gate.md) | ✅ 完成（2026-09-14，八项全收口，零挂账） |
-| W12 | MCP Client + 鉴权与限流（出入双向凭证主题周） | [w12-mcp-client-auth.md](w12-mcp-client-auth.md) | 🔵 计划成文，待开工 |
+| W12 | MCP Client + 鉴权与限流（出入双向凭证主题周） | [w12-mcp-client-auth.md](w12-mcp-client-auth.md) | ✅ 完成（2026-09-16，#1-#4 + minikube 冒烟全收口，零挂账；MCP Client 集群形态走 Streamable HTTP 独立工作负载，ADR-0016） |
 | W13 | 检索质量攻坚周（混合检索召回侧 + reranking 精排侧，数据裁决去留）+ M3 验收 | [w13-retrieval-two-stage.md](w13-retrieval-two-stage.md) | 🔵 计划成文，待开工 |
 
 > **新会话接续 SOP**（2026-09-11 起）：每周开工开新会话，先让对方读 `AGENTS.md` + 对应周计划文档（含开工口令），再动手。
