@@ -52,6 +52,6 @@ rm -f build/knowledge-manifest.json
 AI_EVAL_ENABLED=true AI_RAG_CHUNK_SIZE=400 ./mvnw spring-boot:run   # 需 SILICONFLOW_API_KEY
 ```
 
-> 挂账（非阻塞）：`KnowledgeBaseIngestor` 的增量判据只看文件 SHA，不看分块参数——
-> chunk-size 变更后正常启动会拿旧块服务。本轮靠手工清库规避；若未来 chunk-size
-> 进入频繁调参，应将分块参数哈希并入 manifest 判变键。
+> 挂账已结案（2026-09-17）：分块参数哈希（chunkSignature）已并入 manifest 判变键，
+> chunk-size 变更自动触发全量重建，旧块按记录清理，无需手工清库；单测锁定 +
+> 旧格式清单真实迁移冒烟通过。
