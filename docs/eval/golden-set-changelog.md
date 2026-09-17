@@ -17,6 +17,7 @@ v3 数据集下的对照实验档案（数据集不变，参数回归）：
 | 时点 | 实验 | 结论 | 报告 |
 |---|---|---|---|
 | W13（2026-09-17） | chunk-size 400/800/1200 三轮全量回归 | 三轮 Recall@5 均 21/29（72%），维持 800 | [w13-chunk-size-comparison](../retrieval/w13-chunk-size-comparison.md) |
+| W13（2026-09-17） | 混合检索 on/off 对照 + 参数敏感性 | Recall@5 72%→93%（+21pp 达标），hybrid 默认启用；rrf-k 锁 60、recall-top-k 定稿 20 | [w13-hybrid-eval](../retrieval/w13-hybrid-eval.md) |
 
 ## 生成黄金集 `src/main/resources/eval/golden-set-generation.json`
 

@@ -15,7 +15,7 @@
 |---|---|---|
 | 0 ✅ | **设计先行**：检索管线两阶段改造设计稿——`ai.rag.*` 配置结构调整（recall-top-k / rerank-top-n）、`KnowledgeRetriever` 返回语义、RRF 融合策略、reranker 供应商（bge-reranker-v2-m3，SiliconFlow 同族）；评审通过才动代码 | 设计稿入 ADR；配置项清单评审通过<br>**完成 2026-09-17**：[ADR-0017](../../adr/0017-retrieval-two-stage-design.md) 已接受（`5325b3e` 初稿 → `59ba48c` 业界标尺修订：recall-top-k 小语料适配口径、sparse B 诚实标注为轻量近似）；jar 层实证 Spring AI 零 sparse 支持、qdrant client 原生 API 齐备 |
 | 1 ✅ | **分块对照实验**（能力地图挂账）：chunk-size 400/800/1200 三轮黄金集回归 | 数据报告；最优值入配置；changelog 登记<br>**完成 2026-09-17**：`bb36298`——三轮 Recall@5 均 21/29（72%）、失败集合相同（分块数 523/303/211 证参数生效），裁决维持 800（机理：小 md 三档均单块，粒度只切 PDF 而失败集中在 .md 用例）；报告 [w13-chunk-size-comparison](../../eval/retrieval/w13-chunk-size-comparison.md)；挂账当日结案：manifest 判变键已并入分块参数哈希 |
-| 2 | **混合检索**（TDD）：dense + sparse 双路召回 + RRF 融合 | 黄金集回归报告；Recall@5 提升 ≥5pp 才默认启用，否则配置保留默认关（裁决记录） |
+| 2 ✅ | **混合检索**（TDD）：dense + sparse 双路召回 + RRF 融合 | 黄金集回归报告；Recall@5 提升 ≥5pp 才默认启用，否则配置保留默认关（裁决记录）<br>**完成 2026-09-17**：`c68cd12`（RRF）→ `c7b5921`/`b0ad55c`/`6d2d017`（sparse 路）→ `35d6fa4`（接线）→ `d906974`（标识符兜底）→ `5f31315`（裁决启用）——Recall@5 **72%→93%（+21pp）**，负例拒答率 7/10 零回归，W8 失败模式一/二全击穿；rrf-k 30/60/100 与 recall-top-k 20/40 敏感性均无差异定稿；报告 [w13-hybrid-eval](../../eval/retrieval/w13-hybrid-eval.md)（含实施期三个分词器坑实证链） |
 | 3 | **Reranking 精排**（TDD）：召回 topK 放大 → reranker 重排取前 5 | 黄金集回归报告；同上数据裁决；成本账更新（rerank 调用单价进一页账） |
 | 4 | **M3 验收**：按验收门逐项过（研究 Loop 可演示 / 轨迹评估指标 / 多轮 eval 不回归 / MCP 外部调通 / 检索裁决结论），产出 `m3-acceptance.md`（DoD ⑦） | 验收记录归档；README 快照层刷新（A8）；能力地图刷新（A15）；portfolio 更新 |
 
