@@ -58,7 +58,9 @@ spring:
         protocol: STREAMABLE
         type: SYNC
       # W12 #1：MCP Client（协议栈的另一半）——Agent 持证调外部服务取数。
-      # stdio 拉起官方 mcp-server-fetch（uvx 常驻子进程，启动时建立连接）
+      # 传输按部署形态分 profile：本地开发 stdio（uvx 子进程），K8s 走 Streamable HTTP
+      # 连独立 mcp-fetch 工作负载（见文件尾部两个 profile 文档；stdio 是桌面协议，
+      # 部署态业界标准是 HTTP——ADR-0016 观察项落地）
       client:
         # 测试上下文显式关闭（外部子进程不进测试）；本地/部署默认开，AI_MCP_CLIENT_ENABLED 可覆盖
         enabled: ${AI_MCP_CLIENT_ENABLED:true}
@@ -70,17 +72,6 @@ spring:
         # 与 tools.resolution.fallback.enabled=false 同一安全立场（显式边界，防注入越权通道）
         toolcallback:
           enabled: false
-        stdio:
-          connections:
-            fetch:
-              # uvx 路径走环境变量（开发机 PATH 各异，CI 不需要）；args 无 --ignore-robots-txt：
-              # 尊重目标站 robots 是默认正确姿态，抓取演示选无争议页面
-              command: ${MCP_FETCH_COMMAND:uvx}
-              args: mcp-server-fetch
-              env:
-                # uv 解析走镜像（2026-09-16 实测：默认 PyPI 源 7s+/请求且缓存按 index 分桶，
-                # 冷启动远超 20s 初始化握手超时；镜像 ~5s）。环境已配 UV_INDEX_URL 时透传覆盖
-                UV_INDEX_URL: ${UV_INDEX_URL:https://pypi.tuna.tsinghua.edu.cn/simple}
 
 server:
   port: 18080
@@ -174,3 +165,42 @@ logging:
   level:
     # W8-6：SimpleLoggerAdvisor 的 prompt/response 日志走 DEBUG；生产关闭时把 ai.chat.prompt-logging.enabled 置 false 即可
     org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor: DEBUG
+
+---
+# 本地开发形态（default profile：未显式设置 SPRING_PROFILES_ACTIVE 时生效，
+# k8s profile 激活时本文档不加载，stdio 连接不会出现）：stdio 拉起官方
+# mcp-server-fetch（uvx 常驻子进程，启动时建立连接）
+spring:
+  config:
+    activate:
+      on-profile: default
+  ai:
+    mcp:
+      client:
+        stdio:
+          connections:
+            fetch:
+              # uvx 路径走环境变量（开发机 PATH 各异，CI 不需要）；args 无 --ignore-robots-txt：
+              # 尊重目标站 robots 是默认正确姿态，抓取演示选无争议页面
+              command: ${MCP_FETCH_COMMAND:uvx}
+              args: mcp-server-fetch
+              env:
+                # uv 解析走镜像（2026-09-16 实测：默认 PyPI 源 7s+/请求且缓存按 index 分桶，
+                # 冷启动远超 20s 初始化握手超时；镜像 ~5s）。环境已配 UV_INDEX_URL 时透传覆盖
+                UV_INDEX_URL: ${UV_INDEX_URL:https://pypi.tuna.tsinghua.edu.cn/simple}
+
+---
+# K8s 部署形态（SPRING_PROFILES_ACTIVE=k8s，由 ConfigMap 注入）：Streamable HTTP
+# 连集群内独立 mcp-fetch Service——连接键仍为 fetch，McpClientToolConfiguration
+# 按 "... - fetch" 后缀识别，两种传输对上层零差异（契约不变式）
+spring:
+  config:
+    activate:
+      on-profile: k8s
+  ai:
+    mcp:
+      client:
+        streamable-http:
+          connections:
+            fetch:
+              url: ${MCP_FETCH_URL:http://mcp-fetch:8000/mcp}
