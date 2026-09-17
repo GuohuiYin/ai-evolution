@@ -91,8 +91,9 @@ public class QdrantSparseRecall implements SparseRecall, SmartInitializingSingle
     }
   }
 
-  // 候选网上限：本工程语料全库 chunks 量级小，50 已接近全捞；应用侧覆盖率裁决负责精度
-  private static final int CANDIDATE_LIMIT = 50;
+  // 候选网上限：小语料适配——全库 chunks 三位数，直接放宽到全库量级，应用侧覆盖率裁决负责精度；
+  // 语料上量后此值与标识符兜底全扫路必须一起重评（ADR-0017 候选 A 触发条件）
+  private static final int CANDIDATE_LIMIT = 500;
   // 候选网条件数上限：标识符 token + CJK 二元组，超长问句截断（黄金集最长问句 ~12 token）
   private static final int NET_CONDITION_LIMIT = 24;
 
@@ -117,23 +118,45 @@ public class QdrantSparseRecall implements SparseRecall, SmartInitializingSingle
       net.addMust(ConditionFactory.matchKeyword("asOf", filter.asOf()));
     }
     try {
-      ScrollResponse response =
-          client
-              .scrollAsync(
-                  ScrollPoints.newBuilder()
-                      .setCollectionName(collection)
-                      .setFilter(net.build())
-                      .setLimit(CANDIDATE_LIMIT)
-                      .setWithPayload(WithPayloadSelectorFactory.enable(true))
-                      .build())
-              .get();
-      List<Document> candidates = response.getResultList().stream().map(this::toDocument).toList();
-      return SparseCoverage.rank(normalized, candidates, limit);
+      List<Document> candidates = fetch(net.build());
+      List<Document> ranked = SparseCoverage.rank(normalized, candidates, limit);
+      if (ranked.isEmpty() && hasIdentifier(normalized)) {
+        // 标识符兜底层：数字代号无法走服务端分词（probe 实证：纯数字单 token 被分词器丢弃），
+        // 候选网空收（或被非代号词洪泛挤满）时按 must 条件全量扫，覆盖率层做最终裁决
+        Filter.Builder scan = Filter.newBuilder();
+        if (filter.docType() != null) {
+          scan.addMust(ConditionFactory.matchKeyword("docType", filter.docType()));
+        }
+        if (filter.asOf() != null) {
+          scan.addMust(ConditionFactory.matchKeyword("asOf", filter.asOf()));
+        }
+        ranked = SparseCoverage.rank(normalized, fetch(scan.build()), limit);
+      }
+      return ranked;
     } catch (Exception e) {
       // 增强路故障不击穿主路：降级为空召回，dense 结果照常服务
       log.warn("sparse 召回失败，降级为空路（dense 照常）：{}", e.getMessage());
       return List.of();
     }
+  }
+
+  private List<Document> fetch(Filter qdrantFilter) throws Exception {
+    ScrollResponse response =
+        client
+            .scrollAsync(
+                ScrollPoints.newBuilder()
+                    .setCollectionName(collection)
+                    .setFilter(qdrantFilter)
+                    .setLimit(CANDIDATE_LIMIT)
+                    .setWithPayload(WithPayloadSelectorFactory.enable(true))
+                    .build())
+            .get();
+    return response.getResultList().stream().map(this::toDocument).toList();
+  }
+
+  private static boolean hasIdentifier(String normalizedQuery) {
+    return SparseCoverage.queryTokens(normalizedQuery).stream()
+        .anyMatch(SparseCoverage::isIdentifier);
   }
 
   /** 候选网 token：标识符整 token + CJK 二元组（整 CJK 长 token 的 AND 必败，probe 实证）。 */

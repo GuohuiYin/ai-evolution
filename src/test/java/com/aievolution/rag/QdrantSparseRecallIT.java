@@ -100,6 +100,35 @@ class QdrantSparseRecallIT {
   }
 
   @Test
+  void identifierFallsBackToFullScanWhenNetMisses() throws Exception {
+    try (QdrantClient client =
+        new QdrantClient(
+            QdrantGrpcClient.newBuilder(QDRANT.getHost(), QDRANT.getGrpcPort(), false).build())) {
+      QdrantVectorStore store =
+          QdrantVectorStore.builder(client, new TinyHashEmbeddingModel())
+              .collectionName(COLLECTION + "_fallback")
+              .initializeSchema(true)
+              .build();
+      store.afterPropertiesSet();
+      store.add(
+          List.of(
+              new Document(
+                  FullTextNormalizer.normalize("酿造工艺遵循12987流程：一年生产周期"),
+                  Map.of("source", "maotai.md", "docType", "note")),
+              new Document("动力电池装车量市占率第一", Map.of("source", "catl.md", "docType", "note"))));
+
+      QdrantSparseRecall recall = new QdrantSparseRecall(client, COLLECTION + "_fallback");
+      recall.ensureIndex();
+
+      // 中文部分（"到底什么梗"）在任何文档都不存在：候选网必空收，
+      // 标识符 12987 触发兜底全扫，覆盖率层命中 maotai.md
+      List<Document> hits = recallWhenReady(recall, "12987 到底什么梗", KnowledgeFilter.NONE, 5);
+      assertThat(hits).hasSize(1);
+      assertThat(hits.getFirst().getMetadata()).containsEntry("source", "maotai.md");
+    }
+  }
+
+  @Test
   void noMatchAndBlankQueryReturnEmpty() throws Exception {
     try (QdrantClient client =
         new QdrantClient(
