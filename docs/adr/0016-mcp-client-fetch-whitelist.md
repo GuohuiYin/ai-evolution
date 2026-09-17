@@ -42,6 +42,13 @@ Agent 以标准协议调用外部服务取数，是研究 Loop"向外取数"的�
 - 正：M3 验收门"外部 MCP 真实调通"达成（2026-09-16 实录：fetchWebPage 1.9s 成功，
   tool-audit + research-trace 双通道 traceId 串联，SSE 轨迹 4 步完整）；
   Agent 工具面板从 3 工具扩为 4 工具（A13 eval 回归 5.5/6 ≥ 基线 5.3/6 无降级）。
-- 负/待办：stdio 子进程生命周期与 Pod 绑定（K8s 部署时 uvx 需进镜像或换 sidecar/远程 MCP，
-  W13 部署冒烟时复核）；首两轮超时根因未完全定论（疑似 TLS/系统缓存冷启动，
+- ~~负/待办：stdio 子进程生命周期与 Pod 绑定（K8s 部署时 uvx 需进镜像或换 sidecar/远程 MCP，
+  W13 部署冒烟时复核）~~ **已结案（2026-09-17）**：K8s 部署态改走 Streamable HTTP——
+  fetch 作为集群内独立 Deployment/Service（`k8s/mcp-fetch.yaml`），官方 stdio 服务器经
+  FastMCP 2.14.7 as_proxy 桥成 HTTP（mcp-proxy 与现行 MCP SDK 不兼容、fastmcp 4.x 移除
+  as_proxy，实测后钉版）；应用镜像零 Python/uv 依赖，传输按 profile 分文档
+  （default=stdio 本地开发，k8s=HTTP）。集群内端到端实测：agent 经桥抓取 example.com
+  成功（tool-audit outcome=success，traceId 串联）。业界依据：stdio 是桌面/单客户端
+  协议，部署态现行标准是 Streamable HTTP；存量 stdio 服务器用适配层桥接是通行做法。
+  首两轮超时根因未完全定论（疑似 TLS/系统缓存冷启动，
   清洁重启后不可复现），挂观察清单。
