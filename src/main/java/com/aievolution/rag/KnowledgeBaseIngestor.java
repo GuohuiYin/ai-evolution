@@ -163,7 +163,11 @@ public class KnowledgeBaseIngestor implements ApplicationRunner {
           UUID.nameUUIDFromBytes(
                   (metadata.get("source") + "#" + i).getBytes(StandardCharsets.UTF_8))
               .toString();
-      chunks.add(new Document(id, pieces.get(i).getText(), pieces.get(i).getMetadata()));
+      chunks.add(
+          new Document(
+              id,
+              FullTextNormalizer.normalize(pieces.get(i).getText()),
+              pieces.get(i).getMetadata()));
     }
     return chunks;
   }
@@ -188,7 +192,10 @@ public class KnowledgeBaseIngestor implements ApplicationRunner {
   private String splitterSignature() {
     try {
       MessageDigest digest = MessageDigest.getInstance("SHA-256");
-      return toHex(digest.digest(("chunk-size:" + chunkSize).getBytes(StandardCharsets.UTF_8)));
+      return toHex(
+          digest.digest(
+              ("chunk-size:" + chunkSize + "|ft:" + FullTextNormalizer.VERSION)
+                  .getBytes(StandardCharsets.UTF_8)));
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException("SHA-256 不可用", e);
     }
