@@ -1,0 +1,75 @@
+# MCP fetch 独立工作负载（W12 K8s 观察项落地，业界标准形态）：
+# MCP server 作为独立 Deployment + Service 原生讲 Streamable HTTP，
+# 不进应用容器、不用 sidecar——独立生命周期/伸缩/安全边界。
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-fetch
+  labels:
+    app: mcp-fetch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mcp-fetch
+  template:
+    metadata:
+      labels:
+        app: mcp-fetch
+    spec:
+      containers:
+        - name: mcp-fetch
+          image: mcp-fetch:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          # TCP 探针即可：/mcp 无会话 GET 返回 4xx 属正常协议行为，不代表不健康
+          readinessProbe:
+            tcpSocket:
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcp-fetch
+spec:
+  selector:
+    app: mcp-fetch
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+# 入向收口：只允许 ai-evolution pod 调 fetch（工具的出向能力即攻击面，
+# 不应对集群内其他负载开放）。出向不限制——fetch 的职责就是抓任意 URL，
+# NetworkPolicy 做不了域名级过滤，假性收口不如诚实注释。
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mcp-fetch-ingress
+spec:
+  podSelector:
+    matchLabels:
+      app: mcp-fetch
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: ai-evolution
+      ports:
+        - port: 8000
