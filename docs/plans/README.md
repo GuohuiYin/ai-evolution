@@ -25,8 +25,15 @@
 
 | 周 | 文档 | 状态 |
 |---|---|---|
-| 阶段索引 | [m3/README.md](m3/README.md)（W9-5 裁决：ReAct→查询改写→MCP Client→混合检索全纳入） | 🔵 进行中 |
-| W10 | [m3/w10-react-loop.md](m3/w10-react-loop.md) | 🔵 待开工 |
+| 阶段索引 | [m3/README.md](m3/README.md)（W9-5 裁决：ReAct→查询改写→MCP Client→混合检索全纳入） | ✅ 已完成 |
+| **M3 验收记录** | [m3/m3-acceptance.md](m3/m3-acceptance.md) | ✅ 五门四过一警示（2026-09-18，欠账两条入 W14） |
+
+## 进阶期（W14-27）
+
+| 周 | 文档 | 状态 |
+|---|---|---|
+| 阶段索引 | [advanced/README.md](advanced/README.md)（三份台账合并裁决校准版，2026-09-18） | 🔵 进行中 |
+| W14 | [advanced/w14-retro-and-debt.md](advanced/w14-retro-and-debt.md)（复盘 + 欠账/缺陷清理） | 🔵 待开工 |
 
 ## 对账校准记录（2026-09-03）
 
