@@ -22,7 +22,7 @@
 | W10 | 对话链路地基（会话记忆 + SSE 流式；ReAct 任务 2026-09-11 移入 W11） | [w10-react-loop.md](w10-react-loop.md) | ✅ 完成（2026-09-11） |
 | W11 | ReAct 骨架 + 查询改写 + 多轮评测集 + 生成 eval CI 定时回归门 | [w11-query-rewrite-eval-gate.md](w11-query-rewrite-eval-gate.md) | ✅ 完成（2026-09-14，八项全收口，零挂账） |
 | W12 | MCP Client + 鉴权与限流（出入双向凭证主题周） | [w12-mcp-client-auth.md](w12-mcp-client-auth.md) | ✅ 完成（2026-09-16，#1-#4 + minikube 冒烟全收口，零挂账；MCP Client 集群形态走 Streamable HTTP 独立工作负载，ADR-0016） |
-| W13 | 检索质量攻坚周（混合检索召回侧 + reranking 精排侧，数据裁决去留）+ M3 验收 | [w13-retrieval-two-stage.md](w13-retrieval-two-stage.md) | 🟡 进行中（#0-#3 全收口：ADR-0017 / chunk-size 维持 800 / hybrid +21pp 启用 / rerank +0pp 不启用——两升两降均数据裁决；剩 #4 M3 验收；2026-09-18） |
+| W13 | 检索质量攻坚周（混合检索召回侧 + reranking 精排侧，数据裁决去留）+ M3 验收 | [w13-retrieval-two-stage.md](w13-retrieval-two-stage.md) | ✅ 完成（2026-09-18，#0-#4 全收口；M3 验收五门四过一警示，[m3-acceptance.md](m3-acceptance.md)——门③ compound 溯源标注欠账两条入 W14） |
 
 > **新会话接续 SOP**（2026-09-11 起）：每周开工开新会话，先让对方读 `AGENTS.md` + 对应周计划文档（含开工口令），再动手。
 
@@ -31,7 +31,7 @@
 - ~~「12987 每个数字代表什么」生成 eval 误拒答（0/0/2，W9-2 跑批发现）~~ ✅ W11 #6 已结案：多轮对照实锤根因是指代未消解→hits=0；改写开启轮满分，关闭轮 2/6 塌方复现原案（w11-multi-turn.md）
 - ~~**查询改写证据 #4**~~ ✅ W11 #5/#6 已结案：改写落地（`2c0710a`），多轮 eval 6.0 vs 4.5 量化收益
 - embedding 实测对照（bge-m3 vs Qwen3-Embedding-8B）——已挂 W14+ 进阶清单，与混合检索共用"重建基线"流程
-- **fetch 首两轮 30s 超时未定论**（W12 #1d，2026-09-16）：首个应用实例连续两轮协议超时（模型优雅降级实证），清洁重启后 1.9s 成功不可复现，疑似首次 TLS/系统缓存冷启动；若复现先开 `logging.level.io.modelcontextprotocol=DEBUG` 取证
+- **fetch 首两轮 30s 超时已定论**（2026-09-18 M3 验收取证，原 W12 观察项）：运行中实例连续 3 次协议超时，独立 stdio 探测同服务 1.6s 正常，清洁重启即恢复——**非冷启动，是长驻实例 MCP stdio 会话失活**（子进程存活但协议无响应，客户端无重连）。转正式缺陷挂 W14：MCP Client 健康检查/重连策略
 
 ## A14 能力域对账（2026-09-10 首次执行，规范见 AGENTS.md A14）
 
@@ -74,24 +74,24 @@
 
 > 每条 = 口径 + 可跑命令/可看证据 + 阈值 + 落位周。验收时逐项挂证据链接进 m3-acceptance.md（非口头宣布）。
 
-- [ ] **研究 Loop 可演示**：复合问题（数字+文本双查，如"600519 2024 营收多少？顺便查年报工艺描述"）轨迹完整可见
+- [x] **研究 Loop 可演示**（✅ 2026-09-18，m3-acceptance.md 门①）：复合问题（数字+文本双查，如"600519 2024 营收多少？顺便查年报工艺描述"）轨迹完整可见
   - 口径：trajectory 事件 ≥2 步、每步 thought/action/observation 齐全、exit=FINAL_ANSWER、终答双要素都作答
   - 命令：`./mvnw spring-boot:run` 后 `curl -N -X POST localhost:18080/ai/chat/stream -d '{"message":"..."}' -H 'Content-Type: application/json'`，或对话页直接提问看轨迹卡片
   - 证据：research-trace 日志段 + SSE 事件流摘录（入 m3-acceptance.md）｜落位：W11 #3 已具备，W13 验收时实录
-- [ ] **Agent 轨迹评估指标落地**：三指标有量化口径且可采集
+- [x] **Agent 轨迹评估指标落地**（✅ 2026-09-18，门②：6/6 收敛 100%、冗余 0，docs/scripts/trajectory-metrics.py）：三指标有量化口径且可采集
   - 口径（2026-09-14 定）：**步数** = LoopResult.steps().size()；**冗余调用** = 同 tool + 同归一化 input 的重复次数；**收敛率** = 一批运行中 stopReason=FINAL_ANSWER 的占比
   - 采集点：`LoopListener.onComplete`（#2 预留的观测端口，零入侵）；数据源同时可离线解析 research-trace 日志
   - 命令：W13 落地批量采集脚本（docs/scripts/），对黄金集 agent 路由用例输出三指标
   - 阈值：收敛率 = 100%（允许 MAX_STEPS 但须显式登记理由）、冗余调用 = 0｜落位：W13
-- [ ] **多轮追问场景生成 eval 不回归**（查询改写生效的量化证据）
+- [x] **多轮追问场景生成 eval 不回归**（⚠️ 2026-09-18，门③部分达成：改写收益保持、总体 5.7 不降级；compound 溯源标注欠账两条入 W14）（查询改写生效的量化证据）
   - 口径：改写开/关两轮跑批 multi-turn 类别（W11 #6 新增 ≥6 条），开启轮均分严格高于关闭轮；其余类别不降级
   - 命令：`AI_EVAL_GENERATION_ENABLED=true AI_EVAL_GENERATION_CATEGORIES=multi-turn ./mvnw spring-boot:run`（两轮差 `AI_REWRITE_ENABLED`——该开关随 W11 #5 落地）
   - 证据：两轮对比表入 docs/eval/generation/w11-multi-turn.md｜落位：W11 #5/#6
-  - 进度（2026-09-14）：multi-turn 两轮对比 ✅ 达成（开 6.0/6 > 关 4.5/6）；"其余类别不降级"当时只跑了 multi-turn 类别，W13 验收时全量复跑补齐后打勾
-- [ ] **至少一个外部 MCP 服务被我们的 Agent 真实调通**
+  - 进度（2026-09-18）：全量复跑已补齐（22 条两轮），详见 m3-acceptance.md 门③
+- [x] **至少一个外部 MCP 服务被我们的 Agent 真实调通**（✅ 2026-09-18 复验 traceId=c5f8a9ef 1474ms，门④）
   - 口径：Agent 以 MCP Client 身份调用外部 MCP 服务取到真实数据并用于回答，回答含溯源
   - 证据：调用日志（tool-audit）+ 回答摘录；候选服务 W12 开工时定（公开行情/财经 MCP 优先）｜落位：W12
-- [ ] **混合检索 / rerank 上线与否由黄金集回归数据裁决**（同 few-shot 裁决机制：事先写死标准）
+- [x] **混合检索 / rerank 上线与否由黄金集回归数据裁决**（✅ 门⑤：hybrid +21pp 启用 / rerank +0pp 不启用）（同 few-shot 裁决机制：事先写死标准）
   - 口径：检索黄金集全量，dense 基线 vs 混合检索 vs 混合+rerank 三轮 Recall@5
   - 阈值（2026-09-14 写死）：启用条件 = Recall@5 ≥ 80%（基线 72% +8pp）且五条失分用例无一恶化；不达标则不启用并记录 why-not
   - 命令：`./mvnw test -Dtest=GoldenRetrievalEvalIT`（配置切换检索模式）｜落位：W13

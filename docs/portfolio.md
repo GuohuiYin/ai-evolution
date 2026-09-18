@@ -1,4 +1,4 @@
-# 项目亮点清单（M2 收官 · 2026-09-10）
+# 项目亮点清单（M3 收官 · 2026-09-18）
 
 > 定位：对外可展示的项目成果索引。每条亮点挂 commit 哈希与报告链接——**所有声称都可验证**。
 > 读者画像：任何想评估这套 Agent 工程化实践的工程师 / 未来的自己。读法：先看亮点一句话，需要深挖再点证据。
@@ -45,6 +45,17 @@ Harness 工程（Constrain / Inform / Verify / Correct）不是概念，逐条�
 | 成本意识：一页成本账——单次问答 ¥0.0054，一轮生成 eval ¥0.17 | `3c115e0` · [w8-cost-report](cost/w8-cost-report.md) |
 | 增量摄入：SHA-256 manifest 三类分派，未变文件零 embedding 调用 | `8d36249` `7ffe685` · [ADR-0012](adr/0012-incremental-ingestion-manifest.md) |
 | 领域分包前置（不过载就拆）+ 面向接口 + ArchUnit 架构守护 | `46f7300` `64ac5a8` `dff04fd` · [AGENTS.md](../AGENTS.md) |
+
+## 五、M3 最小研究 Loop（W10-W13，2026-09-18 验收收官）
+
+| 亮点 | 证据 |
+|---|---|
+| 显式 ReAct 研究循环：thought/action/observation 轨迹显式化，SSE 逐步推送；协议解析容差实战（"静默降级是故障放大器"教训） | ADR-0015 · `3285a16`→`b7e188e` · [w11-react-loop-regression](eval/generation/w11-react-loop-regression.md) |
+| Agent 轨迹评估成体系：步数/冗余调用/收敛率三指标 + 批量采集脚本，M3 验收 6/6 收敛 100%、冗余 0 | [trajectory-metrics.py](scripts/trajectory-metrics.py) · [m3-acceptance 门②](plans/m3/m3-acceptance.md) |
+| 查询改写数据裁决：多轮 eval 改写开 6.0/6 vs 关 4.5/6，指代消解量化收益 | `2c0710a` · [w11-multi-turn](eval/generation/w11-multi-turn.md) |
+| 检索两阶段化（生产级范式）：hybrid dense+sparse+RRF 黄金集 +21pp（72%→93%）裁决启用；rerank 管线落地但 +0pp 裁决不启用——**数据裁决机制含两次否定答案，机制可信** | ADR-0017 · [w13-hybrid-eval](eval/retrieval/w13-hybrid-eval.md) · [w13-rerank-eval](eval/retrieval/w13-rerank-eval.md)（39 条开/关逐条对比） |
+| 出入双向凭证（W12）：MCP Client 真实调通外部 fetch 服务 + API Key 鉴权 + 限流 + 模型自动降级 failover | ADR-0016 · `8f7deb1`→`270ffc8` |
+| 增量摄入自愈：chunk 参数签名入 manifest 判变键，参数变更触发自动重建，手工清库消失 | `2a65175` |
 
 ## 使用说明
 

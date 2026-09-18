@@ -49,7 +49,7 @@
 |---|---|---|
 | 检索/生成黄金集 + judge 锚定 | ✅ | — |
 | 多轮评测 | ✅ W11（multi-turn 6 条 + 同会话执行器，改写开/关对照入报告） | — |
-| Agent 轨迹评估 | ⚠️ 轨迹留痕 + SSE + 指标口径 W11 落地；进验收门待 W13 | W13 进 M3 验收门 |
+| Agent 轨迹评估 | ✅ W13 #4 落地：三指标口径 + 批量采集脚本（docs/scripts/trajectory-metrics.py），M3 验收 6/6 收敛 100%、冗余 0 | [m3-acceptance](plans/m3/m3-acceptance.md) 门② |
 | 人工反馈回路 | ❌ | W14+ |
 | 线上影子评估 | ❌ | W14+（需流量） |
 | 数据集版本管理 | ✅ golden-set-changelog 台账 | — |

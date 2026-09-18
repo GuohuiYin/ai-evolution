@@ -107,7 +107,7 @@ flowchart TB
     subgraph cross["横切关注点（全链路生效）"]
         RedLines["金融三红线代码化<br/>免责声明 · 拒买卖建议 · 数字溯源"]
         Obs["可观测：traceId 四级留痕<br/>prompt/response 日志 · token 账本"]
-        Eval["评估：检索黄金集 39 条 + 生成黄金集 16 条<br/>（LLM judge，A13 prompt 纪律门）"]
+        Eval["评估：检索黄金集 39 条 + 生成黄金集 22 条<br/>（LLM judge，A13 prompt 纪律门）<br/>Agent 轨迹评估：步数/冗余/收敛率"]
         Sec["安全：CVE-2026-59318 fail-fast<br/>MCP 脱敏 · 入参上限 · 工具调用上限"]
     end
     services -.-> cross
@@ -117,8 +117,8 @@ flowchart TB
 
 **关键数据流**：
 
-- **通路一（RAG）**：问题 → bge-m3 向量化 → Qdrant 检索（topK/阈值/元数据过滤，配置集中 `ai.rag.*`）→ 空检索硬拒答，命中则上下文 + prompt 模板 → DeepSeek → 回答 + sources + 免责声明
-- **通路二（Agent）**：问题 → 模型自主决策调用三工具（AOP 审计留痕）→ 数据回注 prompt → 回答 + 免责声明；数据与问题实体不匹配时禁止拼接推算（agent-chat-v2 反缝合规则）
+- **通路一（RAG）**：问题 → 查询改写（W11，多轮指代消解）→ bge-m3 向量化 → Qdrant 两阶段检索（W13 ADR-0017：混合召回 dense+sparse+RRF 默认开 → rerank 精排管线落地、数据裁决 +0pp 默认关）→ 空检索硬拒答，命中则上下文 + prompt 模板 → DeepSeek → 回答 + sources + 免责声明
+- **通路二（Agent）**：问题 → 显式 ReAct 研究循环（W11 ADR-0015：thought/action/observation 逐步可见，SSE 轨迹推送，步数上限 6）→ 模型逐步决策调用四工具（AOP 审计留痕）→ 数据回注 → 终答 + 免责声明；数据与问题实体不匹配时禁止拼接推算（agent-chat-v2 反缝合规则）
 - **通路三（Analyze）**：股票代码 → StockDataClient 取数（未知代码 404，空数据不过模型）→ CO-STAR + few-shot + `.entity()` schema 强约束 → `StockAnalysisReport` JSON
 
 ## 当前能力
@@ -126,7 +126,7 @@ flowchart TB
 **对话与检索**
 
 - 多轮会话记忆 L1：`MessageWindowChatMemory` 滑动窗口（`ai.chat.memory.window:20`），同会话追问可见上下文
-- SSE 流式对话：`POST /ai/chat/stream` 逐 token 下发，对话页流式渲染 + 会话管理
+- SSE 流式对话：`POST /ai/chat/stream`——RAG 通路逐 token 下发；Agent 通路推送 trajectory 事件（每步 thought/tool/observation）+ 一次性终答，对话页轨迹卡片渲染
 - 知识库问答可溯源：回答带 sources，越界硬拒答（空检索不过模型）
 - Agent 工具调用：行情 / 财务 / 公告检索三工具，AOP 审计留痕
 - MCP Client 出向取数（W12 #1）：ReAct 面板第 4 工具 `fetchWebPage` 经官方 `mcp-server-fetch`
@@ -155,10 +155,10 @@ flowchart TB
 - 全链路 traceId 串链：路由 / 检索 / 工具 / 模型四级留痕
 - prompt/response 日志：开关受控（本地开 / 生产关）
 - token 成本账本：含 DeepSeek 缓存命中率
-- 检索黄金集 39 条（Recall@5=72% 基线）+ 生成黄金集 16 条（LLM judge 三维评分，锚定 5/5）
+- 检索黄金集 39 条（Recall@5 基线 72% → W13 混合检索裁决启用后 **93%**，+21pp）+ 生成黄金集 22 条（LLM judge 三维评分，锚定 5/5）+ Agent 轨迹评估（收敛率/冗余/步数，M3 验收 6/6 收敛）
 - 一页成本账：单次问答 ¥0.0054，一轮生成 eval ¥0.17
 
-**路线图**：W5 工具调用（@Tool）+ M1 验收门 ✅ → M2 MCP/护栏/Eval（W6 MCP 协议贯通 ✅，W7 安全加固 ✅，W8 评估体系 ✅——检索/生成双黄金集 + LLM judge + 成本账；few-shot A/B 裁决不启用）→ M3 最小研究 Loop。
+**路线图**：W5 工具调用（@Tool）+ M1 验收门 ✅ → M2 MCP/护栏/Eval（W6 MCP 协议贯通 ✅，W7 安全加固 ✅，W8 评估体系 ✅——检索/生成双黄金集 + LLM judge + 成本账；few-shot A/B 裁决不启用）→ M3 最小研究 Loop ✅（2026-09-18 验收收官：显式 ReAct + 会话记忆 + SSE 轨迹 / 查询改写 / MCP Client 出向凭证 / 检索两阶段化——hybrid +21pp 启用、rerank +0pp 不启用，数据裁决；[验收记录](docs/plans/m3/m3-acceptance.md)）→ W14+ 进阶。
 
 ## 文档导航
 
