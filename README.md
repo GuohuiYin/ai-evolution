@@ -51,7 +51,7 @@ AI_EVAL_GENERATION_ENABLED=true ./mvnw spring-boot:run  # 生成黄金集 22 条
 
 # Minikube 集群部署（详见 k8s/README.md）
 DOCKER_HOST=unix:///var/run/docker.sock ./mvnw compile jib:dockerBuild -DskipTests
-minikube image load ai-evolution:0.2.0-m2-SNAPSHOT
+minikube image load ai-evolution:0.3.0-m3
 kubectl apply -f k8s/
 ```
 
@@ -65,7 +65,7 @@ flowchart TB
     end
 
     subgraph entry["入口层（W12 起：API Key 鉴权默认拒绝 + 限流 60/min）"]
-        Ctrl["ChatController<br/>POST /ai/chat · /ai/chat/stream（SSE）· /ai/analyze"]
+        Ctrl["ChatController<br/>POST /ai/chat · /ai/chat/stream（SSE）· /ai/analyze<br/>/ai/agent（调试旁路，不接会话记忆）"]
         MCPServer["MCP Server<br/>POST /mcp（Streamable HTTP）"]
     end
 

@@ -54,7 +54,7 @@ spring:
     mcp:
       server:
         name: ai-evolution
-        version: 0.2.0-m2-SNAPSHOT
+        version: 0.3.0-m3
         protocol: STREAMABLE
         type: SYNC
       # W12 #1：MCP Client（协议栈的另一半）——Agent 持证调外部服务取数。

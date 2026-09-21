@@ -9,7 +9,7 @@ DOCKER_HOST=unix:///var/run/docker.sock ./mvnw compile jib:dockerBuild -DskipTes
 DOCKER_HOST=unix:///var/run/docker.sock docker build -t mcp-fetch:1.0.0 k8s/mcp-fetch/
 
 # 2. 加载镜像到 minikube 并应用清单（Qdrant 镜像也需提前 docker pull 后载入）
-minikube image load ai-evolution:0.2.0-m2-SNAPSHOT
+minikube image load ai-evolution:0.3.0-m3
 minikube image load mcp-fetch:1.0.0
 minikube image load qdrant/qdrant:v1.15.1
 kubectl apply -f k8s/
