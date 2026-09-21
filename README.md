@@ -47,7 +47,7 @@ set -a && source .env && set +a
 
 # 评估跑批（需本地 Qdrant + SILICONFLOW_API_KEY）
 AI_EVAL_ENABLED=true ./mvnw spring-boot:run             # 检索黄金集 39 条
-AI_EVAL_GENERATION_ENABLED=true ./mvnw spring-boot:run  # 生成黄金集 16 条 + LLM judge
+AI_EVAL_GENERATION_ENABLED=true ./mvnw spring-boot:run  # 生成黄金集 22 条 + LLM judge
 
 # Minikube 集群部署（详见 k8s/README.md）
 DOCKER_HOST=unix:///var/run/docker.sock ./mvnw compile jib:dockerBuild -DskipTests
@@ -55,7 +55,7 @@ minikube image load ai-evolution:0.2.0-m2-SNAPSHOT
 kubectl apply -f k8s/
 ```
 
-## 架构图（截至 W9 · 2026-09-10）
+## 架构图（截至 W13 · 2026-09-18）
 
 ```mermaid
 flowchart TB
@@ -64,30 +64,34 @@ flowchart TB
         MCPClient["MCP 客户端<br/>（Codex / Inspector）"]
     end
 
-    subgraph entry["入口层"]
-        Ctrl["ChatController<br/>POST /ai/chat · /ai/analyze"]
+    subgraph entry["入口层（W12 起：API Key 鉴权默认拒绝 + 限流 60/min）"]
+        Ctrl["ChatController<br/>POST /ai/chat · /ai/chat/stream（SSE）· /ai/analyze"]
         MCPServer["MCP Server<br/>POST /mcp（Streamable HTTP）"]
     end
 
     Router["ChatRouter 规则路由<br/>命中股票代码/关键词 → Agent，否则 → RAG<br/>（ADR-0010）"]
 
     subgraph services["服务层（按领域分包 · 面向接口）"]
-        RAG["RagChatService<br/>知识问答通路"]
+        RAG["RagChatService<br/>知识问答通路<br/>（会话记忆 L1 滑动窗口 20）"]
         Agent["AgentChatService<br/>工具增强对话通路"]
+        Loop["ResearchLoop 显式 ReAct（W11，ADR-0015）<br/>thought/action/observation · 步数上限 6<br/>SSE 轨迹逐步推送 · 协议解析容差"]
         Analyze["StockAnalysisService<br/>结构化分析通路"]
     end
 
     subgraph capability["能力层"]
-        Retriever["KnowledgeRetriever<br/>bge-m3 向量化 → 检索"]
-        Qdrant[("Qdrant 向量库<br/>md + PDF 增量摄入<br/>元数据三件套过滤")]
+        Rewrite["查询改写（W11）<br/>多轮指代消解，数据裁决启用"]
+        Retriever["KnowledgeRetriever 两阶段（W13，ADR-0017）<br/>混合召回 dense+sparse+RRF（裁决启用，默认开）<br/>→ rerank 精排管线（裁决 +0pp，默认关）"]
+        Qdrant[("Qdrant 向量库<br/>md + PDF 增量摄入（分块参数签名自愈）<br/>元数据三件套过滤")]
         Tools["StockDataTools / AnnouncementTools<br/>行情 · 财务 · 公告检索（@Tool）"]
-        StockClient["StockDataClient<br/>mock 先行 → W5 换真源"]
+        Fetch["fetchWebPage（W12，ReAct 第 4 工具）<br/>MCP Client 出向 → 官方 mcp-server-fetch<br/>stdio 本地 / Streamable HTTP 集群（ADR-0016）"]
+        StockClient["StockDataClient<br/>mock 数据源（真源未接，记录在案）"]
         Prompts["PromptLibrary<br/>prompts/*.md 版本化资产<br/>模板名配置化（A11）"]
     end
 
     subgraph models["模型层（OpenAI 兼容协议，配置切换）"]
-        LLM["DeepSeek<br/>对话 / judge"]
+        LLM["DeepSeek 主力 / Qwen 备选<br/>FailoverChatModel 自动降级（W12）：<br/>瞬态故障切 Qwen，4xx 不切"]
         Embed["SiliconFlow bge-m3<br/>Embedding"]
+        Rerank["SiliconFlow bge-reranker-v2-m3<br/>（默认关，重评触发在案）"]
     end
 
     UI --> Ctrl
@@ -96,24 +100,28 @@ flowchart TB
     Ctrl --> Router
     Router --> RAG & Agent
     Ctrl --> Analyze
-    RAG --> Retriever --> Qdrant
+    Agent --> Loop
+    Loop --> Tools
+    Loop --> Fetch
+    RAG --> Rewrite --> Retriever --> Qdrant
     RAG --> Prompts
-    Agent --> Tools --> StockClient
     Agent --> Prompts
+    Tools --> StockClient
     Analyze --> StockClient
     Retriever --> Embed
+    Retriever -.裁决不启用.-> Rerank
     RAG & Agent & Analyze --> LLM
 
     subgraph cross["横切关注点（全链路生效）"]
         RedLines["金融三红线代码化<br/>免责声明 · 拒买卖建议 · 数字溯源"]
-        Obs["可观测：traceId 四级留痕<br/>prompt/response 日志 · token 账本"]
-        Eval["评估：检索黄金集 39 条 + 生成黄金集 22 条<br/>（LLM judge，A13 prompt 纪律门）<br/>Agent 轨迹评估：步数/冗余/收敛率"]
-        Sec["安全：CVE-2026-59318 fail-fast<br/>MCP 脱敏 · 入参上限 · 工具调用上限"]
+        Obs["可观测：traceId 四级留痕 · SSE 轨迹<br/>prompt/response 日志 · token 账本 · failover 计数器"]
+        Eval["评估：检索黄金集 39 条 + 生成黄金集 22 条<br/>（LLM judge，A13 prompt 纪律门，CI 定时回归）<br/>Agent 轨迹评估：步数/冗余/收敛率"]
+        Sec["安全：CVE-2026-59318 fail-fast · API Key + 限流<br/>MCP 脱敏 · 入参上限 · 工具调用上限"]
     end
     services -.-> cross
 ```
 
-**部署形态**：ai-evolution + Qdrant 同集群（Minikube），ConfigMap/Secret 分层，探针 + 优雅停机 + Jib 镜像。
+**部署形态**：ai-evolution + Qdrant + mcp-fetch（W12 起独立工作负载，MCP Client 出向 HTTP 端）同集群（Minikube），ConfigMap/Secret 分层，探针 + 优雅停机 + Jib 镜像。
 
 **关键数据流**：
 
