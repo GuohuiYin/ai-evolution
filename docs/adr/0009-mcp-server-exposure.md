@@ -23,4 +23,4 @@ M2 验收门要求"业务能力被外部 Agent 客户端真实调用"。需要�
 ## 后果
 
 - 正：Inspector（官方客户端）已真实调通 initialize → tools/list → tools/call 全链路；业务错误走 `isError:true` 而非 HTTP 500，两层错误语义实证分离（参数类型校验失败的案例已演示）。
-- 负/待办：Codex CLI 在本机因区域限制（chatgpt.com 403）无法非交互验证，配置（`~/.codex/config.toml [mcp_servers.ai-evolution]`）已就位，待用户在 Codex 桌面端做最终确认；MCP 端点无鉴权，仅可在本机/受信网络暴露（W7 处理）。
+- 负/待办：Codex CLI 在本机因区域限制（chatgpt.com 403）无法非交互验证，配置（`~/.codex/config.toml [mcp_servers.ai-evolution]`）已就位，待用户在 Codex 桌面端做最终确认；~~MCP 端点无鉴权，仅可在本机/受信网络暴露（W7 处理）~~ **已结案（2026-09-16，W12 #2）**：MCP 端点 API Key 鉴权默认拒绝 + 显式放行落地。

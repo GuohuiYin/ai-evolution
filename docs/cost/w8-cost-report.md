@@ -44,3 +44,17 @@
 - 所有数字可由 `TokenUsageAdvisor` 日志复算：`grep stage=MODEL <log>` 取 tokens_in/out/cache_read
 - judge 调用与被测调用同模型同价，未单独折价
 - 未含：Qdrant 本地容器（¥0）、SiliconFlow embedding（量级过小）、开发与 CI 机器成本
+
+## M3 补记（2026-09-21，口径更新非新实测）
+
+M3 期间成本面三处变化，本页账"随里程碑更新"在此补齐：
+
+1. **rerank 精排段**：管线已落地但数据裁决不启用（默认关）——常态零成本。计费画像见专项
+   一页账 [reranker-selection-v1](../eval/selection/reranker-selection-v1.md)
+   （30 次调用 103,770 tokens，Pro 上界 ¥0.007/次回归）。
+2. **生成 eval 规模**：黄金集 16 → 22 条（W11 +multi-turn 6），单轮成本按线性口径 ≈ ¥0.23
+   （**估算值**：32 → 44 次调用等比外推，未实测；judge 方差双轮跑批惯例再 ×2）。
+3. **轨迹评估采集**（W13，[trajectory-metrics.py](../scripts/trajectory-metrics.py)）：
+   每轮 6 条真实 agent 对话，模型调用计入日常调试量级，未单独记账。
+
+结论不变：eval-first 在本项目没有成本借口。
