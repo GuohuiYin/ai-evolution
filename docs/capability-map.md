@@ -27,10 +27,13 @@
 
 | 阶段 | 现状 | 处置 |
 |---|---|---|
+| 摄入 | ✅ md + PDF 增量摄入：SHA-256 manifest 三类分派 + 分块参数签名自愈（参数变更自动重建） | [ADR-0012](adr/0012-incremental-ingestion-manifest.md) |
 | 分块 | ✅ chunk-size=800 经 400/800/1200 三轮对照数据裁决维持（三轮 Recall@5 均 72%） | [w13-chunk-size-comparison](eval/retrieval/w13-chunk-size-comparison.md) |
+| 向量化 | ✅ bge-m3（调研论证选型，重评触发在案）；实测对照（vs Qwen3-Embedding-8B）挂 W15-16 | [embedding-selection-v1](eval/selection/embedding-selection-v1.md) |
 | 召回 | ✅ 混合检索（dense+sparse+RRF）W13 数据裁决启用：Recall@5 72%→93%，负例零回归 | [w13-hybrid-eval](eval/retrieval/w13-hybrid-eval.md) |
 | 查询理解 | ✅ 改写 W11 落地（多轮 eval 6.0/6 vs 关闭 4.5/6 量化收益）；HyDE/查询扩展 ⛔ 现阶段不采纳（W11 #8） | 调研裁决：[hyde-query-expansion-v1](../eval/selection/hyde-query-expansion-v1.md)，重评触发条件在案 |
 | 精排 | ✅ rerank 管线 W13 落地（bge-reranker-v2-m3 薄封装+故障降级）；数据裁决 +0pp 保持默认关，重评触发在案 | [w13-rerank-eval](eval/retrieval/w13-rerank-eval.md) |
+| 生成 | ✅ prompt 版本化资产 + 空检索硬拒答 + 反缝合规则（W9-2）+ 红线告警 | — |
 | 引用忠实度 | ⚠️ 生成 eval 溯源维部分覆盖 | W14+ 强化 |
 | 知识图谱/GraphRAG | ❌ | ⛔ 27 周范围外，记录在案 |
 

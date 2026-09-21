@@ -23,6 +23,7 @@
 | [embedding-selection-v1.md](selection/embedding-selection-v1.md) | 调研论证型（W9）：维持 BGE-M3；实测对照列进阶阶段（W14+） |
 | [vectorstore-selection-v1.md](selection/vectorstore-selection-v1.md) | 调研论证型（W9）：维持 Qdrant——本项目量级下选型由运维成本与生态决定；含重评触发条件 |
 | [hyde-query-expansion-v1.md](selection/hyde-query-expansion-v1.md) | 调研论证型（W11）：不采纳 HyDE/查询扩展——病灶错位（指代消解已由改写解决），收益被 W13 混合检索覆盖；含重评触发条件 |
+| [reranker-selection-v1.md](selection/reranker-selection-v1.md) | 一页账（W13 #3）：bge-reranker-v2-m3，30 次调用 103,770 tokens，Pro 上界 ¥0.007/次回归——rerank 管线成本侧结论 |
 | [model-selection-samples/](selection/model-selection-samples/) | 模型实测的原始响应样本与延迟记录 |
 
 > 选型方法约定：默认调研论证（需求矩阵 + 公开 benchmark + 显式约束），
@@ -38,6 +39,9 @@ CI 侧 `GoldenRetrievalEvalIT` 用哈希向量替身只覆盖 normal 正例。
 |---|---|---|
 | W5 | [m1-gate-recall.md](retrieval/m1-gate-recall.md) | Recall@5 85.7% 过 M1 门；多源语料逼出 expectSources 语义升级 |
 | W8 | [w8-retrieval-baseline.md](retrieval/w8-retrieval-baseline.md) | 39 条基线 Recall@5 72%；混合检索获 5 条量化证据（M3 候选） |
+| W13 | [w13-chunk-size-comparison.md](retrieval/w13-chunk-size-comparison.md) | chunk-size 400/800/1200 三轮对照均 72%、失败集合相同 → 裁决维持 800 |
+| W13 | [w13-hybrid-eval.md](retrieval/w13-hybrid-eval.md) | 混合检索（dense+sparse+RRF）Recall@5 72%→93%（+21pp），负例零回归 → 裁决启用 |
+| W13 | [w13-rerank-eval.md](retrieval/w13-rerank-eval.md) | rerank +0pp（39 条开/关逐条对比零翻转）→ 裁决不启用，重评触发在案 |
 
 ### [generation/](generation/) — 生成质量回归
 
@@ -53,6 +57,7 @@ CI 定时回归门见 `.github/workflows/eval-generation.yml`（每天 UTC 21:23
 | W8 | [w8-generation-eval.md](generation/w8-generation-eval.md) | 总体 5.3/6；冰淇淋案例暴露"部分相关数据缝合"漏洞 → W9-2 agent-chat-v2 反缝合规则修复后恢复 2/2/2 |
 | W11 | [w11-react-loop-regression.md](generation/w11-react-loop-regression.md) | 显式 ReAct 切换回归 5.6/6 ≥ 基线；首轮降级暴露"协议原文被兜底当答案"，解析器容差是一等职责 |
 | W11 | [w11-multi-turn.md](generation/w11-multi-turn.md) | 多轮 6 条：改写开 6.0/6 vs 关 4.5/6——改写收益集中在指代消解，两条塌方全是 hits=0 误拒答 |
+| W13 | [m3-acceptance.md 门③](../plans/m3/m3-acceptance.md) | 全量复跑 22 条两轮：总体 5.7 不降级；compound 溯源标注 + 冰淇淋期望错位两条欠账入 W14 |
 
 ### 红线安全 — 单列的评估域
 
@@ -69,4 +74,4 @@ CI 定时回归门见 `.github/workflows/eval-generation.yml`（每天 UTC 21:23
 ## 演进路线
 
 - W11：~~生成 eval 接入 CI 定时回归门（GitHub Actions）~~ ✅ 已落地（`.github/workflows/eval-generation.yml`，类别均分 < 4.5/6 违约开 issue），四域从"手动跑"升级为"自动门"
-- M3 候选裁决证据积累中：混合检索（5 条）、查询改写（3 条）
+- M3：两项候选双双数据裁决落地——混合检索 +21pp 启用、查询改写 6.0 vs 4.5 启用；rerank +0pp 裁决不启用。候选积累 → 数据裁决机制闭环（含否定答案）

@@ -9,7 +9,7 @@
 
 | 亮点 | 证据 |
 |---|---|
-| 双黄金集：检索 39 条（Recall@5=72% 基线）+ 生成 16 条（LLM judge 三维评分） | [w8-retrieval-baseline](eval/retrieval/w8-retrieval-baseline.md) · [w8-generation-eval](eval/generation/w8-generation-eval.md) · `08af121` `a187487` |
+| 双黄金集：检索 39 条（Recall@5 基线 72% → W13 混合检索后 93%）+ 生成 22 条（LLM judge 三维评分） | [w8-retrieval-baseline](eval/retrieval/w8-retrieval-baseline.md) · [w8-generation-eval](eval/generation/w8-generation-eval.md) · `08af121` `a187487` |
 | LLM-as-a-Judge 带锚定（judge 自身 5/5 才信它的分）——评估评估者的 metaeval 意识 | `b926412` · [ADR-0014 judge 隔离设计](adr/0014-llm-as-a-judge-isolated.md) |
 | prompt 改动纪律门 A13：动 prompt 必须附生成 eval 跑批摘要才能 commit | `c989436` 立规 → `f444792` 首次执行（反缝合规则修复，冰淇淋案例 0/0/1 → 2/2/2） |
 | few-shot A/B 对照实验：49:49 打平 → 裁决不启用。**敢留负结果** | `3756526` 设施 → `7e9cc26` 裁决报告 |
