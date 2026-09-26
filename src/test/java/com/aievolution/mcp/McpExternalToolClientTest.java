@@ -23,7 +23,10 @@ import org.mockito.ArgumentCaptor;
 class McpExternalToolClientTest {
 
   private final McpSyncClient mcpClient = mock(McpSyncClient.class);
-  private final McpExternalToolClient client = new McpExternalToolClient(mcpClient, 100);
+  private final McpFetchConnectionFactory connectionFactory = mock(McpFetchConnectionFactory.class);
+  private final McpConnectionManager connectionManager =
+      new McpConnectionManager(mcpClient, connectionFactory);
+  private final McpExternalToolClient client = new McpExternalToolClient(connectionManager, 100);
 
   @Test
   void fetchWebPageCallsFetchToolWithUrlArgument() {
@@ -77,6 +80,8 @@ class McpExternalToolClientTest {
   @Test
   void transportExceptionBecomesObservationInsteadOfException() {
     when(mcpClient.callTool(any())).thenThrow(new RuntimeException("connection reset"));
+    // 重建也失败时才给失败观察（重连路径的测试见下方 W14 #1 用例组）
+    when(connectionFactory.connect()).thenThrow(new RuntimeException("uvx not found"));
 
     String result = client.fetchWebPage("https://example.com");
 
@@ -96,5 +101,61 @@ class McpExternalToolClientTest {
     assertThat(client.fetchWebPage("  ")).startsWith("抓取失败");
     // 空白 URL 不值得一次协议往返（也是成本闸门）
     org.mockito.Mockito.verifyNoInteractions(mcpClient);
+  }
+
+  // ─── W14 #1：长驻会话失活 → 重建连接 + 有界重试（缺陷复现与修复锁定） ───
+
+  @Test
+  void transportFailureTriggersReconnectAndRetrySucceeds() {
+    // 复现 M3 门④缺陷形态：长驻会话静默死亡，协议调用抛异常
+    when(mcpClient.callTool(any())).thenThrow(new RuntimeException("request timeout"));
+    McpSyncClient freshClient = mock(McpSyncClient.class);
+    when(freshClient.callTool(any()))
+        .thenReturn(new CallToolResult(List.of(new TextContent("重连后正文")), false, null, null));
+    when(connectionFactory.connect()).thenReturn(freshClient);
+
+    String result = client.fetchWebPage("https://example.com");
+
+    assertThat(result).isEqualTo("重连后正文");
+    verify(mcpClient).closeGracefully();
+    verify(connectionFactory, org.mockito.Mockito.times(1)).connect();
+  }
+
+  @Test
+  void retryFailureAfterReconnectIsBounded() {
+    when(mcpClient.callTool(any())).thenThrow(new RuntimeException("timeout-1"));
+    McpSyncClient freshClient = mock(McpSyncClient.class);
+    when(freshClient.callTool(any())).thenThrow(new RuntimeException("timeout-2"));
+    when(connectionFactory.connect()).thenReturn(freshClient);
+
+    String result = client.fetchWebPage("https://example.com");
+
+    assertThat(result).startsWith("抓取失败").contains("timeout-2");
+    // 有界：每次调用最多重建一次，不死循环
+    verify(connectionFactory, org.mockito.Mockito.times(1)).connect();
+  }
+
+  @Test
+  void protocolErrorDoesNotTriggerReconnect() {
+    when(mcpClient.callTool(any()))
+        .thenReturn(new CallToolResult(List.of(new TextContent("404")), true, null, null));
+
+    client.fetchWebPage("https://example.com/missing");
+
+    // 协议层 isError 是对方服务的正常应答，不是会话失活——不重建
+    org.mockito.Mockito.verifyNoInteractions(connectionFactory);
+  }
+
+  @Test
+  void noLiveConnectionSelfHealsBeforeCall() {
+    // 上一次重建失败后 current=null，下一次调用必须先重建而不是拿空连接撞墙
+    McpConnectionManager emptyManager = new McpConnectionManager(null, connectionFactory);
+    McpExternalToolClient healingClient = new McpExternalToolClient(emptyManager, 100);
+    McpSyncClient freshClient = mock(McpSyncClient.class);
+    when(freshClient.callTool(any()))
+        .thenReturn(new CallToolResult(List.of(new TextContent("自愈正文")), false, null, null));
+    when(connectionFactory.connect()).thenReturn(freshClient);
+
+    assertThat(healingClient.fetchWebPage("https://example.com")).isEqualTo("自愈正文");
   }
 }
