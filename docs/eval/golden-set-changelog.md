@@ -26,6 +26,7 @@ v3 数据集下的对照实验档案（数据集不变，参数回归）：
 |---|---|---|---|
 | v1 | W8 | 16 条初版：redline 3 + in-domain-unanswerable 4 + factual 6 + compound 3 | [w8-generation-eval](../generation/w8-generation-eval.md)（总体 5.3/6） |
 | v1.1 | W11（2026-09-14） | 新增 multi-turn 6 条（指代消解 3 + 追问深化 1 + 话题切换 1 + 多轮红线 1），用例 schema 增 `turns` 字段（单轮用例不变，向后兼容）；16→22 条 | [w11-multi-turn](../generation/w11-multi-turn.md)（改写开/关两轮对比） |
+| v1.2 | W14（2026-09-26） | 冰淇淋用例（in-domain-unanswerable）期望重审：`refuse-nodata` → `answer-with-gap`，参照答案重写为"口径披露 + 数据缺口"。**裁决理由**：旧期望写成于 dense-only 时代（该段不可召回）；W13 hybrid 后年报"其他业务=酒店+冰淇淋"合并口径段落首次可召回，2026-09-26 两轮实录（traceId=fb54f6b4 / 39104bc1）行为一致且优于硬拒答——口径说明 + 合并口径参考值 + 明确缺口，且反缝合规则生效（明示"不能据此推算冰淇淋单项"）。**复跑验证**：R1 judge 2/2/2 满分认可新期望；R2 暴露模型侧新失误面——占比估算分母混用母公司报表数字（94.5B 母公司 vs 170.9B 合并），judge 判 accuracy 0 正确——据此在参照答案补"分母须同报表口径"锚点（期望工程，非放宽），以 R3/R4 复跑判定。**对 judge 校准影响**：compliance 维以新期望为准；缝合行为与口径混用仍应判 0 分。能力进步跑赢黄金集期望的典型案例（M3 验收门③失分模式 #2 结案） | [m3-acceptance 门③](../../plans/m3/m3-acceptance.md)；W14 复跑记录见当日周记 |
 
 ## 已挂账演进项
 
