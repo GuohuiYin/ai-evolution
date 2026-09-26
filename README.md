@@ -178,6 +178,7 @@ flowchart TB
 | [docs/cost/](docs/cost/) | 成本账（一页制，随里程碑更新） |
 | [docs/notes/](docs/notes/) | 精读笔记（如 MCP 协议精读——先读懂协议再动手） |
 | [docs/security/](docs/security/) | 安全基线（W7 红队 10 用例等） |
+| [docs/retro/](docs/retro/) | 阶段复盘（误解档案——错在哪、证据链、纠正动作） |
 | [docs/journal/](docs/journal/) | 周记（PPT 机制篇约定：每周末 5 行） |
 | [docs/portfolio.md](docs/portfolio.md) | 项目亮点清单（作品集，每条挂 commit/报告证据链） |
 | [docs/capability-map.md](docs/capability-map.md) | 生产级 Agent 能力地图（A15 差距台账活文档，里程碑刷新） |
