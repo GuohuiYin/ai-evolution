@@ -42,6 +42,7 @@ CI 侧 `GoldenRetrievalEvalIT` 用哈希向量替身只覆盖 normal 正例。
 | W13 | [w13-chunk-size-comparison.md](retrieval/w13-chunk-size-comparison.md) | chunk-size 400/800/1200 三轮对照均 72%、失败集合相同 → 裁决维持 800 |
 | W13 | [w13-hybrid-eval.md](retrieval/w13-hybrid-eval.md) | 混合检索（dense+sparse+RRF）Recall@5 72%→93%（+21pp），负例零回归 → 裁决启用 |
 | W13 | [w13-rerank-eval.md](retrieval/w13-rerank-eval.md) | rerank +0pp（39 条开/关逐条对比零翻转）→ 裁决不启用，重评触发在案 |
+| W15 | [w15-query-rewrite.md](retrieval/w15-query-rewrite.md) | 改写层覆盖语料指代：指代案 1/2 修复、Recall 93% 守线（口径变更为"改写+检索"）、负例 7/10；残余 3 条排序层挂账 |
 
 ### [generation/](generation/) — 生成质量回归
 
