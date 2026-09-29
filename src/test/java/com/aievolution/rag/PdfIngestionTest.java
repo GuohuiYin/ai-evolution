@@ -24,6 +24,8 @@ class PdfIngestionTest {
         new KnowledgeBaseIngestor(
             vectorStore,
             800,
+            "test-embedding-model",
+            "test-collection",
             "classpath:knowledge-test/**/*",
             stateDir.resolve("m1.json").toString());
 
@@ -45,6 +47,8 @@ class PdfIngestionTest {
         new KnowledgeBaseIngestor(
             vectorStore,
             800,
+            "test-embedding-model",
+            "test-collection",
             "classpath:knowledge-test/*.pdf",
             stateDir.resolve("m2.json").toString());
 

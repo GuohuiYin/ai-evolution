@@ -70,16 +70,22 @@ public class KnowledgeBaseIngestor implements ApplicationRunner {
   // 分块大小是 RAG 最经典的调参项（与检索质量直接相关），显式配置化而非吃库默认值（约定 A11-2）
   private final TextSplitter textSplitter;
   private final int chunkSize;
+  private final String embeddingModel;
+  private final String collectionName;
 
   public KnowledgeBaseIngestor(
       VectorStore vectorStore,
       @Value("${ai.rag.chunk-size:800}") int chunkSize,
+      @Value("${spring.ai.openai.embedding.model:unknown}") String embeddingModel,
+      @Value("${spring.ai.vectorstore.qdrant.collection-name:unknown}") String collectionName,
       @Value("${ai.knowledge.location:" + DEFAULT_LOCATION + "}") String knowledgeLocation,
       @Value("${ai.knowledge.manifest-path:" + DEFAULT_MANIFEST_PATH + "}") String manifestPath) {
     this.vectorStore = vectorStore;
     this.knowledgeLocation = knowledgeLocation;
     this.manifestPath = Path.of(manifestPath);
     this.chunkSize = chunkSize;
+    this.embeddingModel = embeddingModel;
+    this.collectionName = collectionName;
     this.textSplitter = TokenTextSplitter.builder().withChunkSize(chunkSize).build();
   }
 
@@ -91,11 +97,15 @@ public class KnowledgeBaseIngestor implements ApplicationRunner {
             .toArray(Resource[]::new);
 
     KnowledgeManifest manifest = new KnowledgeManifest(manifestPath);
-    // 分块参数并入判变键：签名不符说明旧向量是按另一组参数切的，全部作废重建
-    String signature = splitterSignature();
-    boolean splitterChanged = !signature.equals(manifest.chunkSignature());
-    if (splitterChanged && !manifest.entries().isEmpty()) {
-      log.info("分块参数变更（当前 chunk-size={}），已有向量全部作废，执行全量重建", chunkSize);
+    // 向量生成参数并入判变键：签名不符说明旧向量是按另一组参数/模型/库生成的，全部作废重建
+    String signature = vectorSignature();
+    boolean signatureChanged = !signature.equals(manifest.chunkSignature());
+    if (signatureChanged && !manifest.entries().isEmpty()) {
+      log.info(
+          "向量生成参数变更（chunk-size={}，embedding={}，collection={}），已有向量全部作废，执行全量重建",
+          chunkSize,
+          embeddingModel,
+          collectionName);
     }
     Set<String> present = new HashSet<>();
     int skipped = 0;
@@ -106,7 +116,7 @@ public class KnowledgeBaseIngestor implements ApplicationRunner {
       present.add(filename);
       String sha256 = sha256(resource);
       KnowledgeManifest.Entry old = manifest.entries().get(filename);
-      if (old != null && !splitterChanged && old.sha256().equals(sha256)) {
+      if (old != null && !signatureChanged && old.sha256().equals(sha256)) {
         skipped++;
         continue;
       }
@@ -186,15 +196,23 @@ public class KnowledgeBaseIngestor implements ApplicationRunner {
   }
 
   /**
-   * 分块参数签名：参数元组的 SHA-256，入 manifest 顶层作判变键。 未来 splitter 新增参数（overlap 等）并入同一元组即可，格式不自描述（hash
-   * 不可读属有意—— 参数值在 application.yml，签名只回答"变没变"）。
+   * 向量生成参数签名：参数元组的 SHA-256，入 manifest 顶层作判变键。元组 = 分块参数 + 全文规整版本 + embedding 模型 +
+   * collection——任一变更，旧向量即按"另一套生成方式"产出，必须作废（W15 #1： 模型/库变更不改文件 SHA 与分块，单靠旧键会拿旧向量服务或把新库"跳过"成空库）。
+   * 格式不自描述（hash 不可读属有意——参数值在 application.yml，签名只回答"变没变"）。
    */
-  private String splitterSignature() {
+  private String vectorSignature() {
     try {
       MessageDigest digest = MessageDigest.getInstance("SHA-256");
       return toHex(
           digest.digest(
-              ("chunk-size:" + chunkSize + "|ft:" + FullTextNormalizer.VERSION)
+              ("chunk-size:"
+                      + chunkSize
+                      + "|ft:"
+                      + FullTextNormalizer.VERSION
+                      + "|emb:"
+                      + embeddingModel
+                      + "|col:"
+                      + collectionName)
                   .getBytes(StandardCharsets.UTF_8)));
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException("SHA-256 不可用", e);

@@ -37,9 +37,16 @@ class KnowledgeBaseIngestorIncrementalTest {
   }
 
   private KnowledgeBaseIngestor newIngestor(VectorStore vectorStore, int chunkSize) {
+    return newIngestor(vectorStore, chunkSize, "test-embedding-model", "test-collection");
+  }
+
+  private KnowledgeBaseIngestor newIngestor(
+      VectorStore vectorStore, int chunkSize, String embeddingModel, String collectionName) {
     return new KnowledgeBaseIngestor(
         vectorStore,
         chunkSize,
+        embeddingModel,
+        collectionName,
         "file:" + knowledgeDir.toAbsolutePath() + "/*",
         stateDir.resolve("manifest.json").toString());
   }
@@ -143,5 +150,34 @@ class KnowledgeBaseIngestorIncrementalTest {
     newIngestor(vectorStore, 400).run(null); // 参数一致：未变文件零 embedding 调用
     verify(vectorStore, times(1)).add(anyList());
     verify(vectorStore, never()).delete(anyList());
+  }
+
+  @Test
+  void changedEmbeddingModelTriggersFullReingestDespiteUnchangedFiles() throws Exception {
+    // W15 #1：embedding 模型变更后文件 SHA 与分块参数都不变，单靠旧判变键会拿旧向量
+    // 服务（或新 collection 被旧清单"跳过"成空库）——向量签名不符即全量重建
+    Files.writeString(knowledgeDir.resolve("a.md"), LONG_A);
+    Files.writeString(knowledgeDir.resolve("b.md"), LONG_B);
+    VectorStore vectorStore = mock(VectorStore.class);
+
+    newIngestor(vectorStore, 800, "BAAI/bge-m3", "knowledge_base").run(null);
+    List<String> oldIdsOfA = idsOf(allAddedDocs(vectorStore, 2), "a.md");
+    assertThat(oldIdsOfA).isNotEmpty();
+
+    newIngestor(vectorStore, 800, "Qwen/Qwen3-Embedding-8B", "knowledge_base_qwen3").run(null);
+    verify(vectorStore).delete(oldIdsOfA);
+    verify(vectorStore, times(4)).add(anyList());
+  }
+
+  @Test
+  void changedCollectionAloneTriggersFullReingest() throws Exception {
+    // 同模型换 collection：目标库是空的，旧清单的"未变跳过"会留它空库——必须重建
+    Files.writeString(knowledgeDir.resolve("a.md"), LONG_A);
+    VectorStore vectorStore = mock(VectorStore.class);
+
+    newIngestor(vectorStore, 800, "BAAI/bge-m3", "knowledge_base").run(null);
+    newIngestor(vectorStore, 800, "BAAI/bge-m3", "knowledge_base_arm_b").run(null);
+
+    verify(vectorStore, times(2)).add(anyList()); // 首轮 1 次 + 换库重建 1 次
   }
 }

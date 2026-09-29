@@ -25,6 +25,8 @@ class KnowledgeBaseIngestorTest {
         new KnowledgeBaseIngestor(
             vectorStore,
             800,
+            "test-embedding-model",
+            "test-collection",
             "classpath:knowledge/*.md",
             stateDir.resolve("manifest.json").toString());
 

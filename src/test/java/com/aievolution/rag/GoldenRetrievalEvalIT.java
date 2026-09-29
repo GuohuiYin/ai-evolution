@@ -38,6 +38,8 @@ class GoldenRetrievalEvalIT {
       new KnowledgeBaseIngestor(
               store,
               800,
+              "test-embedding-model",
+              "test-collection",
               "classpath:knowledge/*.md",
               java.nio.file.Files.createTempFile("test-manifest-golden-eval-", ".json").toString())
           .run(null);
