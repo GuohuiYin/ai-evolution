@@ -65,3 +65,4 @@ BM25 的**职能**已由自制 sparse 全文匹配路等价承接（+21pp），�
 | 2 | ✅ 结案 | `c0efa6b`（改写层 A1+温度外置+降级）/ `ef46f09`（eval 链路）/ `168c087`（uvx offline 顺手项）。指代案 1/2 稳定修复；Recall@5 27/29=93% 双轮守线；负例 7/10；生成 eval 6.0/6 历史最好（multi-turn 无回归）；成本实测入账。报告：[w15-query-rewrite](../../eval/retrieval/w15-query-rewrite.md)。挂账 3 条（品牌壁垒/碳酸锂/赤水河，均为排序层边界体质，重启条件在案） |
 | 2-追加 | ✅ | 计划外顺手项两项经 Owner 裁决落地：uvx `--offline`（启动去 PyPI 依赖）、改写温度策略外置（A11） |
 | 1 | ✅ 结案 | `cfb0d0d`（向量签名并入 emb 模型+collection 判变键，换模型/库自动全量重建，2 条契约测试锁死）。对照：bge-m3 27/29（93%）vs Qwen3-8B 25/29（86%，−6.9pp）；负例 7/10 vs 9/10；重建 17s vs 423s。**裁决：保持 bge-m3 不切换**。报告：[w15-embedding-comparison](../../eval/retrieval/w15-embedding-comparison.md) |
+| 3 | ✅ 结案 | 笔记：[graphrag](../../notes/graphrag.md)。三问齐答：语料 3 文件 2 实体、全局/多跳查询为零 → **不上 GraphRAG**（无病灶/成本倒挂/运维错配三理由独立成立）；重启条件在案（实体上百+多跳查询稳定出现+全局需求，届时先 LightRAG） |
