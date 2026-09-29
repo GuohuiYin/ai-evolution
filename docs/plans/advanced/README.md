@@ -12,7 +12,7 @@
 | 周 | 主题 | 完成定义 | 并入台账（来源） |
 |---|---|---|---|
 | W14 | 实战期复盘 + 欠账/缺陷清理 | 复盘文《13 周我误解过什么》；三条快欠账当周结案 | 蓝图 W14 复盘主题；M3 欠账①②（compound 溯源标注、冰淇淋期望重审）；MCP stdio 长驻会话失活缺陷（门④定论）——任务级见 [w14-retro-and-debt.md](w14-retro-and-debt.md) |
-| W15-16 | L2 强化：检索调优收尾 + embedding 实测对照 + 指代改写强化 | 蓝图"Recall 0.7→≥0.85"已提前达成（W13 93%），本周转残余攻坚：embedding 对照实验（bge-m3 vs Qwen3-Embedding-8B，走重建基线流程）；指代类残余失败的改写层强化；GraphRAG 认知（会用）；Recall@5 ≥93% 守线不降级 | embedding 对照（m3/README 挂账，原话"与混合检索共用重建基线流程"）；指代改写（w13-hybrid-eval 残余失败判读：指代消解属改写层靶子）；GraphRAG 为蓝图原项 |
+| W15-16 | L2 强化：检索调优收尾 + embedding 实测对照 + 指代改写强化 | 蓝图"Recall 0.7→≥0.85"已提前达成（W13 93%），本周转残余攻坚：embedding 对照实验（bge-m3 vs Qwen3-Embedding-8B，走重建基线流程）；指代类残余失败的改写层强化；GraphRAG 认知（会用）；Recall@5 ≥93% 守线不降级 | embedding 对照（m3/README 挂账，原话"与混合检索共用重建基线流程"）；指代改写（w13-hybrid-eval 残余失败判读：指代消解属改写层靶子）；GraphRAG 为蓝图原项——任务级见 [w15-embedding-compare.md](w15-embedding-compare.md) |
 | W17-18 | 专项二·评估造数 | 黄金集 100+；Judge 与人工抽检一致率 ≥80%；评估集防泄漏机制；引用忠实度强化；内容审核（moderation）论述补章 | 蓝图专项二；引用忠实度强化（能力地图挂账）；内容审核论述（能力地图挂账——自有语料风险低，但标准答案应有章节） |
 | W19-20 | 专项一·源码阅读 + Temporal 到会调 | Spring AI Advisor 链结构图 + 分享（ChatClient 补到会造）；Temporal 替换状态机；会话记忆 L2 持久化（与 Temporal 同源：状态持久化）；LLM 可观测平台自建 vs 平台 ADR | 蓝图专项一；ChatClient 会造缺口（§3A L1）；会话记忆 L2（能力地图挂账，五级路线在 m3/README）；可观测 ADR（能力地图挂账，原话"值得一个 ADR"） |
 | W21-23 | L4 完整：Sub-Agent 协作 + Skill 渐进披露 + HITL | 三角色跑通；Skill 加载 Token 降幅实测；审批断点落地（护栏三件套 3.7 收口）；多 Agent 协作 / A2A 认知 | 蓝图原项；HITL 审批断点（能力地图挂账——ReAct 轨迹已成型，前置条件满足） |
