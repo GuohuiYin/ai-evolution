@@ -59,8 +59,10 @@ class GoldenRetrievalEvalIT {
 
       // 测试替身的哈希向量得分分布与真实模型不同，阈值放 0 专注验证"Recall@5 命中正确来源"
       // topK 与 application.yml 的 ai.rag.top-k 默认值保持一致（非 Spring 测试，手工传入）
+      // 改写层用直通实现：CI 不打真实 LLM；改写接线由 RetrievalEvaluatorTest 单测覆盖
       List<RetrievalEvaluator.EvalResult> results =
-          new RetrievalEvaluator(new VectorStoreKnowledgeRetriever(store, 0.0, 5))
+          new RetrievalEvaluator(
+                  new VectorStoreKnowledgeRetriever(store, 0.0, 5), new PassThroughQueryRewriter())
               .evaluate(normalPositiveCases);
 
       assertThat(results)

@@ -1,6 +1,7 @@
 package com.aievolution.eval;
 
 import com.aievolution.rag.KnowledgeRetriever;
+import com.aievolution.rag.QueryRewriter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,7 @@ public class RetrievalEvalRunner implements ApplicationRunner {
   private static final Logger log = LoggerFactory.getLogger(RetrievalEvalRunner.class);
 
   private final KnowledgeRetriever knowledgeRetriever;
+  private final QueryRewriter queryRewriter;
   // 以下配置仅用于报告头展示与验收门判定，检索行为由 KnowledgeRetriever 收口
   private final double similarityThreshold;
   private final int topK;
@@ -40,10 +42,12 @@ public class RetrievalEvalRunner implements ApplicationRunner {
 
   public RetrievalEvalRunner(
       KnowledgeRetriever knowledgeRetriever,
+      QueryRewriter queryRewriter,
       @Value("${ai.rag.similarity-threshold:0.5}") double similarityThreshold,
       @Value("${ai.rag.top-k:5}") int topK,
       @Value("${ai.eval.gate-threshold:0.7}") double gateThreshold) {
     this.knowledgeRetriever = knowledgeRetriever;
+    this.queryRewriter = queryRewriter;
     this.similarityThreshold = similarityThreshold;
     this.topK = topK;
     this.gateThreshold = gateThreshold;
@@ -57,19 +61,23 @@ public class RetrievalEvalRunner implements ApplicationRunner {
             .readValue(new ClassPathResource("eval/golden-set.json").getInputStream());
 
     List<RetrievalEvaluator.EvalResult> results =
-        new RetrievalEvaluator(knowledgeRetriever).evaluate(goldenSet);
+        new RetrievalEvaluator(knowledgeRetriever, queryRewriter).evaluate(goldenSet);
 
     log.info("════════ 检索 eval 报告（Recall@{}，阈值 {}） ════════", topK, similarityThreshold);
     results.forEach(
         r ->
             log.info(
-                "{} [{}][{}] 期望={} 实际Top1={} （{}）",
+                "{} [{}][{}] 期望={} 实际Top1={} （{}）{}",
                 r.pass() ? "✅" : "❌",
                 r.goldenCase().category(),
                 r.goldenCase().query(),
                 r.goldenCase().expectSources() == null ? "不召回" : r.goldenCase().expectSources(),
                 r.topSource() == null ? "未召回" : r.topSource(),
-                r.pass() ? "通过" : "未通过"));
+                r.pass() ? "通过" : "未通过",
+                // 改写证据随报告可回放（W15 #2）：生效查询与原查询不同才展示
+                r.effectiveQuery().equals(r.goldenCase().query())
+                    ? ""
+                    : " 改写→" + r.effectiveQuery()));
 
     // 按类别分组统计，边界/对抗用例的失败能单独定位而不是被总数稀释
     Map<String, long[]> byCategory =
