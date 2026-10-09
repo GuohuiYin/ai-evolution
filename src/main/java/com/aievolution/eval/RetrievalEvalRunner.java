@@ -67,12 +67,13 @@ public class RetrievalEvalRunner implements ApplicationRunner {
     results.forEach(
         r ->
             log.info(
-                "{} [{}][{}] 期望={} 实际Top1={} （{}）{}",
+                "{} [{}][{}] 期望={} 实际Top1={} topScore={} （{}）{}",
                 r.pass() ? "✅" : "❌",
                 r.goldenCase().category(),
                 r.goldenCase().query(),
                 r.goldenCase().expectSources() == null ? "不召回" : r.goldenCase().expectSources(),
                 r.topSource() == null ? "未召回" : r.topSource(),
+                formatScore(r.topScore()),
                 r.pass() ? "通过" : "未通过",
                 // 改写证据随报告可回放（W15 #2）：生效查询与原查询不同才展示
                 r.effectiveQuery().equals(r.goldenCase().query())
@@ -106,11 +107,50 @@ public class RetrievalEvalRunner implements ApplicationRunner {
         "正例 Recall@{}：{}/{}（{}%）",
         topK, positivePassed, positives.size(), Math.round(recall * 100));
     log.info("负例拒答率：{}/{}", negativePassed, negatives.size());
+
+    // topScore 分布段（W16 #1）：阈值校准的第一份分布证据——通过组/未通过组/误召回组分开摆，
+    // 交叠带直接读出；分数缺席（未召回）单独计数，缺席本身即判罚依据
+    log.info("════════ topScore 分布（dense 段，阈值 {} 校准证据） ════════", similarityThreshold);
+    logScoreGroup("正例通过组", positives.stream().filter(RetrievalEvaluator.EvalResult::pass).toList());
+    logScoreGroup("正例未通过组", positives.stream().filter(r -> !r.pass()).toList());
+    logScoreGroup("负例误召回组", negatives.stream().filter(r -> !r.pass()).toList());
+    long negativeRefused = negatives.stream().filter(RetrievalEvaluator.EvalResult::pass).count();
+    log.info("负例拒答组 n={}：无分数（未召回即拒答成立）", negativeRefused);
+
     if (recall >= gateThreshold) {
       log.info("════════ M1 验收门：通过（Recall@{} {} ≥ {}） ════════", topK, recall, gateThreshold);
     } else {
       log.warn(
           "════════ M1 验收门：未通过（Recall@{} {} < {}），不得进入下一阶段 ════════", topK, recall, gateThreshold);
     }
+  }
+
+  /** 分组分数读数：有分数给 max/中位/min 三档 + 逐案降序清单；无分数组明示缺席数。 */
+  private void logScoreGroup(String label, List<RetrievalEvaluator.EvalResult> group) {
+    List<Double> scores =
+        group.stream()
+            .map(RetrievalEvaluator.EvalResult::topScore)
+            .filter(s -> s != null)
+            .sorted(java.util.Comparator.reverseOrder())
+            .toList();
+    long absent = group.size() - scores.size();
+    if (scores.isEmpty()) {
+      log.info("{} n={}：无分数（全部未召回）", label, group.size());
+      return;
+    }
+    double median = scores.get(scores.size() / 2); // 近似中位（偶数取上中位，分布读数不做精确插值）
+    log.info(
+        "{} n={}（缺席 {}）：max={} median≈{} min={} 逐案={}",
+        label,
+        group.size(),
+        absent,
+        formatScore(scores.getFirst()),
+        formatScore(median),
+        formatScore(scores.getLast()),
+        scores.stream().map(RetrievalEvalRunner::formatScore).toList());
+  }
+
+  private static String formatScore(Double score) {
+    return score == null ? "--" : String.format("%.2f", score);
   }
 }

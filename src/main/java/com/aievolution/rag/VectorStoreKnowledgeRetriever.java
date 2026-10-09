@@ -11,6 +11,7 @@ import org.springframework.ai.vectorstore.filter.Filter;
 import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
 /**
@@ -103,6 +104,17 @@ public class VectorStoreKnowledgeRetriever implements KnowledgeRetriever {
 
   @Override
   public List<Document> retrieve(String query, KnowledgeFilter filter) {
+    // 与证据口径共用同一份检索逻辑（A11-1）：线上只取命中，判罚标尺读数不外暴露
+    return retrieveWithEvidence(query, filter).hits();
+  }
+
+  @Override
+  public RetrievalEvidence retrieveWithEvidence(String query) {
+    return retrieveWithEvidence(query, KnowledgeFilter.NONE);
+  }
+
+  @Override
+  public RetrievalEvidence retrieveWithEvidence(String query, KnowledgeFilter filter) {
     if (sparseRecall == null && reranker == null) {
       List<Document> hits = denseSearch(query, filter, topK);
       // 检索判罚依据单点留痕：hits=0 即拒答现场；topScore 即"差多少命中"的标尺
@@ -114,10 +126,16 @@ public class VectorStoreKnowledgeRetriever implements KnowledgeRetriever {
           topK,
           filter,
           abbreviate(query));
-      return hits;
+      return new RetrievalEvidence(hits, firstScore(hits));
     }
-    // 两阶段：召回段（可选混合检索）宽松过取 → 精排段（可选）重排取前 N
-    List<Document> recalled = recall(query, filter);
+    // 两阶段：召回段（可选混合检索）宽松过取 → 精排段（可选）重排取前 N。
+    // 证据分数固定报 dense 段（阈值 0.5 卡在这里），不取末端 RRF/rerank 异构分
+    List<Document> dense = denseSearch(query, filter, recallTopK);
+    Double denseTop = firstScore(dense);
+    List<Document> recalled =
+        sparseRecall == null
+            ? dense
+            : rrfFuser.fuse(dense, sparseRecall.recall(query, filter, recallTopK));
     if (reranker == null) {
       List<Document> hits = recalled.stream().limit(topK).toList();
       log.info(
@@ -127,7 +145,7 @@ public class VectorStoreKnowledgeRetriever implements KnowledgeRetriever {
           recallTopK,
           filter,
           abbreviate(query));
-      return hits;
+      return new RetrievalEvidence(hits, denseTop);
     }
     if (recalled.isEmpty()) {
       // 空召回即拒答的现有语义不变（越界硬拒答是红线）；零候选不打 rerank 计费电话
@@ -135,7 +153,7 @@ public class VectorStoreKnowledgeRetriever implements KnowledgeRetriever {
           "stage=RETRIEVE mode=rerank recallHits=0 rerank=skipped filter={} query={}",
           filter,
           abbreviate(query));
-      return List.of();
+      return new RetrievalEvidence(List.of(), denseTop);
     }
     try {
       List<Document> reranked = reranker.rerank(query, recalled, rerankTopN);
@@ -146,7 +164,7 @@ public class VectorStoreKnowledgeRetriever implements KnowledgeRetriever {
           topScore(reranked),
           filter,
           abbreviate(query));
-      return reranked;
+      return new RetrievalEvidence(reranked, denseTop);
     } catch (RerankerClient.RerankException e) {
       // rerank 是增强段不是必经段（ADR-0017）：供应商故障降级回召回结果，不报错、不穿底
       List<Document> degraded = recalled.stream().limit(rerankTopN).toList();
@@ -156,18 +174,8 @@ public class VectorStoreKnowledgeRetriever implements KnowledgeRetriever {
           degraded.size(),
           filter,
           abbreviate(query));
-      return degraded;
+      return new RetrievalEvidence(degraded, denseTop);
     }
-  }
-
-  /** 召回段：hybrid 在场则 dense+sparse 双路 RRF 融合，否则 dense 单路；统一按 recall-top-k 过取。 */
-  private List<Document> recall(String query, KnowledgeFilter filter) {
-    List<Document> dense = denseSearch(query, filter, recallTopK);
-    if (sparseRecall == null) {
-      return dense;
-    }
-    List<Document> sparse = sparseRecall.recall(query, filter, recallTopK);
-    return rrfFuser.fuse(dense, sparse);
   }
 
   private List<Document> denseSearch(String query, KnowledgeFilter filter, int k) {
@@ -187,6 +195,15 @@ public class VectorStoreKnowledgeRetriever implements KnowledgeRetriever {
         .map(s -> String.format("%.2f", s))
         .findFirst()
         .orElse("--");
+  }
+
+  /** 首名文档的原始分数（dense 段相似度）；无命中或分数缺席时返回 null——缺席即判罚依据。 */
+  private static @Nullable Double firstScore(List<Document> hits) {
+    return hits.stream()
+        .map(Document::getScore)
+        .filter(java.util.Objects::nonNull)
+        .findFirst()
+        .orElse(null);
   }
 
   private static String abbreviate(String query) {

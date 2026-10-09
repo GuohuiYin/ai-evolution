@@ -24,4 +24,13 @@ public interface KnowledgeRetriever {
    * @param filter 过滤条件；{@link KnowledgeFilter#NONE} 等价于 {@link #retrieve(String)}
    */
   List<Document> retrieve(String query, KnowledgeFilter filter);
+
+  /**
+   * 带证据的语义检索（W16 #1）：除命中清单外，返回 dense 段最高相似度（阈值判罚标尺）。 eval 链路用此采集逐案分数分布；线上问答通路仍用 {@link
+   * #retrieve(String)}—— 两种口径共用同一份检索逻辑，证据只是同一判罚过程的读数外暴露。
+   */
+  RetrievalEvidence retrieveWithEvidence(String query);
+
+  /** 带元数据过滤的证据检索；{@link KnowledgeFilter#NONE} 等价于 {@link #retrieveWithEvidence(String)} */
+  RetrievalEvidence retrieveWithEvidence(String query, KnowledgeFilter filter);
 }

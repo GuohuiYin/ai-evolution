@@ -70,10 +70,16 @@ class GoldenRetrievalEvalIT {
       assertThat(results)
           .isNotEmpty()
           .allSatisfy(
-              r ->
-                  assertThat(r.pass())
-                      .as("用例 [%s] 应命中 %s", r.goldenCase().query(), r.goldenCase().expectSources())
-                      .isTrue());
+              r -> {
+                assertThat(r.pass())
+                    .as("用例 [%s] 应命中 %s", r.goldenCase().query(), r.goldenCase().expectSources())
+                    .isTrue();
+                // W16 #1 契约锁定：eval 报告必须含逐案 topScore 字段——
+                // 正例全数命中即全数有分数，缺席（null）即设施回归
+                assertThat(r.topScore())
+                    .as("用例 [%s] 的 dense topScore 必须随结果外暴露", r.goldenCase().query())
+                    .isNotNull();
+              });
     }
   }
 }

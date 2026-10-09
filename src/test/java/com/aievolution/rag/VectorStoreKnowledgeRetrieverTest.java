@@ -107,6 +107,53 @@ class VectorStoreKnowledgeRetrieverTest {
   }
 
   @Test
+  void singleStageEvidenceCarriesDenseTopScore() {
+    // W16 #1：单段模式下证据分数 = dense 相似度——阈值判罚标尺
+    when(vectorStore.similaritySearch(any(SearchRequest.class)))
+        .thenReturn(
+            List.of(
+                doc("d1").mutate().score(0.83).build(), doc("d2").mutate().score(0.61).build()));
+    VectorStoreKnowledgeRetriever retriever =
+        new VectorStoreKnowledgeRetriever(vectorStore, 0.5, 5);
+
+    RetrievalEvidence evidence = retriever.retrieveWithEvidence("茅台工艺");
+
+    assertThat(evidence.hits()).extracting(Document::getId).containsExactly("d1", "d2");
+    assertThat(evidence.denseTopScore()).isEqualTo(0.83);
+  }
+
+  @Test
+  void hybridEvidenceReportsDenseScoreNotRrfScore() {
+    // W16 #1 关键口径：hybrid 最终命中的 getScore() 是 RRF 融合分（0.0x 量级，与阈值异构不可比），
+    // 证据必须仍报 dense 段相似度——阈值 0.5 校准的是 dense 段
+    SparseRecall sparse = mock(SparseRecall.class);
+    when(vectorStore.similaritySearch(any(SearchRequest.class)))
+        .thenReturn(List.of(doc("d1").mutate().score(0.66).build()));
+    when(sparse.recall(eq("茅台工艺"), any(), eq(20))).thenReturn(List.of(doc("d1")));
+    VectorStoreKnowledgeRetriever retriever =
+        new VectorStoreKnowledgeRetriever(vectorStore, 0.5, 5, Optional.of(sparse), true, 20, 60);
+
+    RetrievalEvidence evidence = retriever.retrieveWithEvidence("茅台工艺");
+
+    assertThat(evidence.denseTopScore()).isEqualTo(0.66);
+    // 融合分确为 RRF 异构口径——若证据误读末端分数，本断言会先失败
+    assertThat(evidence.hits().getFirst().getScore()).isLessThan(0.1);
+  }
+
+  @Test
+  void emptyRecallEvidenceHasNullScore() {
+    // 未召回时分数缺席（null）——缺席本身即拒答判罚依据
+    when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(List.of());
+    VectorStoreKnowledgeRetriever retriever =
+        new VectorStoreKnowledgeRetriever(vectorStore, 0.5, 5);
+
+    RetrievalEvidence evidence = retriever.retrieveWithEvidence("12987 工艺");
+
+    assertThat(evidence.hits()).isEmpty();
+    assertThat(evidence.denseTopScore()).isNull();
+  }
+
+  @Test
   void rerankOnUsesRecallPoolAndReturnsRerankerOrder() {
     RerankerClient reranker = mock(RerankerClient.class);
     List<Document> pool = List.of(doc("d1"), doc("d2"), doc("d3"));

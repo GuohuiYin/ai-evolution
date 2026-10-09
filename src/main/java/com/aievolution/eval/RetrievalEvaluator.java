@@ -2,6 +2,7 @@ package com.aievolution.eval;
 
 import com.aievolution.rag.KnowledgeRetriever;
 import com.aievolution.rag.QueryRewriter;
+import com.aievolution.rag.RetrievalEvidence;
 import java.util.List;
 import org.springframework.lang.Nullable;
 
@@ -29,23 +30,29 @@ public class RetrievalEvaluator {
   private EvalResult evaluateOne(GoldenCase goldenCase) {
     // 单轮黄金集无会话历史，空列表入参——与对话通路首轮同形
     String effectiveQuery = queryRewriter.rewrite(goldenCase.query(), List.of());
+    // W16 #1 起走取证口径：逐案 dense topScore 随结果外暴露，阈值校准的分布证据由报告承载
+    RetrievalEvidence evidence = knowledgeRetriever.retrieveWithEvidence(effectiveQuery);
     List<String> actualSources =
-        knowledgeRetriever.retrieve(effectiveQuery).stream()
-            .map(d -> String.valueOf(d.getMetadata().get("source")))
-            .toList();
+        evidence.hits().stream().map(d -> String.valueOf(d.getMetadata().get("source"))).toList();
     boolean pass =
         goldenCase.expectSources() == null
             ? actualSources.isEmpty()
             : actualSources.stream().anyMatch(goldenCase.expectSources()::contains);
-    return new EvalResult(goldenCase, effectiveQuery, actualSources, pass);
+    return new EvalResult(
+        goldenCase, effectiveQuery, actualSources, evidence.denseTopScore(), pass);
   }
 
   /**
    * @param effectiveQuery 实际用于检索的查询（改写后；未改写时与原查询相同）
    * @param actualSources Top-K 实际命中来源（按相似度降序）；空列表表示未召回任何文档
+   * @param topScore dense 段最高相似度（阈值判罚标尺，W16 #1）；{@code null} 表示未召回——缺席本身即判罚依据
    */
   public record EvalResult(
-      GoldenCase goldenCase, String effectiveQuery, List<String> actualSources, boolean pass) {
+      GoldenCase goldenCase,
+      String effectiveQuery,
+      List<String> actualSources,
+      @Nullable Double topScore,
+      boolean pass) {
 
     /** Top-1 命中来源（报告展示用）；{@code null} 表示未召回 */
     public @Nullable String topSource() {
