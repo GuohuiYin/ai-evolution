@@ -42,7 +42,7 @@
 | 维度 | 现状 | 处置 |
 |---|---|---|
 | 规划 | ✅ ReAct 显式化 W11 落地（ResearchLoop + 协议解析 + ADR-0015，回归 5.6/6 ≥ 基线） | — |
-| 工具 | ✅ 三工具 + MCP Server + MCP Client（W12 #1 fetchWebPage 真实调通，ADR-0016） | — |
+| 工具 | ✅ 三工具 + MCP Server + MCP Client（W12 #1 fetchWebPage 真实调通，ADR-0016） | ⚠️ 挂账：行情/财务数据源仍是 MockStockDataClient（W4 mock 先行，W5 真源未换、此前台账漏记；2026-09-29 扫描重新发现）。候选 W17：Tushare pro 真源实现 + `ai.stock.data-source` env 切换，mock 留默认；半天~一天；演示 PPT 前收口 |
 | Human-in-the-loop | ❌ 高风险动作人工确认（金融域正当性足） | W14+（ReAct 轨迹成型后加确认节点） |
 | 多 Agent / A2A | ❌ | W14+ 进阶（单 Agent 扎实后） |
 
