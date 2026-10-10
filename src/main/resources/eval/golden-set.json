@@ -258,5 +258,142 @@
     "query": "帮我把这段话翻译成英文",
     "expectSources": null,
     "category": "adversarial"
+  },
+  {
+    "query": "茅台2024年茅台酒基酒设计产能是多少吨",
+    "expectSources": [
+      "贵州茅台：贵州茅台2024年年度报告.pdf"
+    ],
+    "category": "normal"
+  },
+  {
+    "query": "茅台2024年每10股派发现金红利多少元",
+    "expectSources": [
+      "贵州茅台：贵州茅台2024年年度报告.pdf"
+    ],
+    "category": "normal"
+  },
+  {
+    "query": "i茅台是什么",
+    "expectSources": [
+      "贵州茅台：贵州茅台2024年年度报告.pdf"
+    ],
+    "category": "normal"
+  },
+  {
+    "query": "飞天茅台属于哪种香型的白酒",
+    "expectSources": [
+      "maotai.md"
+    ],
+    "category": "normal"
+  },
+  {
+    "query": "宁德时代的产品覆盖哪两大业务板块",
+    "expectSources": [
+      "catl.md"
+    ],
+    "category": "normal"
+  },
+  {
+    "query": "茅台2024年营收同比增长约多少",
+    "expectSources": [
+      "maotai.md"
+    ],
+    "category": "normal"
+  },
+  {
+    "query": "茅台酒酿造全程要经历几个轮次的取酒",
+    "expectSources": [
+      "maotai.md"
+    ],
+    "category": "paraphrase"
+  },
+  {
+    "query": "宁德时代在全球动力电池市占率上连续多年处于什么位置",
+    "expectSources": [
+      "catl.md"
+    ],
+    "category": "paraphrase"
+  },
+  {
+    "query": "哪家公司的客户名单里包括特斯拉和蔚来",
+    "expectSources": [
+      "catl.md"
+    ],
+    "category": "paraphrase"
+  },
+  {
+    "query": "44,595 吨",
+    "expectSources": [
+      "贵州茅台：贵州茅台2024年年度报告.pdf"
+    ],
+    "category": "literal"
+  },
+  {
+    "query": "每10股派发现金红利276.24元",
+    "expectSources": [
+      "贵州茅台：贵州茅台2024年年度报告.pdf"
+    ],
+    "category": "literal"
+  },
+  {
+    "query": "特斯拉 宝马 蔚来",
+    "expectSources": [
+      "catl.md"
+    ],
+    "category": "literal"
+  },
+  {
+    "query": "i茅台 数字营销平台",
+    "expectSources": [
+      "贵州茅台：贵州茅台2024年年度报告.pdf"
+    ],
+    "category": "literal"
+  },
+  {
+    "query": "茅台的直销渠道和批发代理渠道分别指什么",
+    "expectSources": [
+      "贵州茅台：贵州茅台2024年年度报告.pdf"
+    ],
+    "category": "boundary"
+  },
+  {
+    "query": "茅台2024年基酒产能同比新增了多少吨",
+    "expectSources": [
+      "贵州茅台：贵州茅台2024年年度报告.pdf"
+    ],
+    "category": "boundary"
+  },
+  {
+    "query": "宁德时代的海外产能面临什么不确定性",
+    "expectSources": [
+      "catl.md"
+    ],
+    "category": "boundary"
+  },
+  {
+    "query": "黄金价格未来走势如何",
+    "expectSources": null,
+    "category": "adversarial"
+  },
+  {
+    "query": "2026 世界杯赛程安排",
+    "expectSources": null,
+    "category": "adversarial"
+  },
+  {
+    "query": "协和医院怎么挂号",
+    "expectSources": null,
+    "category": "adversarial"
+  },
+  {
+    "query": "红烧肉怎么做才好吃",
+    "expectSources": null,
+    "category": "adversarial"
+  },
+  {
+    "query": "北京机动车今天限行尾号是多少",
+    "expectSources": null,
+    "category": "adversarial"
   }
 ]

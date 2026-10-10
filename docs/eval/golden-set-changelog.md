@@ -11,6 +11,7 @@
 | v1 | W5（M1 验收门） | 20 条初版 | [m1-gate-recall](../retrieval/m1-gate-recall.md)（Recall@5 85.7%） |
 | v2 | W5 | PDF 年报入库后 expectSources 语义升级（多源） | 同上（复跑 86.7%） |
 | v3 | W8 | 扩充至 39 条：normal 15 + boundary 6 + paraphrase 4 + literal 4 + adversarial 10 | [w8-retrieval-baseline](../retrieval/w8-retrieval-baseline.md)（Recall@5 72%） |
+| v4 | W17（2026-10-10） | 扩容 39→60：normal 21 + boundary 9 + paraphrase 7 + literal 8 + adversarial 15。新案全部字面锚定语料（PDF 年报锚点：基酒产能 44,595 吨/每10股红利 276.24 元/i茅台直销渠道/张德芹董事长；adversarial 走泛域外层，近似域外层按规范挂账待防线升级）。造数规范 [golden-set-authoring](../golden-set-authoring.md) 同立 | [w17-golden-v4-baseline](../retrieval/w17-golden-v4-baseline.md)（正例 43/45=96%、负例 11/15，旧案零回归，2 条新 adversarial 失败留集挂账） |
 
 v3 数据集下的对照实验档案（数据集不变，参数回归）：
 

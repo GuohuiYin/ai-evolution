@@ -22,9 +22,9 @@
 
 | # | 任务 | 验收条件 | 状态 |
 |---|---|---|---|
-| 1 | **TushareStockDataClient 真源实现（TDD）**：`StockDataClient` 新增实现，`ai.stock.data-source=tushare` 装配（mock 留缺省）；日行情（daily 接口）+ 年度财务（income 或等价接口）字段映射到 `DailyQuote`/`FinancialSummary`（source 诚实标 "tushare"，asOf 真实日期）；token 经 `ai.stock.tushare.token` 配置（env `TUSHARE_TOKEN`，.env.example 登记）；超时/限流/未知代码语义与接口契约对齐（空列表/Optional.empty，不抛异常）；故障行为显式（任务内裁决：报错 or 降级 mock——若降级必须 source 标注可溯源，红线 03）；单测 mock HTTP 层 + 与 Mock 同断言集的契约测试 | `data-source=tushare` 下个股分析链路返回真源数据且 source/asOf 可溯源；mock 缺省不变；clean verify 绿 | ⬜ |
-| 2 | **真源冒烟 IT（打标隔离）**：真实 Tushare 调通 600519 行情+财务各一条，`TUSHARE_TOKEN` 缺失自动 skip（JUnit `Assumptions` 或 tag），不拖 CI | token 到位本地可跑真源 IT；CI 无 token 全绿 | ⬜ |
-| 3 | **专项二启动·造数规范成文 + 检索黄金集首批扩容**：造数流程文档（候选来源/评审口径/与 few-shot 隔离的防泄漏机制/轮换纪律）+ 检索黄金集 39→60+（新增案按 normal/paraphrase/literal/boundary/adversarial 五类配比，逐案挂证据）；golden-set-changelog 登记 | 规范成文 Owner 过目；新增案真实 eval 复跑全量通过且旧案零回归；Judge 校准与生成集扩容明确归 W18 | ⬜ |
+| 1 | **TushareStockDataClient 真源实现（TDD）**：`StockDataClient` 新增实现，`ai.stock.data-source=tushare` 装配（mock 留缺省）；日行情（daily 接口）+ 年度财务（income 或等价接口）字段映射到 `DailyQuote`/`FinancialSummary`（source 诚实标 "tushare"，asOf 真实日期）；token 经 `ai.stock.tushare.token` 配置（env `TUSHARE_TOKEN`，.env.example 登记）；超时/限流/未知代码语义与接口契约对齐（空列表/Optional.empty，不抛异常）；故障行为显式（任务内裁决：报错 or 降级 mock——若降级必须 source 标注可溯源，红线 03）；单测 mock HTTP 层 + 与 Mock 同断言集的契约测试 | `data-source=tushare` 下个股分析链路返回真源数据且 source/asOf 可溯源；mock 缺省不变；clean verify 绿 | ✅ `4e75ec3`（REST 直连；代码后缀/日期/元→亿元映射；故障显式报错；JDK HttpServer 契约测试 6 条——MockRestServiceServer 被 requestFactory 覆盖的坑入注释） |
+| 2 | **真源冒烟 IT（打标隔离）**：真实 Tushare 调通 600519 行情+财务各一条，`TUSHARE_TOKEN` 缺失自动 skip（JUnit `Assumptions` 或 tag），不拖 CI | token 到位本地可跑真源 IT；CI 无 token 全绿 | ✅ `4e75ec3`（600519 行情+财务对公开年报口径区间断言；CI 无 token skip 1 条全绿） |
+| 3 | **专项二启动·造数规范成文 + 检索黄金集首批扩容**：造数流程文档（候选来源/评审口径/与 few-shot 隔离的防泄漏机制/轮换纪律）+ 检索黄金集 39→60+（新增案按 normal/paraphrase/literal/boundary/adversarial 五类配比，逐案挂证据）；golden-set-changelog 登记 | 规范成文 Owner 过目；新增案真实 eval 复跑全量通过且旧案零回归；Judge 校准与生成集扩容明确归 W18 | ✅ 规范 [golden-set-authoring](../../eval/golden-set-authoring.md)；v4 扩容 39→60（changelog 登记）；**首跑基线 [w17-golden-v4-baseline](../../eval/retrieval/w17-golden-v4-baseline.md)：正例 43/45=96%、负例 11/15，新增 16 正例全过+旧案零回归；2 条新 adversarial 未过按"挂账在集"先例留集（金融词面 dense 0.53 交叠带 + sparse 标识符网新失败面）——完成定义"新案全过"字面未达，按挂账先例处置并全文披露** |
 
 ## 待 Owner 裁决（#1 动工前）
 

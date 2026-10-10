@@ -46,6 +46,7 @@ CI 侧 `GoldenRetrievalEvalIT` 用哈希向量替身只覆盖 normal 正例。
 | W15 | [w15-embedding-comparison.md](retrieval/w15-embedding-comparison.md) | bge-m3 93% vs Qwen3-8B 86%（−6.9pp）、重建慢 24 倍 → 裁决保持 bge-m3；向量签名并入 emb+collection 判变键 |
 | W16 | [w16-topscore-distribution.md](retrieval/w16-topscore-distribution.md) | topScore 逐案外暴露 + 分布首证：通过组 [0.51,0.79] vs 误召回组 {0.50,0.55,0.60} 交叠带实测 → 裁决阈值 0.5 维持（有分布支撑，非经验拍值） |
 | W16 | [w16-sparse-bm25-eval.md](retrieval/w16-sparse-bm25-eval.md) | ADR-0017 候选 A 全流程：A1 服务端 BM25 中文单 token 出局 → A3-lite 落地（应用侧分词+服务端 IDF）；对照正例 93.1%→96.6% 但负例 7/10→3/10 破守线 → 裁决不切换，实现留 `impl=bm25` 旗标后待召回门槛重评 |
+| W17 | [w17-golden-v4-baseline.md](retrieval/w17-golden-v4-baseline.md) | 黄金集 v4 扩容 39→60（造数规范同立）首跑基线：正例 43/45=96%、负例 11/15，新增 16 正例全过、旧案零回归；2 条新 adversarial 失败留集挂账（金融词面 dense 交叠带 + sparse 标识符网新失败面） |
 
 ### [generation/](generation/) — 生成质量回归
 
