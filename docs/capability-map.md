@@ -42,7 +42,7 @@
 | 维度 | 现状 | 处置 |
 |---|---|---|
 | 规划 | ✅ ReAct 显式化 W11 落地（ResearchLoop + 协议解析 + ADR-0015，回归 5.6/6 ≥ 基线） | — |
-| 工具 | ✅ 三工具 + MCP Server + MCP Client（W12 #1 fetchWebPage 真实调通，ADR-0016） | ⚠️ 挂账：行情/财务数据源仍是 MockStockDataClient（W4 mock 先行，W5 真源未换、此前台账漏记；2026-09-29 扫描重新发现）。候选 W17：Tushare pro 真源实现 + `ai.stock.data-source` env 切换，mock 留默认；半天~一天；演示 PPT 前收口。挂账二：Tushare 官方 hosted MCP 体验（AI 宿主自然语言直达 30+ 接口取数，零代码接入）——与 StockDataClient 真源替换（REST 确定性管道）是两条链路，候选 W21-23 工具周（W17 裁决记录） |
+| 工具 | ✅ 三工具 + MCP Server + MCP Client（W12 #1 fetchWebPage 真实调通，ADR-0016） | ✅ W17 收口：行情/财务真源切换 Tushare pro 落地（`4e75ec3`，REST 直连，`ai.stock.data-source` env 切换，mock 留缺省；真源冒烟 IT + tushare 态全链路实测过——真实营收 1741.44 亿/全年日线，2026-10-10）。挂账：Tushare 官方 hosted MCP 体验（AI 宿主自然语言直达 30+ 接口取数，零代码接入）——与 StockDataClient 真源替换（REST 确定性管道）是两条链路，候选 W21-23 工具周（W17 裁决记录） |
 | Human-in-the-loop | ❌ 高风险动作人工确认（金融域正当性足） | W14+（ReAct 轨迹成型后加确认节点） |
 | 多 Agent / A2A | ❌ | W14+ 进阶（单 Agent 扎实后） |
 
