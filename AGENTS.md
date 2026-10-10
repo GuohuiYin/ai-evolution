@@ -20,7 +20,7 @@ ai_evolution：Java 架构师向 AI 应用架构师转型的实战项目。
 
 - **O1** 代码托管 GitHub，仓库根目录：`/Users/guohui/Workspace/ai-evolution`
 - **O2** 一切开发工作在本仓库进行
-- **O3** 分步推进：每步核心变更 ≤150 行、可独立编译、测试独立通过，Owner 约 5 分钟可 review 完
+- **O3** 分步推进：每步核心变更 ≤150 行、可独立编译、测试独立通过，Owner 约 5 分钟可 review 完；**按计划任务表逐项交付——每项做完停下等 Owner 确认再进下一项，不把多任务打包成既成事实**（2026-10-10 Owner 指令）
 - **O4** Clean Code + TDD；识别并应用合适的设计模式（策略、模板方法等），遵循开闭原则；不为用模式而用模式。LLM 相关逻辑以黄金集 eval 作为回归测试（Agent 工程的 TDD 形态）
 - **O5** Maven 依赖在满足兼容性前提下使用最新稳定版；引入前核对兼容矩阵，提交说明写明选型理由
 - **O6** 使用 Java 25 LTS；新特性以可读性为先自然采用，不炫技
@@ -30,7 +30,7 @@ ai_evolution：Java 架构师向 AI 应用架构师转型的实战项目。
 ## 2. 工程实践（Engineering Practices, A1-A6 立即执行 / B1-B4 按阶段引入）
 
 - **A1** Maven Wrapper 入仓 + GitHub Actions CI（每次推送跑 `./mvnw verify`）
-- **A2** Conventional Commits + 小步提交（feat/fix/refactor/test/docs/chore 前缀）
+- **A2** Conventional Commits + 小步提交（feat/fix/refactor/test/docs/chore 前缀）；**commit 前向 Owner 报变更清单（文件+行数+测试状态），经确认后提交；push 再经单独确认——"验证绿"不构成提交许可**（2026-10-10 Owner 指令）
 - **A3** Spotless 自动格式化，verify 阶段强制校验
 - **A4** ADR 架构决策记录，存 `docs/adr/`，关键决策必须留痕
 - **A5** 密钥与配置隔离（12-factor）：环境变量注入，`.env` 不入库，提供 `.env.example`
