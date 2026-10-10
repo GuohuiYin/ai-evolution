@@ -45,6 +45,7 @@ CI 侧 `GoldenRetrievalEvalIT` 用哈希向量替身只覆盖 normal 正例。
 | W15 | [w15-query-rewrite.md](retrieval/w15-query-rewrite.md) | 改写层覆盖语料指代：指代案 1/2 修复、Recall 93% 守线（口径变更为"改写+检索"）、负例 7/10；残余 3 条排序层挂账 |
 | W15 | [w15-embedding-comparison.md](retrieval/w15-embedding-comparison.md) | bge-m3 93% vs Qwen3-8B 86%（−6.9pp）、重建慢 24 倍 → 裁决保持 bge-m3；向量签名并入 emb+collection 判变键 |
 | W16 | [w16-topscore-distribution.md](retrieval/w16-topscore-distribution.md) | topScore 逐案外暴露 + 分布首证：通过组 [0.51,0.79] vs 误召回组 {0.50,0.55,0.60} 交叠带实测 → 裁决阈值 0.5 维持（有分布支撑，非经验拍值） |
+| W16 | [w16-sparse-bm25-eval.md](retrieval/w16-sparse-bm25-eval.md) | ADR-0017 候选 A 全流程：A1 服务端 BM25 中文单 token 出局 → A3-lite 落地（应用侧分词+服务端 IDF）；对照正例 93.1%→96.6% 但负例 7/10→3/10 破守线 → 裁决不切换，实现留 `impl=bm25` 旗标后待召回门槛重评 |
 
 ### [generation/](generation/) — 生成质量回归
 

@@ -38,6 +38,8 @@
 | # | 状态 | 证据 |
 |---|---|---|
 | 1 | ✅ 结案 | `825c0be`（RetrievalEvidence 类型化契约 + retrieveWithEvidence 接口；hybrid 模式证据固定报 dense 分非 RRF 分，测试锁死；eval 报告逐案 topScore + 分布段）。复跑：Recall@5 27/29=93% 守线、负例 7/10 零回归；**阈值 0.5 首份校准证据：通过组 [0.51,0.79] vs 误召回组 {0.50,0.55,0.60} 交叠带实测，调阈值为负交换比 → 裁决维持 0.5**。报告：[w16-topscore-distribution](../../eval/retrieval/w16-topscore-distribution.md)。#2 取证提示：品牌壁垒案本轮 dense+sparse 双路未召回，为 BM25 可解性验证的理想靶子 |
+| 2 | ✅ 结案（裁决：不切换） | 取证：BM25 模拟四挂账案全部可解（`68a1fbc`）；A1 服务端 BM25 probe 判决中文整 run 单 token 不可用（`d71e0d7`）→ A3-lite 落地：`5eefa75` 编码器 → `447ac07` Qdrant 升 v1.18.2 → `23d38dc` 摄入挂 sparse 向量（签名扩位+avgdl 两遍法）→ `2e2459c` BM25 SparseRecall → `9108143` 端到端 IT（262 单测+16 IT 绿）。**对照复跑：正例 93.1%→96.6%（+3.4pp，品牌壁垒案修复）但负例拒答 7/10→3/10 破守线（覆盖率裁决是负例防线，BM25 路召回无门槛，4 案新增误召回）→ 净交换比为负，不切换，matchtext 维持；实现留 `impl=bm25` 旗标后，补召回门槛后重评（零重建成本）**。报告：[w16-sparse-bm25-eval](../../eval/retrieval/w16-sparse-bm25-eval.md)；ADR-0017 实施附记二已补记 |
+| 3 | ✅ 条件未触发 | BM25 未落地、召回格局未变 → 按预登记规则不重评 rerank，记录在案 |
 
 ## 顺序与节奏
 
