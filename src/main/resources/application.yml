@@ -107,6 +107,15 @@ ai:
       enabled: true
       # RRF 融合常数：k=30/60/100 三档敏感性实测无差异（<1pp），锁经典值 60
       rrf-k: 60
+    sparse:
+      # W16 #2 sparse 路实现切换面：matchtext（Qdrant 全文索引，现状基线）/
+      # bm25（A3-lite 应用侧分词 + TF 饱和，IDF 由 Qdrant 服务端 modifier 补）。
+      # 值并入向量签名判变键——切换即全量重建。对照复跑：AI_RAG_SPARSE_IMPL=bm25
+      impl: ${AI_RAG_SPARSE_IMPL:matchtext}
+      bm25:
+        # BM25 经典参数（Okapi 缺省值）：k1 控制词频饱和速度，b 控制长度归一强度
+        k1: 1.5
+        b: 0.75
     # RAG 通路 prompt 模板名（resources/prompts/ 下，不含后缀）。A/B 实验经配置切换：
     # AI_RAG_CHAT_PROMPT=rag-chat-v2-fewshot 跑 few-shot 对照（W8-4）
     chat-prompt: rag-chat-v1

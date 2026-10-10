@@ -73,6 +73,30 @@ class KnowledgeManifestTest {
   }
 
   @Test
+  void roundTripPreservesTokenSum() {
+    // W16 #2：tokenSum 是 BM25 语料均值（avgdl）的增量统计原料，必须随清单持久化
+    Path file = tempDir.resolve("manifest.json");
+    KnowledgeManifest manifest = new KnowledgeManifest(file);
+    manifest.put("a.md", new KnowledgeManifest.Entry("h", List.of("id-1"), 437));
+    manifest.save();
+
+    KnowledgeManifest reloaded = new KnowledgeManifest(file);
+    assertThat(reloaded.entries().get("a.md").tokenSum()).isEqualTo(437);
+  }
+
+  @Test
+  void legacyEntryWithoutTokenSumReadsAsNull() {
+    // 旧格式条目无 tokenSum 字段：读为 null（sparse 关闭态的合法形态），统计侧跳过
+    Path file = tempDir.resolve("manifest.json");
+    KnowledgeManifest manifest = new KnowledgeManifest(file);
+    manifest.put("a.md", new KnowledgeManifest.Entry("h", List.of("id-1")));
+    manifest.save();
+
+    KnowledgeManifest reloaded = new KnowledgeManifest(file);
+    assertThat(reloaded.entries().get("a.md").tokenSum()).isNull();
+  }
+
+  @Test
   void legacyFlatFormatWithoutEntriesNodeYieldsEmptyForRebuild() throws Exception {
     // W8-2 旧格式（顶层即文件条目、无分块签名）：视为空清单全量重建，签名置空触发判变
     Path file = tempDir.resolve("manifest.json");

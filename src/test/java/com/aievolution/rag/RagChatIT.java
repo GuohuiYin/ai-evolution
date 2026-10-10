@@ -11,6 +11,7 @@ import com.aievolution.chat.RagChatService;
 import com.aievolution.prompt.ClasspathPromptLibrary;
 import io.qdrant.client.QdrantClient;
 import io.qdrant.client.QdrantGrpcClient;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.client.ChatClient;
@@ -45,7 +46,9 @@ class RagChatIT {
               "test-embedding-model",
               "test-collection",
               "classpath:knowledge/*.md",
-              java.nio.file.Files.createTempFile("test-manifest-rag-chat-it-", ".json").toString())
+              java.nio.file.Files.createTempFile("test-manifest-rag-chat-it-", ".json").toString(),
+              Optional.empty(),
+              "matchtext")
           .run(null);
 
       ChatClient.Builder builder = mock(ChatClient.Builder.class);

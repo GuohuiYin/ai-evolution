@@ -64,6 +64,11 @@ public class Bm25Encoder {
     return new SparseVector(indices, values);
   }
 
+  /** 词项计数：avgdl 语料均值与摄入清单 tokenSum 的统计原料（与编码同一分词口径）。 */
+  public int termCount(String text) {
+    return SparseTokenizer.bm25Terms(text).size();
+  }
+
   /** murmur3 x86_32（seed 0）：公开算法，跨语言可复现——索引两侧对齐不依赖 JVM 私有行为。 */
   static int hash(String term) {
     byte[] data = term.getBytes(StandardCharsets.UTF_8);

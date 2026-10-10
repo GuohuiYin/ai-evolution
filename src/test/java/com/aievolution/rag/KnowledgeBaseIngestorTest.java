@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
@@ -28,7 +29,9 @@ class KnowledgeBaseIngestorTest {
             "test-embedding-model",
             "test-collection",
             "classpath:knowledge/*.md",
-            stateDir.resolve("manifest.json").toString());
+            stateDir.resolve("manifest.json").toString(),
+            Optional.empty(),
+            "matchtext");
 
     ingestor.run(null);
     ArgumentCaptor<List<Document>> captor = ArgumentCaptor.forClass(List.class);

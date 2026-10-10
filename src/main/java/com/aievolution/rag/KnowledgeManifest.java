@@ -21,8 +21,17 @@ import java.util.Map;
  */
 class KnowledgeManifest {
 
-  /** 单文件条目：内容 SHA-256 + 该文件所有向量块 ID（用于变更/删除时清理）。 */
-  record Entry(String sha256, List<String> chunkIds) {}
+  /**
+   * 单文件条目：内容 SHA-256 + 该文件所有向量块 ID（用于变更/删除时清理）+ 词项总数。
+   *
+   * @param tokenSum 全文件词项总数（W16 #2：BM25 avgdl 语料均值的增量统计原料）； {@code null} 表示 sparse
+   *     关闭态摄入的条目或旧格式清单——统计侧按"无数据"跳过
+   */
+  record Entry(String sha256, List<String> chunkIds, Integer tokenSum) {
+    Entry(String sha256, List<String> chunkIds) {
+      this(sha256, chunkIds, null);
+    }
+  }
 
   private final Path file;
   private final ObjectMapper objectMapper = new ObjectMapper();
@@ -54,7 +63,10 @@ class KnowledgeManifest {
                       name,
                       new Entry(
                           String.valueOf(v.get("sha256")),
-                          ((List<?>) v.get("chunkIds")).stream().map(String::valueOf).toList())));
+                          ((List<?>) v.get("chunkIds")).stream().map(String::valueOf).toList(),
+                          v.get("tokenSum") == null
+                              ? null
+                              : ((Number) v.get("tokenSum")).intValue())));
     } catch (Exception e) {
       // 损坏清单 = 空清单：不抛错阻断启动，让摄入器走全量重建；签名一并置空确保判变
       entries.clear();

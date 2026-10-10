@@ -6,6 +6,7 @@ import static org.mockito.Mockito.verify;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
@@ -27,7 +28,9 @@ class PdfIngestionTest {
             "test-embedding-model",
             "test-collection",
             "classpath:knowledge-test/**/*",
-            stateDir.resolve("m1.json").toString());
+            stateDir.resolve("m1.json").toString(),
+            Optional.empty(),
+            "matchtext");
 
     ingestor.run(null);
 
@@ -50,7 +53,9 @@ class PdfIngestionTest {
             "test-embedding-model",
             "test-collection",
             "classpath:knowledge-test/*.pdf",
-            stateDir.resolve("m2.json").toString());
+            stateDir.resolve("m2.json").toString(),
+            Optional.empty(),
+            "matchtext");
 
     ingestor.run(null);
 

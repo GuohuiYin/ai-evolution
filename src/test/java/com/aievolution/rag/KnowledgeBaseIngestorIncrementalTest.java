@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
@@ -48,7 +49,9 @@ class KnowledgeBaseIngestorIncrementalTest {
         embeddingModel,
         collectionName,
         "file:" + knowledgeDir.toAbsolutePath() + "/*",
-        stateDir.resolve("manifest.json").toString());
+        stateDir.resolve("manifest.json").toString(),
+        Optional.empty(),
+        "matchtext");
   }
 
   /** 汇总所有 add 调用中的文档（按文件粒度多次调用）。 */

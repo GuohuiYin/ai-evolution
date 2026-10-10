@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.qdrant.client.QdrantClient;
 import io.qdrant.client.QdrantGrpcClient;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
@@ -38,7 +39,9 @@ class KnowledgeIngestionIT {
               "test-embedding-model",
               "test-collection",
               "classpath:knowledge/*.md",
-              java.nio.file.Files.createTempFile("test-manifest-ingestion-it-", ".json").toString())
+              java.nio.file.Files.createTempFile("test-manifest-ingestion-it-", ".json").toString(),
+              Optional.empty(),
+              "matchtext")
           .run(null);
 
       List<Document> results =

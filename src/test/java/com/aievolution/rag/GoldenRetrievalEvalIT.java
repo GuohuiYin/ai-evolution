@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.qdrant.client.QdrantClient;
 import io.qdrant.client.QdrantGrpcClient;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.vectorstore.qdrant.QdrantVectorStore;
 import org.springframework.core.io.ClassPathResource;
@@ -41,7 +42,9 @@ class GoldenRetrievalEvalIT {
               "test-embedding-model",
               "test-collection",
               "classpath:knowledge/*.md",
-              java.nio.file.Files.createTempFile("test-manifest-golden-eval-", ".json").toString())
+              java.nio.file.Files.createTempFile("test-manifest-golden-eval-", ".json").toString(),
+              Optional.empty(),
+              "matchtext")
           .run(null);
 
       // 只回归 normal 正例：boundary/adversarial 的判定依赖真实语义向量的距离分布，

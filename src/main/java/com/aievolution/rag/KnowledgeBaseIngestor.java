@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -72,6 +73,18 @@ public class KnowledgeBaseIngestor implements ApplicationRunner {
   private final int chunkSize;
   private final String embeddingModel;
   private final String collectionName;
+  // W16 #2 A3-lite：sparse 写入器缺省为空（matchtext 路不产出 BM25 向量），
+  // impl 值并入签名判变键——换 sparse 实现即全量重建（旧块没有新实现的稀疏向量）
+  private final Optional<SparseVectorWriter> sparseWriter;
+  private final String sparseImpl;
+
+  /** 单文件摄入计划：第一遍分类/分块的产出，第二遍执行的依据。 */
+  private record Plan(
+      String filename,
+      String sha256,
+      KnowledgeManifest.Entry old,
+      List<Document> chunks,
+      int tokenSum) {}
 
   public KnowledgeBaseIngestor(
       VectorStore vectorStore,
@@ -79,13 +92,17 @@ public class KnowledgeBaseIngestor implements ApplicationRunner {
       @Value("${spring.ai.openai.embedding.model:unknown}") String embeddingModel,
       @Value("${spring.ai.vectorstore.qdrant.collection-name:unknown}") String collectionName,
       @Value("${ai.knowledge.location:" + DEFAULT_LOCATION + "}") String knowledgeLocation,
-      @Value("${ai.knowledge.manifest-path:" + DEFAULT_MANIFEST_PATH + "}") String manifestPath) {
+      @Value("${ai.knowledge.manifest-path:" + DEFAULT_MANIFEST_PATH + "}") String manifestPath,
+      Optional<SparseVectorWriter> sparseWriter,
+      @Value("${ai.rag.sparse.impl:matchtext}") String sparseImpl) {
     this.vectorStore = vectorStore;
     this.knowledgeLocation = knowledgeLocation;
     this.manifestPath = Path.of(manifestPath);
     this.chunkSize = chunkSize;
     this.embeddingModel = embeddingModel;
     this.collectionName = collectionName;
+    this.sparseWriter = sparseWriter;
+    this.sparseImpl = sparseImpl;
     this.textSplitter = TokenTextSplitter.builder().withChunkSize(chunkSize).build();
   }
 
@@ -102,15 +119,22 @@ public class KnowledgeBaseIngestor implements ApplicationRunner {
     boolean signatureChanged = !signature.equals(manifest.chunkSignature());
     if (signatureChanged && !manifest.entries().isEmpty()) {
       log.info(
-          "向量生成参数变更（chunk-size={}，embedding={}，collection={}），已有向量全部作废，执行全量重建",
+          "向量生成参数变更（chunk-size={}，embedding={}，collection={}，sparse={}），已有向量全部作废，执行全量重建",
           chunkSize,
           embeddingModel,
-          collectionName);
+          collectionName,
+          sparseImpl);
     }
     Set<String> present = new HashSet<>();
     int skipped = 0;
-    int reIngested = 0;
+    List<Plan> plans = new ArrayList<>();
+    long retainedTokens = 0;
+    long retainedChunks = 0;
+    long newTokens = 0;
+    long newChunks = 0;
 
+    // 第一遍：分类 + 分块 + 词项统计。avgdl 必须是全语料口径（BM25 长度归一锚点），
+    // 留存文件的统计自 manifest tokenSum 回放，新文件现算——两遍法的存在理由
     for (Resource resource : resources) {
       String filename = resource.getFilename();
       present.add(filename);
@@ -118,22 +142,56 @@ public class KnowledgeBaseIngestor implements ApplicationRunner {
       KnowledgeManifest.Entry old = manifest.entries().get(filename);
       if (old != null && !signatureChanged && old.sha256().equals(sha256)) {
         skipped++;
+        if (sparseWriter.isPresent() && old.tokenSum() != null) {
+          retainedTokens += old.tokenSum();
+          retainedChunks += old.chunkIds().size();
+        }
         continue;
-      }
-      if (old != null) {
-        // 变更文件：整删旧向量再重写，避免分块数变少时旧块残留
-        vectorStore.delete(old.chunkIds());
       }
       List<Document> chunks = chunk(resource);
       if (chunks.isEmpty()) {
         // TokenTextSplitter 默认丢弃短于 minChunkSizeChars 的文本——短文件会零分块，必须告警
         log.warn("文件 {} 未产生任何分块（内容过短或为空？），不会进入向量库", filename);
-      } else {
-        vectorStore.add(chunks);
+      }
+      int tokenSum = 0;
+      if (sparseWriter.isPresent()) {
+        for (Document chunkDoc : chunks) {
+          tokenSum += sparseWriter.get().tokenCount(chunkDoc.getText());
+        }
+      }
+      newTokens += tokenSum;
+      newChunks += chunks.size();
+      plans.add(new Plan(filename, sha256, old, chunks, tokenSum));
+    }
+
+    long corpusChunks = retainedChunks + newChunks;
+    double avgdl = corpusChunks == 0 ? 1.0 : (double) (retainedTokens + newTokens) / corpusChunks;
+
+    // 第二遍：执行变更（删旧 → dense 写入 → sparse 写入 → 清单登记）
+    int reIngested = 0;
+    for (Plan plan : plans) {
+      if (plan.old() != null) {
+        // 变更文件：整删旧向量再重写，避免分块数变少时旧块残留
+        vectorStore.delete(plan.old().chunkIds());
+      }
+      if (!plan.chunks().isEmpty()) {
+        vectorStore.add(plan.chunks());
+        if (sparseWriter.isPresent()) {
+          sparseWriter
+              .get()
+              .write(
+                  plan.chunks().stream()
+                      .map(d -> new SparseVectorWriter.ChunkText(d.getId(), d.getText()))
+                      .toList(),
+                  avgdl);
+        }
       }
       manifest.put(
-          filename,
-          new KnowledgeManifest.Entry(sha256, chunks.stream().map(Document::getId).toList()));
+          plan.filename(),
+          new KnowledgeManifest.Entry(
+              plan.sha256(),
+              plan.chunks().stream().map(Document::getId).toList(),
+              sparseWriter.isPresent() ? plan.tokenSum() : null));
       reIngested++;
     }
 
@@ -212,7 +270,9 @@ public class KnowledgeBaseIngestor implements ApplicationRunner {
                       + "|emb:"
                       + embeddingModel
                       + "|col:"
-                      + collectionName)
+                      + collectionName
+                      + "|sparse:"
+                      + sparseImpl)
                   .getBytes(StandardCharsets.UTF_8)));
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException("SHA-256 不可用", e);
