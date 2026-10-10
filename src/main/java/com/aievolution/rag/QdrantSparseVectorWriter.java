@@ -10,7 +10,6 @@ import io.qdrant.client.grpc.Points.SparseVector;
 import io.qdrant.client.grpc.Points.SparseVectorCreationConfig;
 import io.qdrant.client.grpc.Points.Vector;
 import io.qdrant.client.grpc.Points.Vectors;
-import java.util.Arrays;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -112,8 +111,8 @@ public class QdrantSparseVectorWriter implements SparseVectorWriter, SmartInitia
     Bm25Encoder.SparseVector v = encoder.encodeDocument(chunk.text(), avgDocLength);
     SparseVector sparse =
         SparseVector.newBuilder()
-            .addAllIndices(Arrays.stream(v.indices()).boxed().toList())
-            .addAllValues(toFloatList(v.values()))
+            .addAllIndices(QdrantPayloads.toIntList(v.indices()))
+            .addAllValues(QdrantPayloads.toFloatList(v.values()))
             .build();
     return PointVectors.newBuilder()
         .setId(PointId.newBuilder().setUuid(chunk.id()).build())
@@ -124,13 +123,5 @@ public class QdrantSparseVectorWriter implements SparseVectorWriter, SmartInitia
                         .putVectors(
                             SPARSE_VECTOR_NAME, Vector.newBuilder().setSparse(sparse).build())))
         .build();
-  }
-
-  private static List<Float> toFloatList(float[] values) {
-    Float[] boxed = new Float[values.length];
-    for (int i = 0; i < values.length; i++) {
-      boxed[i] = values[i];
-    }
-    return List.of(boxed);
   }
 }

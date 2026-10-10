@@ -13,7 +13,6 @@ import io.qdrant.client.grpc.Points.RetrievedPoint;
 import io.qdrant.client.grpc.Points.ScrollPoints;
 import io.qdrant.client.grpc.Points.ScrollResponse;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -34,10 +33,14 @@ import org.springframework.stereotype.Component;
  *
  * <p>韧性语义：sparse 是增强路而非必经路——gRPC 故障降级为空召回（dense 主路照常）， 与 W12 工具域"错误降级为观察不击穿"同一立场。
  *
- * <p>只在 {@code ai.rag.hybrid.enabled=true} 时装配；Bean 装配即确保全文索引存在（幂等）。
+ * <p>只在 {@code ai.rag.sparse.impl=matchtext}（缺省值）时装配，与 BM25 路互斥（W16 #2 对照切换面）； 是否启用由消费侧 {@code
+ * hybrid.enabled} 门控（{@link VectorStoreKnowledgeRetriever}）。 Bean 装配即确保全文索引存在（幂等）。
  */
 @Component
-@ConditionalOnProperty(name = "ai.rag.hybrid.enabled", havingValue = "true")
+@ConditionalOnProperty(
+    name = "ai.rag.sparse.impl",
+    havingValue = "matchtext",
+    matchIfMissing = true)
 public class QdrantSparseRecall implements SparseRecall, SmartInitializingSingleton {
 
   private static final Logger log = LoggerFactory.getLogger(QdrantSparseRecall.class);
@@ -171,27 +174,8 @@ public class QdrantSparseRecall implements SparseRecall, SmartInitializingSingle
   }
 
   private Document toDocument(RetrievedPoint point) {
-    Map<String, Object> metadata = toPlainMap(point.getPayloadMap());
+    Map<String, Object> metadata = QdrantPayloads.toPlainMap(point.getPayloadMap());
     String content = (String) metadata.remove(CONTENT_FIELD);
     return Document.builder().id(point.getId().getUuid()).text(content).metadata(metadata).build();
-  }
-
-  /** payload protobuf Value → Java 原生类型（只取本工程元数据用到的标量种类）。 */
-  private static Map<String, Object> toPlainMap(
-      Map<String, io.qdrant.client.grpc.JsonWithInt.Value> payload) {
-    Map<String, Object> out = new HashMap<>();
-    payload.forEach(
-        (k, v) -> {
-          switch (v.getKindCase()) {
-            case STRING_VALUE -> out.put(k, v.getStringValue());
-            case INTEGER_VALUE -> out.put(k, v.getIntegerValue());
-            case DOUBLE_VALUE -> out.put(k, v.getDoubleValue());
-            case BOOL_VALUE -> out.put(k, v.getBoolValue());
-            default -> {
-              /* NULL_/LIST_/STRUCT_VALUE 本工程元数据不涉及，跳过 */
-            }
-          }
-        });
-    return out;
   }
 }
