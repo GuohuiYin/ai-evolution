@@ -134,6 +134,13 @@ ai:
   stock:
     # 个股分析默认会计年度（mock 种子数据按 2024 口径）
     analysis-year: 2024
+    # 行情/财务数据源（W17 #1）：mock（缺省，内置种子）/ tushare（真源 REST 直连）。
+    # 真源切换：AI_STOCK_DATA_SOURCE=tushare + TUSHARE_TOKEN（tushare.pro 个人中心获取）
+    data-source: ${AI_STOCK_DATA_SOURCE:mock}
+    tushare:
+      token: ${TUSHARE_TOKEN:}
+      base-url: ${TUSHARE_BASE_URL:https://api.tushare.pro}
+      timeout-seconds: 5
   agent:
     # Agent 工具通路 prompt 模板名（resources/prompts/ 下，不含后缀）。
     # v2 起含反缝合规则（实体不匹配禁止拼接推算，W9-2）；A/B 对照经 AI_AGENT_CHAT_PROMPT 切换
