@@ -83,35 +83,25 @@ public final class SparseCoverage {
     return bigramCoverage >= BIGRAM_THRESHOLD ? bigramCoverage : -1;
   }
 
-  /** 查询 token 化：规整化文本按空白与标点切分。 */
+  /** 查询 token 化：规整化文本按空白与标点切分（分词规则单点收口于 {@link SparseTokenizer}，A11-1）。 */
   static List<String> queryTokens(String normalizedQuery) {
     if (normalizedQuery == null || normalizedQuery.isBlank()) {
       return List.of();
     }
-    Set<String> tokens = new LinkedHashSet<>();
-    for (String piece : normalizedQuery.split("[\\s\\p{P}]+")) {
-      if (!piece.isEmpty()) {
-        tokens.add(piece);
-      }
-    }
+    Set<String> tokens = new LinkedHashSet<>(SparseTokenizer.runs(normalizedQuery));
     return List.copyOf(tokens);
   }
 
   /** ASCII 标识符 token（代号/编号/年份/英文词）：是否含字母或数字。 */
   static boolean isIdentifier(String token) {
-    return token
-        .chars()
-        .anyMatch(
-            ch -> (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'));
+    return SparseTokenizer.isIdentifier(token);
   }
 
-  /** CJK token 的连续二元组（跨 token 不切）。 */
+  /** CJK token 的连续二元组（跨 token 不切；不足两字不出二元组）。 */
   static List<String> cjkBigrams(List<String> cjkTokens) {
     List<String> bigrams = new ArrayList<>();
     for (String token : cjkTokens) {
-      for (int i = 0; i + 2 <= token.length(); i++) {
-        bigrams.add(token.substring(i, i + 2));
-      }
+      bigrams.addAll(SparseTokenizer.cjkBigrams(token));
     }
     return bigrams;
   }
