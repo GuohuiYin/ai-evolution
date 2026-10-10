@@ -25,7 +25,7 @@
 | 语言 / 框架 | Java 25 (LTS) / Spring Boot 4.1.1 | [ADR-0001](docs/adr/0001-foundation-and-stack.md) |
 | AI 编排 | Spring AI 2.0.1 | ADR-0001 |
 | 模型供应商 | DeepSeek（对话）+ SiliconFlow bge-m3（Embedding，OpenAI 兼容协议） | [模型选型笔记 v1](docs/eval/selection/model-selection-v1.md)（双模型实测） |
-| 向量数据库 | Qdrant v1.15.1 | W3 落地 |
+| 向量数据库 | Qdrant v1.18.2 | W3 落地 |
 | 镜像构建 | Jib | [ADR-0002](docs/adr/0002-image-build-with-jib.md) |
 | 部署 | Kubernetes（本地 Minikube）——云原生第一天 | W2 落地 |
 | 接口文档 | springdoc OpenAPI 3（本地开 UI / 集群关 UI，约定 A7） | W2 落地 |
@@ -34,7 +34,7 @@
 
 ```bash
 # 前置：.env 配置 AI_API_KEY / SILICONFLOW_API_KEY；本地 Qdrant 容器
-docker run -d --name qdrant -p 6333:6333 -p 6334:6334 qdrant/qdrant:v1.15.1
+docker run -d --name qdrant -p 6333:6333 -p 6334:6334 qdrant/qdrant:v1.18.2
 
 # 本地运行（对话页 http://localhost:18080/，Swagger UI /swagger-ui/index.html，MCP /mcp）
 # 端口说明：默认 18080（非 8080）——本机 8080 常被 IDE 占用，W6 起全链路统一（含 k8s）

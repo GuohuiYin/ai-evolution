@@ -11,7 +11,7 @@ DOCKER_HOST=unix:///var/run/docker.sock docker build -t mcp-fetch:1.0.0 k8s/mcp-
 # 2. 加载镜像到 minikube 并应用清单（Qdrant 镜像也需提前 docker pull 后载入）
 minikube image load ai-evolution:0.3.0-m3
 minikube image load mcp-fetch:1.0.0
-minikube image load qdrant/qdrant:v1.15.1
+minikube image load qdrant/qdrant:v1.18.2
 kubectl apply -f k8s/
 
 # 3. 创建密钥（Secret 清单不进 git，密钥取自本地 .env）

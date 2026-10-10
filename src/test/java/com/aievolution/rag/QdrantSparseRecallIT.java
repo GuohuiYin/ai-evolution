@@ -20,7 +20,7 @@ import org.testcontainers.qdrant.QdrantContainer;
 @Testcontainers
 class QdrantSparseRecallIT {
 
-  @Container static final QdrantContainer QDRANT = new QdrantContainer("qdrant/qdrant:v1.15.1");
+  @Container static final QdrantContainer QDRANT = new QdrantContainer("qdrant/qdrant:v1.18.2");
 
   private static final String COLLECTION = "w13_sparse_it";
 

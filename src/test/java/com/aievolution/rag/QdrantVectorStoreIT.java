@@ -17,7 +17,7 @@ import org.testcontainers.qdrant.QdrantContainer;
 @Testcontainers
 class QdrantVectorStoreIT {
 
-  @Container static final QdrantContainer QDRANT = new QdrantContainer("qdrant/qdrant:v1.15.1");
+  @Container static final QdrantContainer QDRANT = new QdrantContainer("qdrant/qdrant:v1.18.2");
 
   @Test
   void similaritySearchReturnsSemanticallyClosestDocument() throws Exception {
