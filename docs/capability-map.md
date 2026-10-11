@@ -34,7 +34,7 @@
 | 查询理解 | ✅ 改写 W11 落地（多轮 eval 6.0/6 vs 关闭 4.5/6 量化收益）；HyDE/查询扩展 ⛔ 现阶段不采纳（W11 #8） | 调研裁决：[hyde-query-expansion-v1](../eval/selection/hyde-query-expansion-v1.md)，重评触发条件在案 |
 | 精排 | ✅ rerank 管线 W13 落地（bge-reranker-v2-m3 薄封装+故障降级）；数据裁决 +0pp 保持默认关，重评触发在案 | [w13-rerank-eval](eval/retrieval/w13-rerank-eval.md) |
 | 生成 | ✅ prompt 版本化资产 + 空检索硬拒答 + 反缝合规则（W9-2）+ 红线告警 | — |
-| 引用忠实度 | ⚠️ 生成 eval 溯源维部分覆盖 | W14+ 强化 |
+| 引用忠实度 | ✅ W18 #3 论述结案：三层概念切开（标注率/忠实度/结构化一致性），防线分层 L0/L2 已有、L1 程序化一致性校验候选 W19+、L3 逐句归因明确不做 | [citation-faithfulness](eval/citation-faithfulness.md) |
 | 知识图谱/GraphRAG | ❌ | ⛔ 27 周范围外，记录在案 |
 
 ## 四、Agent 核心
@@ -64,7 +64,7 @@
 | 红线/红队/注入防御 | ✅ W7 | — |
 | 鉴权/限流 | ✅ W12 #2 API Key（默认拒绝+显式放行）+ W12 #3 固定窗口限流（每身份 60/min，429+Retry-After） | — |
 | 降级容错 | ✅ 见模型层（W12 #4） | — |
-| 内容审核（moderation） | ❌ | W14+ 补论述（自有语料风险低，但标准答案应有章节） |
+| 内容审核（moderation） | ✅ W18 #3 论述结案：语料低风险成立但三面登记（外部内容入口/输出边界/多轮渗透），最小防线三件套指认，L1/L2 触发条件显式化 | [moderation-minimal-defense](security/moderation-minimal-defense.md) |
 
 ## 七、可观测与成本
 
