@@ -81,7 +81,7 @@
     "query": "600519 2024 年营收多少？顺便查年报里的工艺描述",
     "category": "compound",
     "expectedBehavior": "answer-with-source",
-    "referenceAnswer": "2024 年营业总收入约 1740 亿元（注明来源与时点）；工艺为 12987 流程（引用年报/速览来源）；两部分都要答"
+    "referenceAnswer": "2024 年营业总收入约 1740 亿元（注明来源与时点；来源可为年报文件或工具数据——工具数据须诚实标注工具名与时点，W18 C-lite 口径）；工艺为 12987 流程（引用年报/速览来源）；两部分都要答"
   },
   {
     "query": "宁德时代 2024 年营收多少？它的第二增长曲线是什么",
@@ -153,6 +153,86 @@
     "turns": [
       "宁德时代 2024 年营收多少",
       "那它现在值得买入吗"
+    ]
+  },
+  {
+    "query": "茅台 2024 年基本每股收益是多少，年度分红预案每 10 股派多少",
+    "category": "compound",
+    "expectedBehavior": "answer-with-source",
+    "referenceAnswer": "基本每股收益 68.64 元/股（上年 59.49 元，同比 +15.38%）；2024 年度利润分配预案每 10 股派发现金红利 276.24 元（含税）；两数均须注明来源文件与时点（2024 年年报口径）；EPS 禁止写成 60.79 等错误值（W14/W18 已知取数波动面）"
+  },
+  {
+    "query": "茅台 2024 年内的中期分红和 2023 年度分红分别是什么时候实施的",
+    "category": "compound",
+    "expectedBehavior": "answer-with-source",
+    "referenceAnswer": "2024 年中期分红：每 10 股派 238.82 元（含税），2024 年 12 月实施完毕；2023 年度分红：每 10 股派 308.76 元（含税），2024 年 6 月实施完毕；两部分都要答并注明来源与时点"
+  },
+  {
+    "query": "茅台 2024 年茅台酒基酒设计产能是多少吨，产能扩张受什么约束",
+    "category": "compound",
+    "expectedBehavior": "answer-with-source",
+    "referenceAnswer": "设计产能 44,595.00 吨（2024 年报产能状况表，实际产能 56,271.99 吨可一并注明）；扩张受赤水河流域环境容量约束（速览核心看点）；跨源作答，各自注明来源与时点"
+  },
+  {
+    "query": "i 茅台是什么，茅台的直销渠道指什么",
+    "category": "compound",
+    "expectedBehavior": "answer-with-source",
+    "referenceAnswer": "i 茅台是茅台的数字营销平台；直销渠道指自营和 i 茅台等数字营销平台渠道（2024 年直销收入约 748.4 亿元、毛利率 95.33%）；注明来源与时点（2024 年年报）"
+  },
+  {
+    "query": "宁德时代 2024 年归母净利润约多少，动力电池全球市占率多少",
+    "category": "compound",
+    "expectedBehavior": "answer-with-source",
+    "referenceAnswer": "归母净利润约 500 亿元；全球动力电池市占率约 37%（SNE Research 口径）；注明来源与时点（2024 年年报口径）"
+  },
+  {
+    "query": "那每股收益呢",
+    "category": "multi-turn",
+    "expectedBehavior": "answer-with-source",
+    "referenceAnswer": "沿用茅台实体：2024 年基本每股收益 68.64 元/股（年报口径），注明来源与时点；EPS 禁止错误值（60.79 等）",
+    "turns": [
+      "茅台 2024 年归母净利润多少",
+      "那每股收益呢"
+    ]
+  },
+  {
+    "query": "茅台的酿造工艺是什么",
+    "category": "multi-turn",
+    "expectedBehavior": "answer-with-source",
+    "referenceAnswer": "12987 流程：一年生产周期、两次投料、九次蒸煮、八次发酵、七次取酒；话题切换，不得把储能/电池内容黏连进本题；注明来源",
+    "turns": [
+      "宁德时代的第二增长曲线是什么",
+      "茅台的酿造工艺是什么"
+    ]
+  },
+  {
+    "query": "那茅台呢",
+    "category": "multi-turn",
+    "expectedBehavior": "answer-with-source",
+    "referenceAnswer": "实体切换沿用问题型（营收）：茅台 2024 年营业总收入约 1740 亿元（年报口径 1741.44 亿元），注明来源与时点",
+    "turns": [
+      "宁德时代 2024 年营收多少",
+      "那茅台呢"
+    ]
+  },
+  {
+    "query": "为什么不能继续扩",
+    "category": "multi-turn",
+    "expectedBehavior": "answer-with-source",
+    "referenceAnswer": "产能扩张受赤水河流域环境容量约束，供给端稀缺性长期存在（速览核心看点）；注明来源",
+    "turns": [
+      "茅台 2024 年基酒设计产能多少",
+      "为什么不能继续扩"
+    ]
+  },
+  {
+    "query": "它 2024 年营收多少",
+    "category": "multi-turn",
+    "expectedBehavior": "answer-with-source",
+    "referenceAnswer": "「它」指宁德时代（麒麟电池所属）：2024 年营业总收入约 3620 亿元，注明来源与时点",
+    "turns": [
+      "麒麟电池是谁的产品",
+      "它 2024 年营收多少"
     ]
   }
 ]
