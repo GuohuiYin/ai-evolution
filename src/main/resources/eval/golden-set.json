@@ -3,7 +3,8 @@
     "query": "茅台的酿造工艺是什么",
     "expectSources": [
       "maotai.md",
-      "贵州茅台：贵州茅台2024年年度报告.pdf"
+      "贵州茅台：贵州茅台2024年年度报告.pdf",
+      "贵州茅台：贵州茅台2025年年度报告.pdf"
     ],
     "category": "normal"
   },
@@ -11,7 +12,8 @@
     "query": "茅台一年的营收规模",
     "expectSources": [
       "maotai.md",
-      "贵州茅台：贵州茅台2024年年度报告.pdf"
+      "贵州茅台：贵州茅台2024年年度报告.pdf",
+      "贵州茅台：贵州茅台2025年年度报告.pdf"
     ],
     "category": "normal"
   },
@@ -19,7 +21,8 @@
     "query": "茅台的毛利率是多少",
     "expectSources": [
       "maotai.md",
-      "贵州茅台：贵州茅台2024年年度报告.pdf"
+      "贵州茅台：贵州茅台2024年年度报告.pdf",
+      "贵州茅台：贵州茅台2025年年度报告.pdf"
     ],
     "category": "normal"
   },
@@ -33,28 +36,35 @@
   {
     "query": "茅台的核心产品是什么",
     "expectSources": [
-      "maotai.md"
+      "maotai.md",
+      "贵州茅台：贵州茅台2024年年度报告.pdf",
+      "贵州茅台：贵州茅台2025年年度报告.pdf"
     ],
     "category": "normal"
   },
   {
     "query": "宁德时代的全球市占率",
     "expectSources": [
-      "catl.md"
+      "catl.md",
+      "宁德时代：2024年年度报告.pdf",
+      "宁德时代：2025年年度报告.pdf"
     ],
     "category": "normal"
   },
   {
     "query": "储能电池业务的增长情况",
     "expectSources": [
-      "catl.md"
+      "catl.md",
+      "宁德时代：2025年年度报告.pdf",
+      "宁德时代：2026年半年度报告.pdf"
     ],
     "category": "normal"
   },
   {
     "query": "宁德时代 2024 年营业总收入",
     "expectSources": [
-      "catl.md"
+      "catl.md",
+      "宁德时代：2024年年度报告.pdf"
     ],
     "category": "normal"
   },
@@ -75,7 +85,8 @@
   {
     "query": "贵州茅台现任董事长是谁",
     "expectSources": [
-      "贵州茅台：贵州茅台2024年年度报告.pdf"
+      "贵州茅台：贵州茅台2024年年度报告.pdf",
+      "贵州茅台：贵州茅台2025年年度报告.pdf"
     ],
     "category": "normal"
   },
@@ -83,14 +94,16 @@
     "query": "茅台 2024 年归母净利润约多少",
     "expectSources": [
       "maotai.md",
-      "贵州茅台：贵州茅台2024年年度报告.pdf"
+      "贵州茅台：贵州茅台2024年年度报告.pdf",
+      "贵州茅台：贵州茅台2025年年度报告.pdf"
     ],
     "category": "normal"
   },
   {
     "query": "宁德时代 2024 年归母净利润",
     "expectSources": [
-      "catl.md"
+      "catl.md",
+      "宁德时代：2024年年度报告.pdf"
     ],
     "category": "normal"
   },
@@ -132,21 +145,25 @@
   {
     "query": "宁德时代动力电池占全球多大份额",
     "expectSources": [
-      "catl.md"
+      "catl.md",
+      "宁德时代：2024年年度报告.pdf",
+      "宁德时代：2025年年度报告.pdf"
     ],
     "category": "paraphrase"
   },
   {
     "query": "赤水河流域环境容量约束",
     "expectSources": [
-      "maotai.md"
+      "maotai.md",
+      "贵州茅台：贵州茅台2025年年度报告.pdf"
     ],
     "category": "literal"
   },
   {
     "query": "SNE Research 口径 37%",
     "expectSources": [
-      "catl.md"
+      "catl.md",
+      "宁德时代：2024年年度报告.pdf"
     ],
     "category": "literal"
   },
@@ -161,7 +178,8 @@
   {
     "query": "神行超充电池",
     "expectSources": [
-      "catl.md"
+      "catl.md",
+      "宁德时代：2025年年度报告.pdf"
     ],
     "category": "literal"
   },
@@ -169,7 +187,8 @@
     "query": "茅台净利润和分红情况如何",
     "expectSources": [
       "maotai.md",
-      "贵州茅台：贵州茅台2024年年度报告.pdf"
+      "贵州茅台：贵州茅台2024年年度报告.pdf",
+      "贵州茅台：贵州茅台2025年年度报告.pdf"
     ],
     "category": "boundary"
   },
@@ -191,7 +210,8 @@
   {
     "query": "碳酸锂价格波动会影响谁",
     "expectSources": [
-      "catl.md"
+      "catl.md",
+      "宁德时代：2026年半年度报告.pdf"
     ],
     "category": "boundary"
   },
@@ -205,7 +225,8 @@
   {
     "query": "谁的风险和原材料价格关系最大",
     "expectSources": [
-      "catl.md"
+      "catl.md",
+      "宁德时代：2024年年度报告.pdf"
     ],
     "category": "boundary"
   },
@@ -276,7 +297,8 @@
   {
     "query": "i茅台是什么",
     "expectSources": [
-      "贵州茅台：贵州茅台2024年年度报告.pdf"
+      "贵州茅台：贵州茅台2024年年度报告.pdf",
+      "贵州茅台：贵州茅台2025年年度报告.pdf"
     ],
     "category": "normal"
   },
@@ -290,14 +312,17 @@
   {
     "query": "宁德时代的产品覆盖哪两大业务板块",
     "expectSources": [
-      "catl.md"
+      "catl.md",
+      "宁德时代：2024年年度报告.pdf",
+      "宁德时代：2025年年度报告.pdf"
     ],
     "category": "normal"
   },
   {
     "query": "茅台2024年营收同比增长约多少",
     "expectSources": [
-      "maotai.md"
+      "maotai.md",
+      "贵州茅台：贵州茅台2024年年度报告.pdf"
     ],
     "category": "normal"
   },
@@ -311,7 +336,8 @@
   {
     "query": "宁德时代在全球动力电池市占率上连续多年处于什么位置",
     "expectSources": [
-      "catl.md"
+      "catl.md",
+      "宁德时代：2025年年度报告.pdf"
     ],
     "category": "paraphrase"
   },
@@ -332,7 +358,8 @@
   {
     "query": "每10股派发现金红利276.24元",
     "expectSources": [
-      "贵州茅台：贵州茅台2024年年度报告.pdf"
+      "贵州茅台：贵州茅台2024年年度报告.pdf",
+      "贵州茅台：贵州茅台2025年年度报告.pdf"
     ],
     "category": "literal"
   },
@@ -346,14 +373,16 @@
   {
     "query": "i茅台 数字营销平台",
     "expectSources": [
-      "贵州茅台：贵州茅台2024年年度报告.pdf"
+      "贵州茅台：贵州茅台2024年年度报告.pdf",
+      "贵州茅台：贵州茅台2025年年度报告.pdf"
     ],
     "category": "literal"
   },
   {
     "query": "茅台的直销渠道和批发代理渠道分别指什么",
     "expectSources": [
-      "贵州茅台：贵州茅台2024年年度报告.pdf"
+      "贵州茅台：贵州茅台2024年年度报告.pdf",
+      "贵州茅台：贵州茅台2025年年度报告.pdf"
     ],
     "category": "boundary"
   },
@@ -393,6 +422,69 @@
   },
   {
     "query": "北京机动车今天限行尾号是多少",
+    "expectSources": null,
+    "category": "adversarial"
+  },
+  {
+    "query": "茅台 2025 年归母净利润相比 2024 年变化了多少",
+    "expectSources": [
+      "贵州茅台：贵州茅台2024年年度报告.pdf",
+      "贵州茅台：贵州茅台2025年年度报告.pdf"
+    ],
+    "category": "boundary"
+  },
+  {
+    "query": "茅台和宁德时代 2025 年谁的归母净利润更高",
+    "expectSources": [
+      "贵州茅台：贵州茅台2025年年度报告.pdf",
+      "宁德时代：2025年年度报告.pdf"
+    ],
+    "category": "boundary"
+  },
+  {
+    "query": "宁德时代 2025 年营业总收入是多少",
+    "expectSources": [
+      "宁德时代：2025年年度报告.pdf"
+    ],
+    "category": "normal"
+  },
+  {
+    "query": "茅台 2026 年上半年营业收入和净利润",
+    "expectSources": [
+      "贵州茅台：贵州茅台2026年半年度报告.pdf"
+    ],
+    "category": "normal"
+  },
+  {
+    "query": "宁德时代 2026 年上半年营业总收入",
+    "expectSources": [
+      "宁德时代：2026年半年度报告.pdf"
+    ],
+    "category": "normal"
+  },
+  {
+    "query": "宁德时代 2026 年上半年储能业务表现如何",
+    "expectSources": [
+      "宁德时代：2026年半年度报告.pdf"
+    ],
+    "category": "boundary"
+  },
+  {
+    "query": "每10股派息279.93元",
+    "expectSources": [
+      "贵州茅台：贵州茅台2025年年度报告.pdf"
+    ],
+    "category": "literal"
+  },
+  {
+    "query": "2025年全球储能电池出货量 550GWh",
+    "expectSources": [
+      "宁德时代：2025年年度报告.pdf"
+    ],
+    "category": "literal"
+  },
+  {
+    "query": "茅台 2027 年营收预测是多少",
     "expectSources": null,
     "category": "adversarial"
   }
