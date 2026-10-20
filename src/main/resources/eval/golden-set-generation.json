@@ -21,7 +21,7 @@
     "query": "茅台 2025 年一季度的营收是多少",
     "category": "in-domain-unanswerable",
     "expectedBehavior": "refuse-nodata",
-    "referenceAnswer": "知识库时点为 2024 年年报，未覆盖 2025 年数据；应明确回答暂无相关资料，禁止编造数字"
+    "referenceAnswer": "知识库已覆盖 2025 年年报与 2026 年半年报，但两者均未披露 2025 年一季度单季数据；应明确回答暂无相关资料，禁止编造数字"
   },
   {
     "query": "五粮液的营收规模有多大",
@@ -33,13 +33,13 @@
     "query": "宁德时代固态电池什么时候量产",
     "category": "in-domain-unanswerable",
     "expectedBehavior": "refuse-nodata",
-    "referenceAnswer": "语料未提及固态电池量产计划；应明确回答暂无相关资料"
+    "referenceAnswer": "语料仅提及固态电池在研（2026 半年报'钠电池、凝聚态电池、固态电池等新产品新技术开发保持前瞻性及领先性'），未披露量产时间表；应明确回答暂无量产时间相关资料，禁止把'在研领先'表述当作量产计划"
   },
   {
     "query": "茅台冰淇淋业务的营收占比是多少",
     "category": "in-domain-unanswerable",
     "expectedBehavior": "answer-with-gap",
-    "referenceAnswer": "语料未单独披露冰淇淋营收：年报仅披露'其他业务=酒店+冰淇淋'合并口径（2024 年合并报表口径约 2.87 亿元）。正确行为：明确说明未单独披露 + 可给合并口径参考值并注明口径属性 + 声明数据缺口；做占比估算时分母必须使用同一报表口径的营业收入合计（2024 年合并口径约 1708.99 亿元），禁止混用母公司报表数字；禁止把合并口径当作冰淇淋单项数据或据此推算单项金额"
+    "referenceAnswer": "语料未单独披露冰淇淋营收：年报仅披露'其他业务=酒店+冰淇淋'合并口径（2024 年合并报表口径约 2.87 亿元）。正确行为：明确说明未单独披露 + 可给合并口径参考值并注明口径属性 + 声明数据缺口；做占比估算时分母必须使用同一报表口径的营业收入合计（2024 年合并口径约 1708.99 亿元），禁止混用母公司报表数字；禁止把合并口径当作冰淇淋单项数据或据此推算单项金额；注意 2025 年年报起'其他业务'注释不再点名冰淇淋，2024 年口径为最后可考时点"
   },
   {
     "query": "茅台的酿造工艺是什么",
@@ -257,7 +257,7 @@
     "query": "茅台的法定代表人是谁",
     "category": "factual",
     "expectedBehavior": "answer-with-source",
-    "referenceAnswer": "张德芹（2024 年年报公司资料页法定代表人/公司负责人）；注明来源与时点"
+    "referenceAnswer": "陈华（2025 年年报起法定代表人变更，2025 年报公司信息页与 2026 半年报均为陈华；2024 年年报为张德芹）；query 无年份以最新披露口径为准，可并注变更沿革；须注明来源文件与数据时点"
   },
   {
     "query": "茅台 2024 年营业总收入同比增速是多少",
@@ -315,9 +315,9 @@
   },
   {
     "query": "宁德时代 2024 年储能业务收入是多少亿元",
-    "category": "in-domain-unanswerable",
-    "expectedBehavior": "refuse-nodata",
-    "referenceAnswer": "语料仅定性提及储能是第二增长曲线，无收入数字；应明确回答暂无相关资料，禁止编造数字"
+    "category": "factual",
+    "expectedBehavior": "answer-with-source",
+    "referenceAnswer": "2024 年储能电池系统收入约 572.9 亿元（2024 年报分产品营收表，原表单位千元：57,290,460；占总营收 15.83%，同比 -4.36%）；须注明来源文件与数据时点（2024 年年报口径）"
   },
   {
     "query": "茅台冰淇淋有多少家门店",
@@ -333,9 +333,9 @@
   },
   {
     "query": "宁德时代的员工总数是多少",
-    "category": "in-domain-unanswerable",
-    "expectedBehavior": "refuse-nodata",
-    "referenceAnswer": "语料未覆盖宁德时代员工信息；应明确回答暂无相关资料"
+    "category": "factual",
+    "expectedBehavior": "answer-with-source",
+    "referenceAnswer": "2025 年末在职员工 185,839 人（2025 年年报员工情况节）；2024 年末 131,988 人（2024 年年报）可并注；query 无年份以最新披露口径为主；须注明来源文件与数据时点"
   },
   {
     "query": "茅台冰淇淋的单杯售价是多少",
@@ -357,10 +357,40 @@
     "query": "中期分红算在里面吗",
     "category": "multi-turn",
     "expectedBehavior": "answer-with-source",
-    "referenceAnswer": "40.21% 是 2024 年度利润分配预案口径；中期分红（每 10 股 238.82 元，2024 年 12 月实施完毕）是另一次分配，不计入该比率；口径归属必须说清，注明来源与时点",
+    "referenceAnswer": "40.21% 是 2024 年度利润分配预案口径；中期分红（每 10 股 238.82 元，2024 年 12 月实施完毕）是另一次分配，不计入该比率；口径归属必须说清，注明来源与时点；若检索资料无法证实 40.21% 是否包含中期分红，诚实声明无法确认并分别列出两笔分配各自口径亦属合规，禁止编造断言（W19 期望重审：'不计入'断言无 chunk 可证，诚实不确定性优于编造——W14 冰淇淋先例）",
     "turns": [
       "茅台 2024 年度分红比例是多少",
       "中期分红算在里面吗"
     ]
+  },
+  {
+    "query": "宁德时代 2025 年营业总收入是多少",
+    "category": "factual",
+    "expectedBehavior": "answer-with-source",
+    "referenceAnswer": "约 4,237.0 亿元（2025 年年报合并利润表，原表单位千元：423,701,834；同比 2024 年 3,620.1 亿元约 +17.0%）；须注明来源文件与数据时点（2025 年年报口径）"
+  },
+  {
+    "query": "茅台 2025 年归母净利润是多少",
+    "category": "factual",
+    "expectedBehavior": "answer-with-source",
+    "referenceAnswer": "约 823.2 亿元（2025 年年报主要会计数据：82,320,067,101.68 元），同比 -4.53%（上年 862.28 亿元）；须注明来源文件与数据时点（2025 年年报口径）"
+  },
+  {
+    "query": "宁德时代 2026 年上半年营业总收入是多少",
+    "category": "factual",
+    "expectedBehavior": "answer-with-source",
+    "referenceAnswer": "约 2,769.2 亿元（2026 年半年报合并利润表，原表单位千元：276,916,580；同比 2025 年上半年 1,788.9 亿元约 +54.8%）；须注明来源文件与数据时点（2026 年半年报口径）"
+  },
+  {
+    "query": "茅台 2025 年归母净利润同比变化多少，2025 年度分红预案每 10 股派多少",
+    "category": "compound",
+    "expectedBehavior": "answer-with-source",
+    "referenceAnswer": "归母净利润约 823.2 亿元，同比 -4.53%（2025 年年报主要会计数据）；2025 年度利润分配预案每 10 股派息 279.93 元（含税，2025 年年报利润分配预案段）；两部分都要答并注明来源与时点"
+  },
+  {
+    "query": "茅台 2026 年全年营收是多少",
+    "category": "in-domain-unanswerable",
+    "expectedBehavior": "refuse-nodata",
+    "referenceAnswer": "知识库时点为 2026 年半年报，未覆盖 2026 年全年数据；应明确回答暂无相关资料，禁止把半年报数据乘二外推全年，禁止编造数字"
   }
 ]
