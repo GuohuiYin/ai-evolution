@@ -38,6 +38,7 @@ v3 数据集下的对照实验档案（数据集不变，参数回归）：
 | 时点 | 修订 | 出处 |
 |---|---|---|
 | W20（2026-10-21） | 造数规范增补第五条「校准复测触发条件」：语料轮换 / 在案缺陷状态变化 / judge 相关配置变更后必须复测校准（同分层同种子，守线 ≥80%） | [golden-set-authoring §四.3](golden-set-authoring.md)；教训来源 [w19-rotation-first-run-review](w19-rotation-first-run-review.md)（校准证据时效破产 36.7%） |
+| W20（2026-10-21） | **校准复测揭盲：63.3%（19/30）不达标立案**——泄漏修复后方向反转（judge 偏松→偏严 9:2，泄漏零分歧证 #1 有效）；三新病灶：时效先验误判（judge 以过时世界知识判"2026 半年报不存在"，M26 实在库）/ rubric 维度误用（完整性缺陷错打 compliance）/ 人工漏判对照（judge 抓到 238.82 中期分红张冠李戴，人工漏）；judge prompt 未动（铁律），处置候选登记待裁决 | [w20-calibration-rerun](generation/w20-calibration-rerun.md) |
 
 ## 已挂账演进项
 
