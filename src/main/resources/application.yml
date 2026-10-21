@@ -149,6 +149,8 @@ ai:
     # W11 #3：显式 ReAct 循环。协议 prompt（含 {TOOL_MANUAL} 占位符，由 ToolRegistry 渲染注入）
     # v2 起含协议纪律段（英文标记强制 + 中文标记反例，W20 #1）；回滚经 AI_LOOP_REACT_PROMPT 切换
     react-prompt: agent-react-v2
+    # 触顶合成步 prompt（W20 #1 裁决①B）：MAX_STEPS 后无工具收尾，诚实红线绑定
+    synthesis-prompt: agent-react-synthesis-v1
     # 研究步数上限：防死循环/注入诱导烧 token（复用工具调用上限思想，RETURN_ERROR_RESPONSE 同族）
     max-steps: 6
   chat:

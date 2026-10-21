@@ -57,6 +57,7 @@ class AgentChatServiceTest {
         TestProtocolMarkers.parser(),
         chatMemory,
         promptName,
+        "agent-react-synthesis-v1",
         maxSteps);
   }
 
@@ -92,14 +93,36 @@ class AgentChatServiceTest {
 
   @Test
   void chatFallsBackWhenMaxStepsExhausted() {
+    // 两次循环调用 + 一次合成调用（第三次返回空白=合成失败，W20 #1 裁决①B 退兜底）
     when(callSpec.content())
-        .thenReturn("Thought: 继续查\nAction: getDailyQuotes\nAction Input: {\"code\":\"600519\"}");
+        .thenReturn(
+            "Thought: 继续查\nAction: getDailyQuotes\nAction Input: {\"code\":\"600519\"}",
+            "Thought: 继续查\nAction: getDailyQuotes\nAction Input: {\"code\":\"600519\"}",
+            " ");
     when(registry.execute(anyString(), anyString())).thenReturn("观察");
 
     ChatAnswer answer = service("agent-react-v1", 2).chat("追不完的问题", "conv-t2");
 
-    // 超限不编造：兜底话术 + 轨迹已留痕（不击穿、不假装收敛）
+    // 合成失败不编造：兜底话术 + 轨迹已留痕（不击穿、不假装收敛）
     assertThat(answer.reply()).contains("未能在限定的 2 步内得出结论");
     verify(registry, times(2)).execute(anyString(), anyString());
+  }
+
+  @Test
+  void chatSynthesizesAnswerWhenMaxStepsExhausted() {
+    // W20 #1 裁决①B：触顶后合成步成功——已查证 observations 强制收尾，兜底话术不再出现
+    when(callSpec.content())
+        .thenReturn(
+            "Thought: 继续查\nAction: getDailyQuotes\nAction Input: {\"code\":\"600519\"}",
+            "Thought: 继续查\nAction: getDailyQuotes\nAction Input: {\"code\":\"600519\"}",
+            "已查证部分：收盘价 1700 元（来源：mock，时点：2025-04-30）；其余未覆盖");
+    when(registry.execute(anyString(), anyString())).thenReturn("观察");
+
+    ChatAnswer answer = service("agent-react-v1", 2).chat("追不完的问题", "conv-t3");
+
+    assertThat(answer.reply())
+        .contains("已查证部分：收盘价 1700 元")
+        .doesNotContain("未能在限定的")
+        .contains("不构成投资建议");
   }
 }

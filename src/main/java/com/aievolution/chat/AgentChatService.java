@@ -44,6 +44,7 @@ public class AgentChatService implements ChatService {
   private final ReactProtocolParser parser;
   private final ChatMemory chatMemory;
   private final String promptName;
+  private final String synthesisPromptName;
   private final int maxSteps;
 
   public AgentChatService(
@@ -53,6 +54,7 @@ public class AgentChatService implements ChatService {
       ReactProtocolParser parser,
       ChatMemory chatMemory,
       @Value("${ai.loop.react-prompt:agent-react-v2}") String promptName,
+      @Value("${ai.loop.synthesis-prompt:agent-react-synthesis-v1}") String synthesisPromptName,
       @Value("${ai.loop.max-steps:6}") int maxSteps) {
     if (!promptLibrary.exists(promptName)) {
       // prompt 缺失是部署事故，启动即 fail-fast
@@ -64,6 +66,7 @@ public class AgentChatService implements ChatService {
     this.parser = parser;
     this.chatMemory = chatMemory;
     this.promptName = promptName;
+    this.synthesisPromptName = synthesisPromptName;
     this.maxSteps = maxSteps;
   }
 
@@ -113,7 +116,7 @@ public class AgentChatService implements ChatService {
     return sink.asFlux();
   }
 
-  /** 超限兜底话术：不编造结论，如实告知并指向已留痕的轨迹（#1 决策：红线措辞归 chat 域） */
+  /** 触顶兜底话术：合成步也失败时（W20 #1 裁决①B），如实告知并指向已留痕的轨迹（红线措辞归 chat 域） */
   private String answerOf(LoopResult result) {
     if (result.answer() != null) {
       return result.answer();
@@ -125,7 +128,13 @@ public class AgentChatService implements ChatService {
     List<Message> history = chatMemory.get(conversationId);
     ResearchModel model =
         new DeepSeekResearchModel(
-            chatClientBuilder, promptLibrary, toolRegistry, promptName, parser, history);
+            chatClientBuilder,
+            promptLibrary,
+            toolRegistry,
+            promptName,
+            synthesisPromptName,
+            parser,
+            history);
     return new ResearchLoop(model, toolRegistry, maxSteps, listener);
   }
 }

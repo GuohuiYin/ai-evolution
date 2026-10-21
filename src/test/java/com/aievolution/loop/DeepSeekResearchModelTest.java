@@ -41,6 +41,8 @@ class DeepSeekResearchModelTest {
     promptLibrary = mock(PromptLibrary.class);
     when(promptLibrary.exists("agent-react-v1")).thenReturn(true);
     when(promptLibrary.get("agent-react-v1")).thenReturn("协议说明\n{TOOL_MANUAL}");
+    when(promptLibrary.exists("agent-react-synthesis-v1")).thenReturn(true);
+    when(promptLibrary.get("agent-react-synthesis-v1")).thenReturn("合成规则：仅基于已查证信息");
     registry = mock(ToolRegistry.class);
     when(registry.specs())
         .thenReturn(
@@ -49,7 +51,13 @@ class DeepSeekResearchModelTest {
 
   private DeepSeekResearchModel model(List<Message> history) {
     return new DeepSeekResearchModel(
-        builder, promptLibrary, registry, "agent-react-v1", TestProtocolMarkers.parser(), history);
+        builder,
+        promptLibrary,
+        registry,
+        "agent-react-v1",
+        "agent-react-synthesis-v1",
+        TestProtocolMarkers.parser(),
+        history);
   }
 
   @Test
@@ -62,10 +70,28 @@ class DeepSeekResearchModelTest {
                     promptLibrary,
                     registry,
                     "nope",
+                    "agent-react-synthesis-v1",
                     TestProtocolMarkers.parser(),
                     List.of()))
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("nope");
+  }
+
+  @Test
+  void failsFastWhenSynthesisPromptMissing() {
+    when(promptLibrary.exists("nope-synthesis")).thenReturn(false);
+    assertThatThrownBy(
+            () ->
+                new DeepSeekResearchModel(
+                    builder,
+                    promptLibrary,
+                    registry,
+                    "agent-react-v1",
+                    "nope-synthesis",
+                    TestProtocolMarkers.parser(),
+                    List.of()))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("nope-synthesis");
   }
 
   @Test
@@ -104,5 +130,31 @@ class DeepSeekResearchModelTest {
 
     assertThat(turn).isInstanceOf(ModelTurn.Final.class);
     assertThat(((ModelTurn.Final) turn).answer()).isEqualTo("茅台的工艺是 12987");
+  }
+
+  @Test
+  void synthesizeFeedsObservationsWithoutToolManual() {
+    // W20 #1 裁决①B：合成步不挂工具手册，只喂问题 + 已查证 observations，强制收尾
+    when(callSpec.content()).thenReturn("已查证：营收 100 亿（来源：mock，时点：2025-04-30）");
+    List<LoopStep> steps =
+        List.of(new LoopStep(0, "先查行情", "getDailyQuotes", "{\"code\":\"600519\"}", "1700.00"));
+
+    java.util.Optional<String> answer = model(List.of()).synthesize("茅台营收多少", steps);
+
+    assertThat(answer).contains("已查证：营收 100 亿（来源：mock，时点：2025-04-30）");
+    ArgumentCaptor<String> systemCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<String> userCaptor = ArgumentCaptor.forClass(String.class);
+    verify(spec).system(systemCaptor.capture());
+    verify(spec).user(userCaptor.capture());
+    assertThat(systemCaptor.getValue()).contains("仅基于已查证信息").doesNotContain("{TOOL_MANUAL}");
+    assertThat(userCaptor.getValue()).contains("茅台营收多少").contains("1700.00");
+  }
+
+  @Test
+  void synthesizeBlankDegradesToFallback() {
+    // 合成失败（空内容）→ 空，调用方退兜底文案（裁决①B：诚实红线优先于硬凑答案）
+    when(callSpec.content()).thenReturn("  ");
+
+    assertThat(model(List.of()).synthesize("问题", List.of())).isEmpty();
   }
 }

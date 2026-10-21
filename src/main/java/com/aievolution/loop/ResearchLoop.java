@@ -50,7 +50,20 @@ public class ResearchLoop {
       }
       steps.add(executeStep(steps.size(), (ModelTurn.Act) turn));
     }
-    return finish(new LoopResult(null, List.copyOf(steps), StopReason.MAX_STEPS));
+    return finish(synthesizeAtMaxSteps(question, steps));
+  }
+
+  /**
+   * 触顶收尾（W20 #1 裁决①B）：追加无工具合成步——已查证 observations 喂回模型强制出终答； 合成失败则 answer=null，兜底措辞交调用方（诚实红线：不硬凑答案）。
+   */
+  private LoopResult synthesizeAtMaxSteps(String question, List<LoopStep> steps) {
+    java.util.Optional<String> synthesized = model.synthesize(question, List.copyOf(steps));
+    if (synthesized.isPresent()) {
+      traceLog.info("synthesize outcome=success steps={}", steps.size());
+    } else {
+      traceLog.warn("synthesize outcome=fallback steps={}", steps.size());
+    }
+    return new LoopResult(synthesized.orElse(null), List.copyOf(steps), StopReason.MAX_STEPS);
   }
 
   /** 执行一步并留痕：审计计时用 nanoTime（tool-audit 先例，单调时钟防系统回拨） */

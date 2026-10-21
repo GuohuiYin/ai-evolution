@@ -25,6 +25,7 @@ public class DeepSeekResearchModel implements ResearchModel {
   private final ChatClient chatClient;
   private final ReactProtocolParser parser;
   private final String systemPrompt;
+  private final String synthesisPrompt;
   private final List<Message> conversationHistory;
 
   public DeepSeekResearchModel(
@@ -32,11 +33,15 @@ public class DeepSeekResearchModel implements ResearchModel {
       PromptLibrary promptLibrary,
       ToolRegistry registry,
       String promptName,
+      String synthesisPromptName,
       ReactProtocolParser parser,
       List<Message> conversationHistory) {
     if (!promptLibrary.exists(promptName)) {
       // prompt 缺失是部署事故，启动即 fail-fast（AgentChatService 先例）
       throw new IllegalStateException("ReAct prompt 模板不存在: " + promptName);
+    }
+    if (!promptLibrary.exists(synthesisPromptName)) {
+      throw new IllegalStateException("ReAct 合成 prompt 模板不存在: " + synthesisPromptName);
     }
     // 裸客户端：不挂工具（工具由 Loop 显式调度）、不挂记忆 advisor
     // ——记忆由调用方组装进构造入参，防 advisor 逐步重复追加同一条 user 消息
@@ -44,6 +49,7 @@ public class DeepSeekResearchModel implements ResearchModel {
     this.parser = parser;
     this.systemPrompt =
         promptLibrary.get(promptName).replace(TOOL_MANUAL_PLACEHOLDER, renderManual(registry));
+    this.synthesisPrompt = promptLibrary.get(synthesisPromptName);
     this.conversationHistory = conversationHistory;
   }
 
@@ -67,18 +73,44 @@ public class DeepSeekResearchModel implements ResearchModel {
             });
   }
 
+  @Override
+  public java.util.Optional<String> synthesize(String question, List<LoopStep> history) {
+    // 裁决①B（W20 #1）：合成步不挂工具手册，只喂问题 + 已查证 observations，诚实红线强制收尾
+    String raw =
+        chatClient
+            .prompt()
+            .system(synthesisPrompt)
+            .user(buildSynthesisMessage(question, history))
+            .call()
+            .content();
+    if (raw == null || raw.isBlank()) {
+      // 合成失败退兜底文案：诚实红线优先于硬凑答案
+      log.warn("synthesis step returned blank content, degrade to fallback answer");
+      return java.util.Optional.empty();
+    }
+    return java.util.Optional.of(raw);
+  }
+
+  private String buildSynthesisMessage(String question, List<LoopStep> history) {
+    StringBuilder sb = new StringBuilder();
+    appendConversationHistory(sb);
+    sb.append("【用户问题】\n").append(question).append("\n\n【已完成的查证】\n");
+    if (history.isEmpty()) {
+      sb.append("尚无\n");
+    } else {
+      history.forEach(
+          s ->
+              sb.append(
+                  "步骤 %d：调用 %s(%s)\n结果：%s\n"
+                      .formatted(s.index() + 1, s.tool(), s.input(), s.observation())));
+    }
+    sb.append("\n请基于以上查证直接作答。");
+    return sb.toString();
+  }
+
   private String buildUserMessage(String question, List<LoopStep> history) {
     StringBuilder sb = new StringBuilder();
-    if (!conversationHistory.isEmpty()) {
-      sb.append("【会话历史】\n");
-      conversationHistory.forEach(
-          m ->
-              sb.append(m.getMessageType().getValue())
-                  .append(": ")
-                  .append(m.getText())
-                  .append('\n'));
-      sb.append('\n');
-    }
+    appendConversationHistory(sb);
     sb.append("【当前问题】\n").append(question).append("\n\n【已完成的研究步骤】\n");
     if (history.isEmpty()) {
       sb.append("尚无\n");
@@ -92,6 +124,18 @@ public class DeepSeekResearchModel implements ResearchModel {
     }
     sb.append("\n请严格按协议输出下一步。");
     return sb.toString();
+  }
+
+  /** 会话历史注入（单点：nextTurn 与 synthesize 共用——A11 两次即收口） */
+  private void appendConversationHistory(StringBuilder sb) {
+    if (conversationHistory.isEmpty()) {
+      return;
+    }
+    sb.append("【会话历史】\n");
+    conversationHistory.forEach(
+        m ->
+            sb.append(m.getMessageType().getValue()).append(": ").append(m.getText()).append('\n'));
+    sb.append('\n');
   }
 
   private static String renderManual(ToolRegistry registry) {
