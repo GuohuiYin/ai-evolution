@@ -2,6 +2,7 @@ package com.aievolution.loop;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.aievolution.loop.protocol.TestProtocolMarkers;
 import java.util.Optional;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
@@ -15,7 +16,7 @@ import org.junit.jupiter.params.provider.MethodSource;
  */
 class ReactProtocolParserTest {
 
-  private final ReactProtocolParser parser = new ReactProtocolParser();
+  private final ReactProtocolParser parser = TestProtocolMarkers.parser();
 
   @Test
   void parsesActionTurn() {

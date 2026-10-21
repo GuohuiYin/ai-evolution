@@ -9,8 +9,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.aievolution.loop.ReactProtocolParser;
 import com.aievolution.loop.ToolRegistry;
+import com.aievolution.loop.protocol.TestProtocolMarkers;
 import com.aievolution.prompt.ClasspathPromptLibrary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,7 +54,7 @@ class AgentChatServiceTest {
         builder,
         registry,
         new ClasspathPromptLibrary(),
-        new ReactProtocolParser(),
+        TestProtocolMarkers.parser(),
         chatMemory,
         promptName,
         maxSteps);

@@ -7,6 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.aievolution.loop.protocol.TestProtocolMarkers;
 import com.aievolution.prompt.PromptLibrary;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,7 +49,7 @@ class DeepSeekResearchModelTest {
 
   private DeepSeekResearchModel model(List<Message> history) {
     return new DeepSeekResearchModel(
-        builder, promptLibrary, registry, "agent-react-v1", new ReactProtocolParser(), history);
+        builder, promptLibrary, registry, "agent-react-v1", TestProtocolMarkers.parser(), history);
   }
 
   @Test
@@ -57,7 +58,12 @@ class DeepSeekResearchModelTest {
     assertThatThrownBy(
             () ->
                 new DeepSeekResearchModel(
-                    builder, promptLibrary, registry, "nope", new ReactProtocolParser(), List.of()))
+                    builder,
+                    promptLibrary,
+                    registry,
+                    "nope",
+                    TestProtocolMarkers.parser(),
+                    List.of()))
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("nope");
   }
