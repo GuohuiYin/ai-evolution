@@ -52,7 +52,7 @@ public class AgentChatService implements ChatService {
       PromptLibrary promptLibrary,
       ReactProtocolParser parser,
       ChatMemory chatMemory,
-      @Value("${ai.loop.react-prompt:agent-react-v1}") String promptName,
+      @Value("${ai.loop.react-prompt:agent-react-v2}") String promptName,
       @Value("${ai.loop.max-steps:6}") int maxSteps) {
     if (!promptLibrary.exists(promptName)) {
       // prompt 缺失是部署事故，启动即 fail-fast
