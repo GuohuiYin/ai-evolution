@@ -20,7 +20,7 @@
 
 | # | 任务 | 验收条件 | 状态 |
 |---|---|---|---|
-| 1 | **Thought 泄漏专项修复**（TDD）：① `ReactProtocolParser` 中文标记容错（思考/行动/行动输入/最终答案 + 既有全角冒号、加粗容差）；② ReAct 系统 prompt 协议纪律强化（英文标记强制 + 反例 few-shot，**judge prompt 不动**）；③ MAX_STEPS 触顶追加**无工具合成步**（裁决①B，合成失败退兜底文案）；④ `DeepSeekResearchModel` 兜底路径加协议违背计数指标（tool-audit 先例留痕） | parser 单测覆盖中文/混排/截断漂移现场（7 次 WARN 原文做成测试夹具）；泄漏 6 案复跑最终答案零 preamble | ⬜ |
+| 1 | **Thought 泄漏专项修复**（TDD）：① `ReactProtocolParser` 中文标记容错（思考/行动/行动输入/最终答案 + 既有全角冒号、加粗容差）；② ReAct 系统 prompt 协议纪律强化（英文标记强制 + 反例 few-shot，**judge prompt 不动**）；③ MAX_STEPS 触顶追加**无工具合成步**（裁决①B，合成失败退兜底文案）；④ `DeepSeekResearchModel` 兜底路径加协议违背计数指标（tool-audit 先例留痕） | parser 单测覆盖中文/混排/截断漂移现场（7 次 WARN 原文做成测试夹具）；泄漏 6 案复跑最终答案零 preamble | ✅ 2026-10-21：`1332939` parser 容错 + `0caa1a0` 方案 B protocol 子包 + `78120f0` prompt v2 + `8cabfb1` 合成步 + `92d87a2` 违背计数；6 案复跑零 preamble（[验证实录](../../eval/generation/w20-leak-fix-verification.md)），eval 两批总体 5.1/6 零回归 |
 | 2 | **校准重生 + 提取修正 + 规范第五条**：① 工作表提取脚本识别 `stopReason=MAX_STEPS`，以 `LoopResult` 兜底文案为准（假象源消除）；② 修复后重跑校准抽测（同分层同种子口径，守线 ≥80%）；③ 造数规范增补第五条"校准复测触发条件"（语料轮换/在案缺陷状态变化/judge 相关配置变更后必测） | 校准复测达标登记；规范第五条入 [golden-set-authoring](../../eval/golden-set-authoring.md) + changelog | ⬜ |
 | 3 | **Advisor 源码精读**（专项一主菜）：Spring AI ChatClient → Advisor 链调用顺序、Request/Response 上下文载体、内置 Advisor（RAG/记忆/日志）挂载点；产出 **Advisor 链结构图**（落 `docs/arch/`）+ 30 分钟分享稿 + 钩子自测问答 | 蓝图验收：不看文档答出"加一层自定义越界拦截，钩子在哪"；结构图 Owner 过目 | ⬜ |
 | 4 | **Temporal 三件套**（替换状态机 / 会话记忆 L2 持久化 / 可观测 ADR） | **顺延 W21 上半周**（裁决②，完成定义后滑一周，W24-27 缓冲吸收） | ⬜ 顺延 |

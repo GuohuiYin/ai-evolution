@@ -126,7 +126,7 @@ flowchart TB
 **关键数据流**：
 
 - **通路一（RAG）**：问题 → 查询改写（W11，多轮指代消解）→ bge-m3 向量化 → Qdrant 两阶段检索（W13 ADR-0017：混合召回 dense+sparse+RRF 默认开 → rerank 精排管线落地、数据裁决 +0pp 默认关）→ 空检索硬拒答，命中则上下文 + prompt 模板 → DeepSeek → 回答 + sources + 免责声明
-- **通路二（Agent）**：问题 → 显式 ReAct 研究循环（W11 ADR-0015：thought/action/observation 逐步可见，SSE 轨迹推送，步数上限 6）→ 模型逐步决策调用四工具（AOP 审计留痕）→ 数据回注 → 终答 + 免责声明；数据与问题实体不匹配时禁止拼接推算（agent-chat-v2 反缝合规则）
+- **通路二（Agent）**：问题 → 显式 ReAct 研究循环（W11 ADR-0015：thought/action/observation 逐步可见，SSE 轨迹推送，步数上限 6）→ 模型逐步决策调用四工具（AOP 审计留痕）→ 数据回注 → 终答 + 免责声明；数据与问题实体不匹配时禁止拼接推算（agent-chat-v2 反缝合规则）；协议防线（W20 #1）：英文标记纪律 prompt（agent-react-v2 反例 few-shot）+ parser 中文标记容错（protocol 子包策略 Bean）+ MAX_STEPS 触顶合成步（诚实红线兜底）+ `react.protocol.violation.total` 计数
 - **通路三（Analyze）**：股票代码 → StockDataClient 取数（未知代码 404，空数据不过模型）→ CO-STAR + few-shot + `.entity()` schema 强约束 → `StockAnalysisReport` JSON
 
 ## 当前能力
@@ -163,7 +163,7 @@ flowchart TB
 - 全链路 traceId 串链：路由 / 检索 / 工具 / 模型四级留痕
 - prompt/response 日志：开关受控（本地开 / 生产关）
 - token 成本账本：含 DeepSeek 缓存命中率
-- 检索黄金集 39 条（Recall@5 基线 72% → W13 混合检索裁决启用后 **93%**，+21pp）+ 生成黄金集 22 条（LLM judge 三维评分，锚定 5/5）+ Agent 轨迹评估（收敛率/冗余/步数，M3 验收 6/6 收敛）
+- 检索黄金集 39 条（Recall@5 基线 72% → W13 混合检索裁决启用后 **93%**，+21pp；W19 轮换复测 94.3%）+ 生成黄金集 57 条（W17-W19 扩库轮换；LLM judge 三维评分，judge 校准重生 W20 #2 进行中）+ Agent 轨迹评估（收敛率/冗余/步数，M3 验收 6/6 收敛）
 - 一页成本账：单次问答 ¥0.0054，一轮生成 eval ¥0.17
 
 **路线图**：W5 工具调用（@Tool）+ M1 验收门 ✅ → M2 MCP/护栏/Eval（W6 MCP 协议贯通 ✅，W7 安全加固 ✅，W8 评估体系 ✅——检索/生成双黄金集 + LLM judge + 成本账；few-shot A/B 裁决不启用）→ M3 最小研究 Loop ✅（2026-09-18 验收收官：显式 ReAct + 会话记忆 + SSE 轨迹 / 查询改写 / MCP Client 出向凭证 / 检索两阶段化——hybrid +21pp 启用、rerank +0pp 不启用，数据裁决；[验收记录](docs/plans/m3/m3-acceptance.md)）→ W14+ 进阶。
