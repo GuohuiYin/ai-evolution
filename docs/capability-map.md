@@ -19,7 +19,7 @@
 | 维度 | 现状 | 处置 |
 |---|---|---|
 | 构建（RAG/工具注入） | ✅ 双通道 | — |
-| 管理（会话记忆 L1-L5） | 🔵 L1 内存版 W10；L2-L5 W14+（见 plans/m3/README 五级路线） | 已排 |
+| 管理（会话记忆 L1-L5） | 🔵 L1 内存版 W10；**L2 已排 W21**（Temporal 顺延包，W20 裁决②）；L3-L5 W24-27 前流量裁决（见 plans/m3/README 五级路线） | 已排 |
 | 优化（压缩/摘要/窗口预算） | ❌ | W14+ |
 | 语义缓存（相似问题命中答案缓存） | ❌ | W14+（需流量数据） |
 
@@ -50,7 +50,7 @@
 
 | 维度 | 现状 | 处置 |
 |---|---|---|
-| 检索/生成黄金集 + judge 锚定 | ✅ | — |
+| 检索/生成黄金集 + judge 锚定 | ⚠️ 黄金集 ✅（检索 69 / 生成 57，changelog 台账）；**judge 校准 W20 复测 63.3% 不达标立案**——病灶=时效先验误判/rubric 维度误用，处置（语料时点清单注入，rubric 冻结）已排 W21 | [w20-calibration-rerun](eval/generation/w20-calibration-rerun.md) |
 | 多轮评测 | ✅ W11（multi-turn 6 条 + 同会话执行器，改写开/关对照入报告） | — |
 | Agent 轨迹评估 | ✅ W13 #4 落地：三指标口径 + 批量采集脚本（docs/scripts/trajectory-metrics.py），M3 验收 6/6 收敛 100%、冗余 0 | [m3-acceptance](plans/m3/m3-acceptance.md) 门② |
 | 人工反馈回路 | ❌ | W14+ |

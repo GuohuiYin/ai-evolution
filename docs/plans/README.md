@@ -33,7 +33,14 @@
 | 周 | 文档 | 状态 |
 |---|---|---|
 | 阶段索引 | [advanced/README.md](advanced/README.md)（三份台账合并裁决校准版，2026-09-18） | 🔵 进行中 |
-| W14 | [advanced/w14-retro-and-debt.md](advanced/w14-retro-and-debt.md)（复盘 + 欠账/缺陷清理） | 🔵 待开工 |
+| W14 | [advanced/w14-retro-and-debt.md](advanced/w14-retro-and-debt.md)（复盘 + 欠账/缺陷清理） | ✅ 已完成 |
+| W15 | [advanced/w15-embedding-compare.md](advanced/w15-embedding-compare.md)（embedding 实测对照） | ✅ 已完成 |
+| W16 | [advanced/w16-sparse-bm25-eval.md](advanced/w16-sparse-bm25-eval.md)（sparse/BM25 候选 A 评估） | ✅ 已完成 |
+| W17 | [advanced/w17-tushare-and-eval-data.md](advanced/w17-tushare-and-eval-data.md)（Tushare 真源 + 评估造数） | ✅ 已完成 |
+| W18 | [advanced/w18-eval-data-week2.md](advanced/w18-eval-data-week2.md)（评估造数第二周 + judge 校准 95.5%） | ✅ 已完成 |
+| W19 | [advanced/w19-rotation-first-run.md](advanced/w19-rotation-first-run.md)（黄金集轮换首演 v5/v3） | ✅ 已完成 |
+| W20 | [advanced/w20-leak-fix-and-advisor-source.md](advanced/w20-leak-fix-and-advisor-source.md)（泄漏修复 + 校准重生 + Advisor 源码精读） | ✅ 已完成（#4 Temporal 裁决顺延 W21） |
+| W21 | [advanced/w21-temporal-and-l4-kickoff.md](advanced/w21-temporal-and-l4-kickoff.md)（Temporal 顺延包 + judge 病灶处置 + L4 设计启动） | 🔵 提案定稿（Owner 三裁决在案） |
 
 ## 对账校准记录（2026-09-03）
 

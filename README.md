@@ -46,8 +46,8 @@ set -a && source .env && set +a
 ./mvnw spotless:apply    # 提交前格式化
 
 # 评估跑批（需本地 Qdrant + SILICONFLOW_API_KEY）
-AI_EVAL_ENABLED=true ./mvnw spring-boot:run             # 检索黄金集 39 条
-AI_EVAL_GENERATION_ENABLED=true ./mvnw spring-boot:run  # 生成黄金集 22 条 + LLM judge
+AI_EVAL_ENABLED=true ./mvnw spring-boot:run             # 检索黄金集 69 条
+AI_EVAL_GENERATION_ENABLED=true ./mvnw spring-boot:run  # 生成黄金集 57 条 + LLM judge
 
 # Minikube 集群部署（详见 k8s/README.md）
 DOCKER_HOST=unix:///var/run/docker.sock ./mvnw compile jib:dockerBuild -DskipTests
@@ -115,7 +115,7 @@ flowchart TB
     subgraph cross["横切关注点（全链路生效）"]
         RedLines["金融三红线代码化<br/>免责声明 · 拒买卖建议 · 数字溯源"]
         Obs["可观测：traceId 四级留痕 · SSE 轨迹<br/>prompt/response 日志 · token 账本 · failover 计数器"]
-        Eval["评估：检索黄金集 39 条 + 生成黄金集 22 条<br/>（LLM judge，A13 prompt 纪律门，CI 定时回归）<br/>Agent 轨迹评估：步数/冗余/收敛率"]
+        Eval["评估：检索黄金集 69 条 + 生成黄金集 57 条<br/>（LLM judge，A13 prompt 纪律门，CI 定时回归）<br/>Agent 轨迹评估：步数/冗余/收敛率"]
         Sec["安全：CVE-2026-59318 fail-fast · API Key + 限流<br/>MCP 脱敏 · 入参上限 · 工具调用上限"]
     end
     services -.-> cross
@@ -163,7 +163,7 @@ flowchart TB
 - 全链路 traceId 串链：路由 / 检索 / 工具 / 模型四级留痕
 - prompt/response 日志：开关受控（本地开 / 生产关）
 - token 成本账本：含 DeepSeek 缓存命中率
-- 检索黄金集 39 条（Recall@5 基线 72% → W13 混合检索裁决启用后 **93%**，+21pp；W19 轮换复测 94.3%）+ 生成黄金集 57 条（W17-W19 扩库轮换；LLM judge 三维评分，judge 校准重生 W20 #2 进行中）+ Agent 轨迹评估（收敛率/冗余/步数，M3 验收 6/6 收敛）
+- 检索黄金集 69 条（W17 扩容 39→60 + W19 v5 轮换 60→69；Recall@5 基线 72% → W13 混合检索裁决启用后 **93%**，+21pp；W19 轮换复测 94.3%）+ 生成黄金集 57 条（W17-W19 扩库轮换；LLM judge 三维评分；judge 校准 W18 95.5% → W19 36.7% 时效破产 → W20 复测 63.3% 不达标立案，处置已排 W21——[揭盲登记](docs/eval/generation/w20-calibration-rerun.md)）+ Agent 轨迹评估（收敛率/冗余/步数，M3 验收 6/6 收敛）
 - 一页成本账：单次问答 ¥0.0054，一轮生成 eval ¥0.17
 
 **路线图**：W5 工具调用（@Tool）+ M1 验收门 ✅ → M2 MCP/护栏/Eval（W6 MCP 协议贯通 ✅，W7 安全加固 ✅，W8 评估体系 ✅——检索/生成双黄金集 + LLM judge + 成本账；few-shot A/B 裁决不启用）→ M3 最小研究 Loop ✅（2026-09-18 验收收官：显式 ReAct + 会话记忆 + SSE 轨迹 / 查询改写 / MCP Client 出向凭证 / 检索两阶段化——hybrid +21pp 启用、rerank +0pp 不启用，数据裁决；[验收记录](docs/plans/m3/m3-acceptance.md)）→ W14+ 进阶。

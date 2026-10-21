@@ -154,7 +154,7 @@
 | 1.5 Zero/Few-shot/ReAct | 会调 | ✅ 超出 | few-shot A/B 裁决不启用 + 显式 ReAct W11 落地（ADR-0015） |
 | 1.6 CO-STAR | 会调 | ✅ | /ai/analyze 结构化输出 + prompt 目录版本化 + A13 纪律门 |
 | 1.8 LLM-as-a-Judge | 会调 | ✅ 超出 | W8 评分内核 + ADR-0014 judge 隔离 + 锚定 5/5 + judge 方差两轮实测（±0.5 噪声带） |
-| 1.2 Spring AI ChatClient | 会造 | ⚠️ 会调 | 全项目主用；会造 = 源码级，留 W19-20 源码专项 |
+| 1.2 Spring AI ChatClient | 会造 | ⚠️ 会调 | 全项目主用；会造 = 源码级，留 W19-20 源码专项。**W20 更新（2026-10-21）：✅ 达成**——Advisor 链源码精读收官（链装配/before-after 模板/上下文载体/内置 Advisor 挂载点），产出 [结构图+钩子自测](../../arch/advisor-chain.md) + [30 分钟分享稿](../../notes/advisor-chain-talk.md)，钩子验收口径达成 |
 | 1.4 CoT/ToT | 会用 | ⬜ | 未专项落地，进阶期泛读项 |
 | 1.7 DSPy / 1.3 LangChain4j | 会用/会调 | ⬜ | 概念项；LangChain4j 二选一走了 Spring AI，进阶期对照 |
 

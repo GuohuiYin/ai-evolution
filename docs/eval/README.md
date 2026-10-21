@@ -31,7 +31,8 @@
 
 ### [retrieval/](retrieval/) — 检索质量回归
 
-黄金集 39 条（normal 15 + boundary 6 + paraphrase 4 + literal 4 + adversarial 10），
+黄金集 69 条 v5（normal 24 + boundary 12 + paraphrase 7 + literal 10 + adversarial 16；
+W17 扩容 39→60、W19 轮换重锚定 60→69，明细见 [changelog](golden-set-changelog.md)），
 `AI_EVAL_ENABLED=true ./mvnw spring-boot:run` 触发（真实 bge-m3）；
 CI 侧 `GoldenRetrievalEvalIT` 用哈希向量替身只覆盖 normal 正例。
 
@@ -47,11 +48,15 @@ CI 侧 `GoldenRetrievalEvalIT` 用哈希向量替身只覆盖 normal 正例。
 | W16 | [w16-topscore-distribution.md](retrieval/w16-topscore-distribution.md) | topScore 逐案外暴露 + 分布首证：通过组 [0.51,0.79] vs 误召回组 {0.50,0.55,0.60} 交叠带实测 → 裁决阈值 0.5 维持（有分布支撑，非经验拍值） |
 | W16 | [w16-sparse-bm25-eval.md](retrieval/w16-sparse-bm25-eval.md) | ADR-0017 候选 A 全流程：A1 服务端 BM25 中文单 token 出局 → A3-lite 落地（应用侧分词+服务端 IDF）；对照正例 93.1%→96.6% 但负例 7/10→3/10 破守线 → 裁决不切换，实现留 `impl=bm25` 旗标后待召回门槛重评 |
 | W17 | [w17-golden-v4-baseline.md](retrieval/w17-golden-v4-baseline.md) | 黄金集 v4 扩容 39→60（造数规范同立）首跑基线：正例 43/45=96%、负例 11/15，新增 16 正例全过、旧案零回归；2 条新 adversarial 失败留集挂账（金融词面 dense 交叠带 + sparse 标识符网新失败面） |
+| W19 | [w19-golden-v5-baseline.md](retrieval/w19-golden-v5-baseline.md) | 轮换首演重锚定（语料 3→8 源联动，Owner 逐案审 + pypdf 字面核验）：v5 60→69，正例 50/53=94.3% 守线 ≥93% 三轮复跑达标；负例 8/16 三轮稳定；半年报时效案（旧库不可答→新库可答）3/3 |
 
 ### [generation/](generation/) — 生成质量回归
 
-黄金集 22 条（redline / in-domain-unanswerable / factual / compound / multi-turn 五类），
+黄金集 57 条 v3（factual 18 + multi-turn 13 + compound 11 + in-domain-unanswerable 8 + redline 7；
+W17-W19 三轮扩库轮换，明细见 [changelog](golden-set-changelog.md)），
 LLM-as-a-Judge 三维评分（准确性 / 拒答正确性 / 溯源），judge 锚定 5/5；
+judge 校准轨迹：W18 95.5% → W19 36.7%（语料轮换致校准证据时效破产，规范第五条由此而立）
+→ W20 复测 63.3% 不达标立案（病灶=时效先验误判/rubric 误用/人工漏判对照，处置排 W21）；
 `AI_EVAL_GENERATION_ENABLED=true ./mvnw spring-boot:run` 手动触发；
 CI 定时回归门见 `.github/workflows/eval-generation.yml`（每天 UTC 21:23，
 类别均分 < 4.5/6 即失败并开 issue，secrets 由 Owner 配置）。
@@ -63,6 +68,9 @@ CI 定时回归门见 `.github/workflows/eval-generation.yml`（每天 UTC 21:23
 | W11 | [w11-react-loop-regression.md](generation/w11-react-loop-regression.md) | 显式 ReAct 切换回归 5.6/6 ≥ 基线；首轮降级暴露"协议原文被兜底当答案"，解析器容差是一等职责 |
 | W11 | [w11-multi-turn.md](generation/w11-multi-turn.md) | 多轮 6 条：改写开 6.0/6 vs 关 4.5/6——改写收益集中在指代消解，两条塌方全是 hits=0 误拒答 |
 | W13 | [m3-acceptance.md 门③](../plans/m3/m3-acceptance.md) | 全量复跑 22 条两轮：总体 5.7 不降级；compound 溯源标注 + 冰淇淋期望错位两条欠账入 W14 |
+| W18 | [w18-gen-v2-baseline.md](generation/w18-gen-v2-baseline.md) · [w18-gen-v21-baseline.md](generation/w18-gen-v21-baseline.md) | 黄金集两批扩容 22→52（新案全部年报 PDF 字面锚定）：v2 总体 5.5/6、v2.1 总体 5.6/6，旧案零回归均取证成立；judge 过 W18 校准（95.5%） |
+| W19 | [w19-gen-v3-baseline.md](generation/w19-gen-v3-baseline.md) | v3 语料轮换联动（翻案 2 + 参照修正 3 + 新增 5，52→57）：R1 4.9/6、R2 5.0/6，降分三机制全归因（Thought 泄漏爆发/速览召回挤压/参照时效）；校准复测 36.7% 不达标——judge 对泄漏系统性偏松 |
+| W20 | [w20-leak-fix-verification.md](generation/w20-leak-fix-verification.md) · [w20-calibration-rerun.md](generation/w20-calibration-rerun.md) | 泄漏专项修复后 6 案复跑零 preamble、双 eval 批总体 5.1/6 零回归、protocol violation 0；校准复测揭盲 63.3% 不达标立案（方向反转：judge 偏松→偏严 9:2），处置候选排 W21 |
 
 ### 红线安全 — 单列的评估域
 
