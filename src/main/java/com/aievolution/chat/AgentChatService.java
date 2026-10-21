@@ -11,6 +11,7 @@ import com.aievolution.loop.ResearchLoop;
 import com.aievolution.loop.ResearchModel;
 import com.aievolution.loop.ToolRegistry;
 import com.aievolution.prompt.PromptLibrary;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.util.List;
 import org.slf4j.MDC;
 import org.springframework.ai.chat.client.ChatClient;
@@ -43,6 +44,7 @@ public class AgentChatService implements ChatService {
   private final PromptLibrary promptLibrary;
   private final ReactProtocolParser parser;
   private final ChatMemory chatMemory;
+  private final MeterRegistry meterRegistry;
   private final String promptName;
   private final String synthesisPromptName;
   private final int maxSteps;
@@ -53,6 +55,7 @@ public class AgentChatService implements ChatService {
       PromptLibrary promptLibrary,
       ReactProtocolParser parser,
       ChatMemory chatMemory,
+      MeterRegistry meterRegistry,
       @Value("${ai.loop.react-prompt:agent-react-v2}") String promptName,
       @Value("${ai.loop.synthesis-prompt:agent-react-synthesis-v1}") String synthesisPromptName,
       @Value("${ai.loop.max-steps:6}") int maxSteps) {
@@ -65,6 +68,7 @@ public class AgentChatService implements ChatService {
     this.promptLibrary = promptLibrary;
     this.parser = parser;
     this.chatMemory = chatMemory;
+    this.meterRegistry = meterRegistry;
     this.promptName = promptName;
     this.synthesisPromptName = synthesisPromptName;
     this.maxSteps = maxSteps;
@@ -134,6 +138,7 @@ public class AgentChatService implements ChatService {
             promptName,
             synthesisPromptName,
             parser,
+            meterRegistry,
             history);
     return new ResearchLoop(model, toolRegistry, maxSteps, listener);
   }

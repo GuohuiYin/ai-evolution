@@ -56,6 +56,7 @@ class AgentChatServiceTest {
         new ClasspathPromptLibrary(),
         TestProtocolMarkers.parser(),
         chatMemory,
+        new io.micrometer.core.instrument.simple.SimpleMeterRegistry(),
         promptName,
         "agent-react-synthesis-v1",
         maxSteps);

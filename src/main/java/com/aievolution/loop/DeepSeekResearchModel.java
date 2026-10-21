@@ -2,6 +2,7 @@ package com.aievolution.loop;
 
 import com.aievolution.infra.LogSummaries;
 import com.aievolution.prompt.PromptLibrary;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -24,6 +25,7 @@ public class DeepSeekResearchModel implements ResearchModel {
 
   private final ChatClient chatClient;
   private final ReactProtocolParser parser;
+  private final MeterRegistry meterRegistry;
   private final String systemPrompt;
   private final String synthesisPrompt;
   private final List<Message> conversationHistory;
@@ -35,6 +37,7 @@ public class DeepSeekResearchModel implements ResearchModel {
       String promptName,
       String synthesisPromptName,
       ReactProtocolParser parser,
+      MeterRegistry meterRegistry,
       List<Message> conversationHistory) {
     if (!promptLibrary.exists(promptName)) {
       // prompt 缺失是部署事故，启动即 fail-fast（AgentChatService 先例）
@@ -47,6 +50,7 @@ public class DeepSeekResearchModel implements ResearchModel {
     // ——记忆由调用方组装进构造入参，防 advisor 逐步重复追加同一条 user 消息
     this.chatClient = chatClientBuilder.build();
     this.parser = parser;
+    this.meterRegistry = meterRegistry;
     this.systemPrompt =
         promptLibrary.get(promptName).replace(TOOL_MANUAL_PLACEHOLDER, renderManual(registry));
     this.synthesisPrompt = promptLibrary.get(synthesisPromptName);
@@ -67,6 +71,8 @@ public class DeepSeekResearchModel implements ResearchModel {
         .orElseGet(
             () -> {
               // 协议违背必须可见（W11 #3c 教训：静默直通曾把协议原文当答案，首轮 eval 三案归零才发现）
+              // + 可计量（W20 #1 子项 4）：WARN 之外加计数器——降解频率是协议纪律健康度指标，可告警
+              meterRegistry.counter("react.protocol.violation.total").increment();
               log.warn(
                   "protocol violation, degrade to direct answer: {}", LogSummaries.summarize(raw));
               return new ModelTurn.Final("", raw);

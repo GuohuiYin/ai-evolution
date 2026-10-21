@@ -23,6 +23,7 @@ class DeepSeekResearchModelTest {
   private ChatClient.Builder builder;
   private PromptLibrary promptLibrary;
   private ToolRegistry registry;
+  private io.micrometer.core.instrument.simple.SimpleMeterRegistry meterRegistry;
   // 流式 API 测试手法：spec 自返回，链式调用收敛到同一 mock，stub 与 verify 都干净
   private ChatClient.ChatClientRequestSpec spec;
   private ChatClient.CallResponseSpec callSpec;
@@ -38,6 +39,7 @@ class DeepSeekResearchModelTest {
     when(spec.call()).thenReturn(callSpec);
     builder = mock(ChatClient.Builder.class);
     when(builder.build()).thenReturn(chatClient);
+    meterRegistry = new io.micrometer.core.instrument.simple.SimpleMeterRegistry();
     promptLibrary = mock(PromptLibrary.class);
     when(promptLibrary.exists("agent-react-v1")).thenReturn(true);
     when(promptLibrary.get("agent-react-v1")).thenReturn("协议说明\n{TOOL_MANUAL}");
@@ -57,6 +59,7 @@ class DeepSeekResearchModelTest {
         "agent-react-v1",
         "agent-react-synthesis-v1",
         TestProtocolMarkers.parser(),
+        meterRegistry,
         history);
   }
 
@@ -72,6 +75,7 @@ class DeepSeekResearchModelTest {
                     "nope",
                     "agent-react-synthesis-v1",
                     TestProtocolMarkers.parser(),
+                    meterRegistry,
                     List.of()))
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("nope");
@@ -89,6 +93,7 @@ class DeepSeekResearchModelTest {
                     "agent-react-v1",
                     "nope-synthesis",
                     TestProtocolMarkers.parser(),
+                    meterRegistry,
                     List.of()))
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("nope-synthesis");
@@ -130,6 +135,18 @@ class DeepSeekResearchModelTest {
 
     assertThat(turn).isInstanceOf(ModelTurn.Final.class);
     assertThat(((ModelTurn.Final) turn).answer()).isEqualTo("茅台的工艺是 12987");
+    // 协议违背必须可计量（W20 #1 子项 4）：WARN 之外加计数器，降解频率可观测可告警
+    assertThat(meterRegistry.get("react.protocol.violation.total").counter().count())
+        .isEqualTo(1.0);
+  }
+
+  @Test
+  void compliantOutputDoesNotCountViolation() {
+    when(callSpec.content()).thenReturn("Thought: 够了\nFinal Answer: 答案");
+
+    model(List.of()).nextTurn("问题", List.of());
+
+    assertThat(meterRegistry.find("react.protocol.violation.total").counter()).isNull();
   }
 
   @Test
