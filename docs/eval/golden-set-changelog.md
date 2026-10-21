@@ -33,6 +33,12 @@ v3 数据集下的对照实验档案（数据集不变，参数回归）：
 | v2.1 | W18（2026-10-11） | 扩容 32→52（第二批）：factual 6→13 + compound 8→10 + redline 3→7 + in-domain-unanswerable 4→9 + multi-turn 11→13。正例锚点全部年报 PDF 页码核验（出口 50 亿/系列酒产能 52,460/分红率 40.21%/法定代表人张德芹/总股本/行业利润总额 2,508.65 亿归属区分案）；5 条不可答案当场确认"语料无"（冰淇淋门店与售价全文零命中、电商仅批发子类、CATL 储能收入与员工数无语料）。候选评审 [w18-gen-expansion-batch2](../generation/w18-gen-expansion-batch2.md)。注：M6/M7 首轮 query 与 F1/F3 字面近同（多轮上下文考点在次轮，沿用集内先例） | [w18-gen-v21-baseline](../generation/w18-gen-v21-baseline.md)（总体 5.6/6；旧案零回归成立——C1 降分系 EPS 60.79 波动面复发非数据集回归；新案 17 满分+U3/F4 挂账在集+F6 观察） |
 | v2 | W18（2026-10-11） | 扩容 22→32（第一批）：compound 3→8 + multi-turn 6→11。新案全部字面锚定（年报 PDF 页码 + 速览原文，候选评审 [w18-gen-expansion-batch1](../generation/w18-gen-expansion-batch1.md)）；含"召回已成功"联动案 3 条（裁决③口径）+ EPS/口径核对案 2 条（W18 #1 校准立案②对口）；prompts 防泄漏自查零命中。注：M2 末轮 query 与既有 factual 案字面相同（多轮上下文不同，沿用集内 query 重复先例）。judge 已过 W18 #1 校准（一致率 95.5%）。**C-lite 修订**：600519 compound 案参照答案补"来源可为工具数据（诚实标注工具名与时点）"（Owner 裁决，judge prompt 未动） | [w18-gen-v2-baseline](../generation/w18-gen-v2-baseline.md)（总体 5.5/6；旧案零回归取证后成立——2 降分案复跑回 6 判抖动；新案 6 满分+3 挂账在集：分红时间线/EPS 波动复发/多轮追问召回失败；五粮液 Thought 泄漏 0 分复发加重） |
 
+## 规范修订
+
+| 时点 | 修订 | 出处 |
+|---|---|---|
+| W20（2026-10-21） | 造数规范增补第五条「校准复测触发条件」：语料轮换 / 在案缺陷状态变化 / judge 相关配置变更后必须复测校准（同分层同种子，守线 ≥80%） | [golden-set-authoring §四.3](golden-set-authoring.md)；教训来源 [w19-rotation-first-run-review](w19-rotation-first-run-review.md)（校准证据时效破产 36.7%） |
+
 ## 已挂账演进项
 
 - W11：多轮会话评测用例（指代/追问/话题切换）——随查询改写同步补
