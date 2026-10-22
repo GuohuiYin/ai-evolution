@@ -48,6 +48,19 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
+    <!-- W21 #1：Temporal 工作流引擎（loop run 状态持久化/断点恢复候选方案，先最小环验证） -->
+    <dependency>
+      <groupId>io.temporal</groupId>
+      <artifactId>temporal-sdk</artifactId>
+      <version>1.29.0</version>
+    </dependency>
+    <!-- Temporal 进程内测试环境（时间跳跃，单测锁定 workflow/activity 语义） -->
+    <dependency>
+      <groupId>io.temporal</groupId>
+      <artifactId>temporal-testing</artifactId>
+      <version>1.29.0</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-validation</artifactId>
