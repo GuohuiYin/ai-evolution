@@ -101,6 +101,27 @@
       <groupId>org.springframework.ai</groupId>
       <artifactId>spring-ai-starter-mcp-client</artifactId>
     </dependency>
+    <!-- W21 #1③：会话记忆 L2 持久化——JDBC 版 ChatMemoryRepository。用纯模块而非 starter：
+         仓储 bean 由 ConversationMemoryConfig 按 ai.chat.memory.store 旗标手工装配，
+         避免自动配置绕过旗标。版本由 spring-ai-bom 管理 -->
+    <dependency>
+      <groupId>org.springframework.ai</groupId>
+      <artifactId>spring-ai-model-chat-memory-repository-jdbc</artifactId>
+    </dependency>
+    <!-- W21 #1③：MySQL 驱动（容器 ai-evolution-mysql，见 application.yml memory 段）。
+         runtime 范围：主代码不编译期绑定具体数据库。版本由 Boot BOM 管理 -->
+    <dependency>
+      <groupId>com.mysql</groupId>
+      <artifactId>mysql-connector-j</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <!-- W21 #1③：H2 仅测试用——ConversationMemoryConfigTest 以文件库验证重启持久化语义，
+         不依赖本机 MySQL。版本由 Boot BOM 管理 -->
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>test</scope>
+    </dependency>
     <!-- OpenAPI 3 文档（约定 A7）：注解生成契约 + 内嵌 Swagger UI，Boot 4 兼容线从 3.x 开始 -->
     <dependency>
       <groupId>org.springdoc</groupId>

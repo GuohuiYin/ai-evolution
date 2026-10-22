@@ -3,6 +3,11 @@ spring:
     name: ai-evolution
   lifecycle:
     timeout-per-shutdown-phase: 10s
+  # W21 #1③：DataSource 自动配置显式关闭——会话记忆 L2 的 H2 数据源由 ConversationMemoryConfig
+  # 按 ai.chat.memory.store 旗标手工装配，inmemory 缺省态不允许出现 DataSource 副作用；
+  # 真接外部 DB 时再手工装配对应 DataSource（彼时此处一并放开）
+  autoconfigure:
+    exclude: org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
   ai:
     # 多供应商分工：聊天走 DeepSeek，Embedding 走 OpenAI 兼容协议（SiliconFlow bge-m3）
     model:
@@ -163,9 +168,16 @@ ai:
     # 统一入口路由策略（ChatRouter）：命中股票代码或下列关键词 → Agent 工具通路；其余 → RAG 管道
     agent-keywords: 股价,行情,走势,营收,净利,利润,财务
     memory:
-      # 会话记忆滑动窗口（条数）：超出后最旧消息淘汰。L1 内存版——重启失忆、多副本断片，
-      # L2 持久化挂 W14+（五级路线见 docs/plans/m3/README.md）
+      # 会话记忆滑动窗口（条数）：超出后最旧消息淘汰
       window: 20
+      # 仓储实现（W21 #1③ L2 落地）：inmemory=内存版（缺省，重启失忆）；
+      # jdbc=MySQL 持久化（重启记忆仍在，多副本同源——容器 ai-evolution-mysql，docker 起）
+      store: ${AI_CHAT_MEMORY_STORE:inmemory}
+      # jdbc 模式连接串与凭据（凭据在 .env，A5 密钥隔离）；
+      # createDatabaseIfNotExist 兜底建库；换外部库改 url + 凭据即迁移，业务代码零改动
+      jdbc-url: ${AI_CHAT_MEMORY_JDBC_URL:jdbc:mysql://localhost:3306/ai_evolution?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai}
+      jdbc-username: ${AI_CHAT_MEMORY_JDBC_USERNAME:root}
+      jdbc-password: ${AI_CHAT_MEMORY_JDBC_PASSWORD:}
     prompt-logging:
       # W8-6：日志记录模型输入 prompt 与返回 response（SimpleLoggerAdvisor，DEBUG 级）。
       # 本地默认开；生产必须关（金融语料敏感）。该 logger 级别需同时为 DEBUG 才生效，见 logging 段
