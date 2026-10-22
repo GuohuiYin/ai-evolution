@@ -20,6 +20,9 @@ public class LlmEvalJudge implements EvalJudge {
   private static final Pattern JSON_FENCE =
       Pattern.compile("```(?:json)?\\s*(\\{.*?})\\s*```", Pattern.DOTALL);
 
+  /** 语料时点清单（W21 #2a）：类加载时扫描一次，语料静态于单次运行；扫描失败即类初始化失败——eval 语境 fail-fast。 */
+  private static final String CORPUS_TIMELINE = CorpusTimeline.load();
+
   private final ChatClient judgeClient;
   private final PromptLibrary promptLibrary;
   private final ObjectMapper objectMapper = new ObjectMapper();
@@ -39,6 +42,8 @@ public class LlmEvalJudge implements EvalJudge {
                     "query", generationCase.query(),
                     "expectedBehavior", generationCase.expectedBehavior(),
                     "referenceAnswer", generationCase.referenceAnswer(),
+                    // W21 #2a：输入侧注入语料时点清单（rubric 冻结，Owner 裁决①解禁范围仅限上下文）
+                    "corpusTimeline", CORPUS_TIMELINE,
                     "answer", answer));
     String raw = judgeClient.prompt(prompt).call().content();
     return parse(raw);
