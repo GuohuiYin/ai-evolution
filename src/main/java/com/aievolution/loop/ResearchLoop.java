@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
  * <p>轨迹可观测（W11 #2）：每步与退出写 {@code research-trace} 专用 logger（tool-audit 先例； traceId 由控制台 pattern 经
  * MDC 自动带出），同时回调 {@link LoopListener}—— SSE 轨迹推送与轨迹评估指标共用这一观测点。
  */
-public class ResearchLoop {
+public class ResearchLoop implements ResearchLoopEngine {
 
   private static final Logger traceLog = LoggerFactory.getLogger("research-trace");
 

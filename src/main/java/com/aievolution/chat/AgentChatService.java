@@ -8,6 +8,7 @@ import com.aievolution.loop.LoopResult;
 import com.aievolution.loop.LoopStep;
 import com.aievolution.loop.ReactProtocolParser;
 import com.aievolution.loop.ResearchLoop;
+import com.aievolution.loop.ResearchLoopEngine;
 import com.aievolution.loop.ResearchModel;
 import com.aievolution.loop.ToolRegistry;
 import com.aievolution.prompt.PromptLibrary;
@@ -48,6 +49,10 @@ public class AgentChatService implements ChatService {
   private final String promptName;
   private final String synthesisPromptName;
   private final int maxSteps;
+  private final String loopEngine;
+  private final org.springframework.beans.factory.ObjectProvider<
+          com.aievolution.loop.temporal.TemporalLoopEngine>
+      temporalLoopEngine;
 
   public AgentChatService(
       ChatClient.Builder chatClientBuilder,
@@ -58,7 +63,11 @@ public class AgentChatService implements ChatService {
       MeterRegistry meterRegistry,
       @Value("${ai.loop.react-prompt:agent-react-v2}") String promptName,
       @Value("${ai.loop.synthesis-prompt:agent-react-synthesis-v1}") String synthesisPromptName,
-      @Value("${ai.loop.max-steps:6}") int maxSteps) {
+      @Value("${ai.loop.max-steps:6}") int maxSteps,
+      @Value("${ai.loop.engine:inline}") String loopEngine,
+      org.springframework.beans.factory.ObjectProvider<
+              com.aievolution.loop.temporal.TemporalLoopEngine>
+          temporalLoopEngine) {
     if (!promptLibrary.exists(promptName)) {
       // prompt 缺失是部署事故，启动即 fail-fast
       throw new IllegalStateException("ReAct prompt 模板不存在: " + promptName);
@@ -72,6 +81,8 @@ public class AgentChatService implements ChatService {
     this.promptName = promptName;
     this.synthesisPromptName = synthesisPromptName;
     this.maxSteps = maxSteps;
+    this.loopEngine = loopEngine;
+    this.temporalLoopEngine = temporalLoopEngine;
   }
 
   public ChatAnswer chat(String message, String conversationId) {
@@ -128,8 +139,22 @@ public class AgentChatService implements ChatService {
     return "本次研究未能在限定的 %d 步内得出结论。已完成的查证步骤可在研究轨迹中查看；建议缩小问题范围后重试。".formatted(maxSteps);
   }
 
-  private ResearchLoop newLoop(String conversationId, LoopListener listener) {
+  private ResearchLoopEngine newLoop(String conversationId, LoopListener listener) {
     List<Message> history = chatMemory.get(conversationId);
+    // W21 #1② 路线 C：双引擎旗标（inline 缺省 / temporal 事件历史 checkpoint + 断点恢复）
+    if ("temporal".equals(this.loopEngine)) {
+      com.aievolution.loop.temporal.TemporalLoopEngine engine =
+          this.temporalLoopEngine.getIfAvailable();
+      if (engine == null) {
+        // 旗标与装配同键（TemporalLoopConfig @ConditionalOnProperty），缺 Bean 即配置事故
+        throw new IllegalStateException("ai.loop.engine=temporal 但 Temporal 引擎未装配");
+      }
+      return engine.newRun(
+          com.aievolution.loop.temporal.HistoryTurn.fromMessages(history),
+          MDC.get(TraceIdFilter.MDC_KEY),
+          this.maxSteps,
+          listener);
+    }
     ResearchModel model =
         new DeepSeekResearchModel(
             chatClientBuilder,

@@ -59,7 +59,9 @@ class AgentChatServiceTest {
         new io.micrometer.core.instrument.simple.SimpleMeterRegistry(),
         promptName,
         "agent-react-synthesis-v1",
-        maxSteps);
+        maxSteps,
+        "inline",
+        org.mockito.Mockito.mock(org.springframework.beans.factory.ObjectProvider.class));
   }
 
   @Test
