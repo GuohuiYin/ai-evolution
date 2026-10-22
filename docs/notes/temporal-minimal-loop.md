@@ -2,8 +2,11 @@
 
 > 2026-10-22。目的：蓝图"Temporal 到会调"的第一环——本地跑通 + 弄清
 > workflow/activity/retry/query/确定性五个核心语义，为 #1②（loop run 状态持久化
-> 裁决）提供一手依据。代码：`src/main/java/com/aievolution/temporal/hello/`（4 类）+
-> `HelloLoopWorkflowTest`（进程内测试环境单测）。
+> 裁决）提供一手依据。
+>
+> ⚠️ 脚手架已拆除（W21 #1③ 同批）：`temporal/hello/` 5 类 + `HelloLoopWorkflowTest`
+> 已删——其验证的语义已由 #1② 真实 `loop/temporal/ResearchLoopWorkflow` 继承覆盖，
+> 本笔记作为历史实录保留，代码引用失效以 git 历史（d944187）为准。
 
 ## 环境
 
@@ -41,7 +44,7 @@ completed
 activity 失败不再写 ActivityTaskFailed 历史事件**（减历史体积），尝试计数在
 pending activity 信息里——排障时别在历史里找失败事件，直接看 attempts。
 
-单测：`HelloLoopWorkflowTest` 绿——TestWorkflowEnvironment 进程内测试服务器
+单测（已随脚手架拆除，见文首说明）：`HelloLoopWorkflowTest` 绿——TestWorkflowEnvironment 进程内测试服务器
 （时间跳跃，重试 backoff 不真实等待），锁定三条语义：结果拼接正确 /
 `attempts(step2)=2` 重试生效 / Query 读到终态 `completed`。
 
