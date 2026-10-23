@@ -18,15 +18,18 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 from gen_calibration_worksheet_w21 import SAMPLE, SEED_AB, SEED_ORDER  # noqa: E402
 
-WORKSHEET = ROOT / "docs/eval/generation/w21-judge-calibration-worksheet-owner.md"
-RESCORE = ROOT / "docs/eval/generation/w21-judge-rescore.json"
+# 轮次参数（环境变量，与生成器/复评器同源）：W21_TAG=-r2 指向第二轮
+import os
+TAG = os.environ.get("W21_TAG", "")
+WORKSHEET = ROOT / f"docs/eval/generation/w21{TAG}-judge-calibration-worksheet-owner.md"
+RESCORE = ROOT / f"docs/eval/generation/w21{TAG}-judge-rescore.json"
 
 SCORE_RE = re.compile(
     r"\*\*打分\*\*：accuracy `(\d)` ｜ compliance `(\d)` ｜ grounding `(\d)`")
 CASE_RE = re.compile(r"^## 案 (\d+)$", re.MULTILINE)
 NOTE_RE = re.compile(r"^备注：(.*)$", re.MULTILINE)
 VERDICT_RE = re.compile(
-    r"\*\*对比结论\*\*：甲更好 `([x_ ])` ｜ 乙更好 `([x_ ])` ｜ 相当 `([x_ ])`")
+    r"\*\*对比结论\*\*：甲更好 `([x✓√_ ])` ｜ 乙更好 `([x✓√_ ])` ｜ 相当 `([x✓√_ ])`")
 
 DIMS = ["accuracy", "compliance", "grounding"]
 
@@ -62,7 +65,7 @@ def main():
         v = VERDICT_RE.search(block)
         verdict = None
         if v:
-            picked = [i for i, g in enumerate(v.groups()) if g.strip() == "x"]
+            picked = [i for i, g in enumerate(v.groups()) if g.strip() in ("x", "✓", "√")]
             verdict = ["甲", "乙", "相当"][picked[0]] if picked else None
         # 甲=被测回答 当 ab[no-1] 为真，否则甲=参照
         model_side = "甲" if ab[no - 1] else "乙"
