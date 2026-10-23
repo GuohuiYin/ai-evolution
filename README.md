@@ -26,6 +26,8 @@
 | AI 编排 | Spring AI 2.0.1 | ADR-0001 |
 | 模型供应商 | DeepSeek（对话）+ SiliconFlow bge-m3（Embedding，OpenAI 兼容协议） | [模型选型笔记 v1](docs/eval/selection/model-selection-v1.md)（双模型实测） |
 | 向量数据库 | Qdrant v1.18.2 | W3 落地 |
+| 工作流引擎 | Temporal（可选第二循环引擎，`AI_LOOP_ENGINE=temporal` 激活，inline 留缺省） | [ADR-0019](docs/adr/0019-temporal-observability.md)（W21 #1②） |
+| 会话记忆存储 | MySQL 8.4（可选持久化，`AI_CHAT_MEMORY_STORE=jdbc` 激活，inmemory 留缺省） | W21 #1③ |
 | 镜像构建 | Jib | [ADR-0002](docs/adr/0002-image-build-with-jib.md) |
 | 部署 | Kubernetes（本地 Minikube）——云原生第一天 | W2 落地 |
 | 接口文档 | springdoc OpenAPI 3（本地开 UI / 集群关 UI，约定 A7） | W2 落地 |
@@ -35,6 +37,11 @@
 ```bash
 # 前置：.env 配置 AI_API_KEY / SILICONFLOW_API_KEY；本地 Qdrant 容器
 docker run -d --name qdrant -p 6333:6333 -p 6334:6334 qdrant/qdrant:v1.18.2
+
+# 可选基础设施（W21，按需——缺省配置均不需要）：
+# Temporal dev server（AI_LOOP_ENGINE=temporal 时）：temporal server start-dev（CLI 见 docs/notes/temporal-minimal-loop.md）
+# MySQL 容器（AI_CHAT_MEMORY_STORE=jdbc 时）：docker run -d --name ai-evolution-mysql -p 3306:3306 \
+#   -e MYSQL_ROOT_PASSWORD=<见.env> -e MYSQL_DATABASE=ai_evolution -v ai-evolution-mysql-data:/var/lib/mysql mysql:8.4
 
 # 本地运行（对话页 http://localhost:18080/，Swagger UI /swagger-ui/index.html，MCP /mcp）
 # 端口说明：默认 18080（非 8080）——本机 8080 常被 IDE 占用，W6 起全链路统一（含 k8s）

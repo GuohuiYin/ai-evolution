@@ -20,9 +20,9 @@
 
 | # | 任务 | 验收条件 | 状态 |
 |---|---|---|---|
-| 1 | **Temporal 三件套**（顺延包，上半周）：① Temporal 到会调最小环——本地 dev server + hello workflow 跑通，弄清 workflow/activity/retry 语义；② **loop run 状态持久化裁决与落地**——现状无 Spring StateMachine 实物（显式 ReAct 循环），对象是 ResearchLoop run 状态（步进/中间产物/断点恢复），替换范围先裁决后动手；③ 会话记忆 L2 持久化——`InMemoryChatMemoryRepository` → Redis/DB 仓储（同源病：重启即失忆、多副本断片）；④ 可观测 ADR——Temporal 引入后的 trace/指标方案入 `docs/adr/` | Temporal 本地跑通有实录；loop run 持久化方案 Owner 过目后落地；记忆 L2 可切换（配置开关，内存版留缺省）；ADR 入库 | ⬜ |
+| 1 | **Temporal 三件套**（顺延包，上半周）：① Temporal 到会调最小环——本地 dev server + hello workflow 跑通，弄清 workflow/activity/retry 语义；② **loop run 状态持久化裁决与落地**——现状无 Spring StateMachine 实物（显式 ReAct 循环），对象是 ResearchLoop run 状态（步进/中间产物/断点恢复），替换范围先裁决后动手；③ 会话记忆 L2 持久化——`InMemoryChatMemoryRepository` → Redis/DB 仓储（同源病：重启即失忆、多副本断片）；④ 可观测 ADR——Temporal 引入后的 trace/指标方案入 `docs/adr/` | Temporal 本地跑通有实录；loop run 持久化方案 Owner 过目后落地；记忆 L2 可切换（配置开关，内存版留缺省）；ADR 入库 | ✅（①`d944187` ②`73b62ad` ③`8793ef7`+`105418a` ④`addacf4`） |
 | 2 | **judge 病灶处置**（裁决①：解禁限输入侧）：a. judge 输入侧注入语料时点清单（在库文档+时点，消解"2026 半年报不存在"类误判，**rubric 冻结**）；b. 校准工作表参照旁附语料锚点页码（人工侧，#3 漏判教训，与 a 同批）；c. compliance 维边界澄清——**视 a 复测效果再定，默认不做**——动作后按规范第五条复测校准（同分层同种子 10 案，守线 ≥80%） | 处置落地 + 校准复测结果登记（达标收官/不达标再立案）；changelog 留痕 | ⬜ |
-| 3 | **L4 完整启动·设计先行**（下半周）：Sub-Agent 协作三角色选型与职责切分设计（蓝图 Planner/Builder/Reviewer/Monitor 取三，结合个股研究域）+ Skill 渐进式披露调研（Token 降幅测量方案设计，为 W22 实测铺路） | 设计文档入库（docs/plans/advanced/ 或 docs/arch/）；三角色边界 Owner 过目 | ⬜ |
+| 3 | **L4 完整启动·设计先行**（下半周）：Sub-Agent 协作三角色选型与职责切分设计（蓝图 Planner/Builder/Reviewer/Monitor 取三，结合个股研究域）+ Skill 渐进式披露调研（Token 降幅测量方案设计，为 W22 实测铺路） | 设计文档入库（docs/plans/advanced/ 或 docs/arch/）；三角色边界 Owner 过目 | ✅（`e4b4561`，三角色边界+测量守线 Owner 已过目） |
 
 ## Owner 裁决记录（2026-10-21 拍板，动工前已定）
 
