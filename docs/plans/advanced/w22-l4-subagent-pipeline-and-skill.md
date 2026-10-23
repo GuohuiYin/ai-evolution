@@ -13,7 +13,7 @@
 
 | # | 任务 | 验收条件 | 状态 |
 |---|---|---|---|
-| 1 | **三角色管线落地（上半周）**：a. Planner activity（计划=子问题+通路标注，无工具）；b. Builder 收窄（按计划取证+起草，现 ResearchLoop 继承）；c. Reviewer activity（只读证据包，打回 ≤2 次，不过则拒答文案）；d. 消息契约四记录（Plan/EvidencePack/DraftAnswer/ReviewVerdict，Temporal payload 压平先例）；e. inline 单循环留对照臂不拆 | TDD 单测全绿；真机冒烟三角色轨迹（Temporal UI 逐 activity 留痕）；**57 案双臂对照**：三角色 vs 单循环，红线类 6/6 守线，总分判读走 jitter 带口径 | ⬜ |
+| 1 | **三角色管线落地（上半周）**：a. Planner activity（计划=子问题+通路标注，无工具）；b. Builder 收窄（按计划取证+起草，现 ResearchLoop 继承）；c. Reviewer activity（只读证据包，打回 ≤2 次，不过则拒答文案）；d. 消息契约四记录（Plan/EvidencePack/DraftAnswer/ReviewVerdict，Temporal payload 压平先例）；e. inline 单循环留对照臂不拆；f. **HITL 钩子预埋**——Reviewer 后留 Signal 断点位（本周直透不断点），触发策略三条在案（红线擦边/低置信证据/打回耗尽升级人工，W23 接通） | TDD 单测全绿；真机冒烟三角色轨迹（Temporal UI 逐 activity 留痕）；**57 案双臂对照**：三角色 vs 单循环，红线类 6/6 守线，总分判读走 jitter 带口径 | ⬜ |
 | 2 | **SkillRegistry + Token 降幅实测（下半周）**：a. `skill/` 目录扫描（YAML front-matter：name/description/triggers），元数据层常驻 + 命中触发注入正文；b. 首批 skill 落地（数量见裁决②）；c. 按设计 §2.4 执行双臂测量（57 案，usage.prompt_tokens 真账，触发日志逐案） | 降幅报告入库：平均/P50/P95 + 单批成本折算；**守线：B 臂降幅 ≥40% 判值得，<20% 登记止步**；质量分跌落须在 jitter 带内；触发误判有逐案排查记录 | ⬜ |
 | 3 | **挂账处置（穿插）**：a. 红线批"知识库无茅台资料"案归因（生成侧，取 trace 还原检索/工具证据链）；b. judge"清单外=编造"偏向判定（对照轮 2 复评理由 + 必要时专项复跑 2 案）；c. 瞬态 401 观察项——再现即立案，不再现周末销项 | 归因/判定结论入周记；确属缺陷的立项进 W23 输入 | ⬜ |
 
