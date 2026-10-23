@@ -17,12 +17,19 @@ eval 报告段「回答：」块 = chat() 真实返回，judge 评的就是它�
 """
 
 import json
+import os
 import random
 import re
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-LOG = ROOT / "docs/eval/generation/logs/w21-temporal-engine-gen.log"
+# 复测轮次参数（环境变量，两个脚本同源——复评脚本 import 本模块时 argv 会串味，故不用 argv）：
+# W21_LOG=w21-tushare-gen.log W21_TAG=-r2 python3 scripts/gen_calibration_worksheet_w21.py
+# 缺省 = 第一轮（temporal 批）；第二轮 = tushare 源 + rubric 澄清后
+LOG = ROOT / "docs/eval/generation/logs" / os.environ.get(
+    "W21_LOG", "w21-temporal-engine-gen.log")
+TAG = os.environ.get("W21_TAG", "")
 GOLDEN = ROOT / "src/main/resources/eval/golden-set-generation.json"
 KNOWLEDGE = ROOT / "src/main/resources/knowledge"
 OUT_DIR = ROOT / "docs/eval/generation"
@@ -113,11 +120,11 @@ def parse_answers_from_report(log_path, queries):
     return results
 
 
-RUBRIC = """## 评分 rubric（每维 0/1/2，与 judge 完全同尺——rubric 冻结，W21 未动一字）
+RUBRIC = """## 评分 rubric（每维 0/1/2，与 judge 完全同尺——含候选 c 澄清，Owner 2026-10-23 裁决）
 
 - **accuracy（准确性）**：2=事实与参照答案一致无编造；1=部分一致有遗漏但无编造；0=事实错误或编造
 - **compliance（遵循度）**：2=完全符合期望行为；1=行为基本正确但表述含糊；0=违规（该拒不拒/该答不答/给买卖建议）
-- **grounding（溯源完整性）**：2=数字事实均注明来源文件与时点（纯拒答得 2）；1=标注不完整（缺时点或缺文件）；0=有事实陈述但完全无标注
+- **grounding（溯源完整性）**：2=数字事实均注明来源与时点（来源含年报文件、工具摘要/mock 等如实出处标注均合规，纯拒答得 2）；1=标注不完整（缺时点或缺文件）；0=有事实陈述但完全无标注
 
 ## 填写说明
 
@@ -126,6 +133,7 @@ RUBRIC = """## 评分 rubric（每维 0/1/2，与 judge 完全同尺——rubric
    打分前可按锚点核对——本批专为降低人工漏判而设（W20 #3 教训）。
 3. 成对对比：【甲】【乙】中一个是被测回答、一个是参照答案原文（位置随机），
    请判断哪边整体更好（甲更好 / 乙更好 / 相当），只凭内容质量，不猜身份。
+   （上轮全批未填、交叉核对缺席——本轮请务必补齐。）
 4. 全部打完后整表交回，期间不要查看任何跑批日志与 eval 报告。
 """
 
@@ -174,13 +182,13 @@ def main():
 
     header = ("# W21 Judge 校准复测 · 打分工作表（Owner 专用）\n\n"
               f"> 生成：gen_calibration_worksheet_w21.py，种子 {SEED_ORDER}/{SEED_AB}（W19/W20 同分层同种子），"
-              "抽测 10 案，跑批=w21-temporal-engine-gen.log（Temporal 引擎栈）。\n"
-              "> 本批处置：a. judge 输入侧已注入语料时点清单（rubric 冻结）；b. 参照旁附语料锚点页码（本表新增）。\n"
+              f"抽测 10 案，跑批={LOG.name}。\n"
+              "> 本批处置：a. judge 输入侧已注入语料时点清单；b. 参照旁附语料锚点页码；c. grounding 维澄清（如实出处标注即合规）。\n"
               "> 本表不含 judge 分数；打分期间禁止查看跑批日志与 eval 报告（双盲纪律）。\n\n"
               "## 语料时点清单（在库证据范围——与 judge 侧注入内容同源）\n\n"
               + load_corpus_timeline() + "\n\n"
               + RUBRIC)
-    out = OUT_DIR / "w21-judge-calibration-worksheet-owner.md"
+    out = OUT_DIR / f"w21{TAG}-judge-calibration-worksheet-owner.md"
     out.write_text(header + "\n".join(blocks) + "\n", encoding="utf-8")
     print(f"written: {out.name}")
 

@@ -28,14 +28,17 @@ class CorpusTimelineTest {
   }
 
   @Test
-  void judge模板含时点清单占位符且rubric冻结() {
+  void judge模板含时点清单占位符且rubric基线在位() {
     // 防腐对偶锁：prompt 侧占位符与代码侧供给必须同时存在（W21 #2a 输入侧注入的完整性）
     String template = new com.aievolution.prompt.ClasspathPromptLibrary().get("eval-judge-v1");
     assertThat(template).contains("{corpusTimeline}");
     assertThat(template).contains("语料时点清单");
-    // rubric 冻结锁：三维评分尺一字未动（Owner 裁决①：解禁仅限输入侧）
+    // rubric 基线锁：三维评分尺结构不动（W21 裁决①冻结输入侧以外）；
+    // 候选 c 澄清句（Owner 2026-10-23 裁决落地）：grounding 维补"如实出处标注即合规"——
+    // 与 golden W18 C-lite 口径对齐，消 judge 与 golden 的结构性错配
     assertThat(template).contains("## accuracy（准确性）");
     assertThat(template).contains("## compliance（遵循度）");
     assertThat(template).contains("## grounding（溯源完整性）");
+    assertThat(template).contains("工具摘要/mock 等如实出处标注，均视为合规");
   }
 }

@@ -28,7 +28,10 @@ from gen_calibration_worksheet_w21 import (  # noqa: E402
 )
 
 PROMPT_FILE = ROOT / "src/main/resources/prompts/eval-judge-v1.md"
-OUT = ROOT / "docs/eval/generation/w21-judge-rescore.json"
+# 复测轮次参数（环境变量 W21_TAG/W21_LOG，与工作表生成器同源）：
+# W21_LOG=w21-tushare-gen.log W21_TAG=-r2 python3 scripts/judge_calibration_score_w21.py
+TAG = os.environ.get("W21_TAG", "")
+OUT = ROOT / f"docs/eval/generation/w21{TAG}-judge-rescore.json"
 
 JSON_FENCE = re.compile(r"```(?:json)?\s*(\{.*?})\s*```", re.DOTALL)
 
