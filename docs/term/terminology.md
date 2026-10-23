@@ -76,6 +76,8 @@
 | TTFT (Time To First Token) | 读字母 | 首 token 延迟 | 发请求到收到第一个字;感知"快不快" |
 | TPOT (Time Per Output Token) | 读字母 | 每 token 间隔 | 流式输出的"打字速度" |
 | throughput | /ˈθruːpʊt/ | 吞吐量 | 单位时间处理的 token 数;与延迟互相制约 |
+| HITL (Human-in-the-Loop) | 读字母 | 人在回路 | 关键节点插人工审批/纠偏,不放全自动 |
+| HOTL (Human-on-the-Loop) | 读字母 | 人在环上 | 不逐步审批,只监控兜底 |
 
 ## 四、评估与上线
 
