@@ -158,9 +158,11 @@ ai:
     synthesis-prompt: agent-react-synthesis-v1
     # 研究步数上限：防死循环/注入诱导烧 token（复用工具调用上限思想，RETURN_ERROR_RESPONSE 同族）
     max-steps: 6
-    # 循环引擎（W21 #1② 路线 C）：inline=进程内直跑（缺省）；temporal=事件历史 checkpoint +
-    # 断点恢复（需本地 dev server：temporal server start-dev，见 docs/notes/temporal-minimal-loop.md）
-    engine: ${AI_LOOP_ENGINE:inline}
+    # 循环引擎（W22 #1 验收后切换）：pipeline=三角色管线（Planner→Builder→Reviewer，
+    # Temporal activity 化，缺省——57 案对照 +0.33 且红线满维，见 docs/eval/generation/w22-pipeline-dual-arm.md）；
+    # temporal=单循环事件历史版；inline=进程内直跑（对照臂留旗标）。
+    # pipeline/temporal 均需本地 dev server：temporal server start-dev（见 docs/notes/temporal-minimal-loop.md）
+    engine: ${AI_LOOP_ENGINE:pipeline}
     temporal:
       # Temporal 服务 gRPC 地址（CLI 注意显式 IPv4：localhost 会优先解析 ::1）
       target: ${TEMPORAL_TARGET:127.0.0.1:7233}

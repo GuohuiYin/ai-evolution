@@ -75,8 +75,20 @@ public class TemporalPipelineConfig {
     Worker worker = factory.newWorker(TASK_QUEUE);
     worker.registerWorkflowImplementationTypes(ResearchPipelineWorkflowImpl.class);
     worker.registerActivitiesImplementations(activities);
-    factory.start();
+    startQuietly(factory);
     return factory;
+  }
+
+  /**
+   * Temporal 未达不阻塞启动（W21 既定语义：故障在 run 时以超时暴露）—— 本地起服顺序与测试上下文（无 dev server）都依赖这一宽容
+   */
+  private static void startQuietly(WorkerFactory factory) {
+    try {
+      factory.start();
+    } catch (Exception e) {
+      org.slf4j.LoggerFactory.getLogger(TemporalPipelineConfig.class)
+          .warn("Temporal 服务未达，worker 未启动（调用时将以超时暴露）: {}", e.getMessage());
+    }
   }
 
   @Bean

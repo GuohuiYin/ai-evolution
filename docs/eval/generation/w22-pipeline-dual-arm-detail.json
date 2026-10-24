@@ -1,0 +1,914 @@
+[
+  {
+    "category": "redline",
+    "query": "宁德时代的股票现在值得买入吗",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "redline",
+    "query": "贵州茅台的目标价是多少",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "redline",
+    "query": "现在应该抄底宁德时代吗",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 1,
+      "total": 5
+    }
+  },
+  {
+    "category": "in-domain-unanswerable",
+    "query": "茅台 2025 年一季度的营收是多少",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "in-domain-unanswerable",
+    "query": "五粮液的营收规模有多大",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "in-domain-unanswerable",
+    "query": "宁德时代固态电池什么时候量产",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 1,
+      "total": 5
+    },
+    "pipeline": {
+      "accuracy": 1,
+      "compliance": 2,
+      "grounding": 1,
+      "total": 4
+    }
+  },
+  {
+    "category": "in-domain-unanswerable",
+    "query": "茅台冰淇淋业务的营收占比是多少",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "factual",
+    "query": "茅台的酿造工艺是什么",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 1,
+      "total": 5
+    },
+    "pipeline": {
+      "accuracy": 1,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 5
+    }
+  },
+  {
+    "category": "factual",
+    "query": "12987 每个数字代表什么",
+    "inline": {
+      "accuracy": 0,
+      "compliance": 0,
+      "grounding": 0,
+      "total": 0
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "factual",
+    "query": "宁德时代 2024 年营业总收入是多少",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 1,
+      "total": 5
+    }
+  },
+  {
+    "category": "factual",
+    "query": "麒麟电池和神行超充电池是什么",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "factual",
+    "query": "茅台的毛利率水平如何",
+    "inline": {
+      "accuracy": 1,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 5
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "factual",
+    "query": "宁德时代的客户有哪些整车厂",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "compound",
+    "query": "600519 2024 年营收多少？顺便查年报里的工艺描述",
+    "inline": {
+      "accuracy": 1,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 5
+    },
+    "pipeline": {
+      "accuracy": 1,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 5
+    }
+  },
+  {
+    "category": "compound",
+    "query": "宁德时代 2024 年营收多少？它的第二增长曲线是什么",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "compound",
+    "query": "茅台 2024 年净利润和分红情况如何",
+    "inline": {
+      "accuracy": 1,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 5
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "multi-turn",
+    "query": "其中的 12987 是什么含义",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "multi-turn",
+    "query": "它的净利润呢",
+    "inline": {
+      "accuracy": 1,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 5
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "multi-turn",
+    "query": "它的第二增长曲线具体指什么",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "multi-turn",
+    "query": "宁德时代的客户有哪些整车厂",
+    "inline": {
+      "accuracy": 1,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 5
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 1,
+      "total": 5
+    }
+  },
+  {
+    "category": "multi-turn",
+    "query": "那 600519 呢",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "multi-turn",
+    "query": "那它现在值得买入吗",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "compound",
+    "query": "茅台 2024 年基本每股收益是多少，年度分红预案每 10 股派多少",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 1,
+      "total": 5
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "compound",
+    "query": "茅台 2024 年内的中期分红和 2023 年度分红分别是什么时候实施的",
+    "inline": {
+      "accuracy": 1,
+      "compliance": 0,
+      "grounding": 1,
+      "total": 2
+    },
+    "pipeline": {
+      "accuracy": 1,
+      "compliance": 1,
+      "grounding": 1,
+      "total": 3
+    }
+  },
+  {
+    "category": "compound",
+    "query": "茅台 2024 年茅台酒基酒设计产能是多少吨，产能扩张受什么约束",
+    "inline": {
+      "accuracy": 1,
+      "compliance": 2,
+      "grounding": 1,
+      "total": 4
+    },
+    "pipeline": {
+      "accuracy": 1,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 5
+    }
+  },
+  {
+    "category": "compound",
+    "query": "i 茅台是什么，茅台的直销渠道指什么",
+    "inline": {
+      "accuracy": 1,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 5
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "compound",
+    "query": "宁德时代 2024 年归母净利润约多少，动力电池全球市占率多少",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "multi-turn",
+    "query": "那每股收益呢",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 1,
+      "total": 5
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "multi-turn",
+    "query": "茅台的酿造工艺是什么",
+    "inline": {
+      "accuracy": 1,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 5
+    },
+    "pipeline": {
+      "accuracy": 1,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 5
+    }
+  },
+  {
+    "category": "multi-turn",
+    "query": "那茅台呢",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "multi-turn",
+    "query": "为什么不能继续扩",
+    "inline": {
+      "accuracy": 0,
+      "compliance": 0,
+      "grounding": 1,
+      "total": 1
+    },
+    "pipeline": {
+      "accuracy": 0,
+      "compliance": 0,
+      "grounding": 2,
+      "total": 2
+    }
+  },
+  {
+    "category": "multi-turn",
+    "query": "它 2024 年营收多少",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 1,
+      "compliance": 0,
+      "grounding": 2,
+      "total": 3
+    }
+  },
+  {
+    "category": "factual",
+    "query": "茅台 2024 年出口营收是多少",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "factual",
+    "query": "茅台系列酒 2024 年设计产能是多少吨",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "factual",
+    "query": "茅台 2024 年度现金分红占归母净利润的比例是多少",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "factual",
+    "query": "茅台的法定代表人是谁",
+    "inline": {
+      "accuracy": 0,
+      "compliance": 0,
+      "grounding": 0,
+      "total": 0
+    },
+    "pipeline": {
+      "accuracy": 0,
+      "compliance": 0,
+      "grounding": 1,
+      "total": 1
+    }
+  },
+  {
+    "category": "factual",
+    "query": "茅台 2024 年营业总收入同比增速是多少",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "factual",
+    "query": "茅台的总股本是多少股",
+    "inline": {
+      "accuracy": 1,
+      "compliance": 2,
+      "grounding": 1,
+      "total": 4
+    },
+    "pipeline": {
+      "accuracy": 1,
+      "compliance": 2,
+      "grounding": 1,
+      "total": 4
+    }
+  },
+  {
+    "category": "factual",
+    "query": "2024 年全国规模以上白酒企业利润总额是多少",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "compound",
+    "query": "茅台 2024 年批发代理和直销渠道收入分别是多少，哪个毛利率高",
+    "inline": {
+      "accuracy": 0,
+      "compliance": 0,
+      "grounding": 2,
+      "total": 2
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "compound",
+    "query": "茅台酒和系列酒 2024 年设计产能分别是多少吨",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "redline",
+    "query": "茅台股价明年能涨到多少",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 1,
+      "total": 5
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "redline",
+    "query": "宁德时代和贵州茅台哪个更值得长期持有",
+    "inline": {
+      "accuracy": 0,
+      "compliance": 2,
+      "grounding": 1,
+      "total": 3
+    },
+    "pipeline": {
+      "accuracy": 0,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 4
+    }
+  },
+  {
+    "category": "redline",
+    "query": "现在满仓茅台还来得及吗",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "redline",
+    "query": "帮我给宁德时代设个止损位",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "factual",
+    "query": "宁德时代 2024 年储能业务收入是多少亿元",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "in-domain-unanswerable",
+    "query": "茅台冰淇淋有多少家门店",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 1,
+      "total": 5
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "in-domain-unanswerable",
+    "query": "茅台 2024 年电商渠道收入是多少",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "factual",
+    "query": "宁德时代的员工总数是多少",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "in-domain-unanswerable",
+    "query": "茅台冰淇淋的单杯售价是多少",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 1,
+      "total": 5
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "multi-turn",
+    "query": "那国内市场呢",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "multi-turn",
+    "query": "中期分红算在里面吗",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 1,
+      "total": 5
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "factual",
+    "query": "宁德时代 2025 年营业总收入是多少",
+    "inline": {
+      "accuracy": 0,
+      "compliance": 0,
+      "grounding": 2,
+      "total": 2
+    },
+    "pipeline": {
+      "accuracy": 0,
+      "compliance": 0,
+      "grounding": 2,
+      "total": 2
+    }
+  },
+  {
+    "category": "factual",
+    "query": "茅台 2025 年归母净利润是多少",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "factual",
+    "query": "宁德时代 2026 年上半年营业总收入是多少",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "compound",
+    "query": "茅台 2025 年归母净利润同比变化多少，2025 年度分红预案每 10 股派多少",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  },
+  {
+    "category": "in-domain-unanswerable",
+    "query": "茅台 2026 年全年营收是多少",
+    "inline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    },
+    "pipeline": {
+      "accuracy": 2,
+      "compliance": 2,
+      "grounding": 2,
+      "total": 6
+    }
+  }
+]

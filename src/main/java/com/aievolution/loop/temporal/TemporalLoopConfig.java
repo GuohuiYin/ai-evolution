@@ -74,8 +74,18 @@ public class TemporalLoopConfig {
     Worker worker = factory.newWorker(TASK_QUEUE);
     worker.registerWorkflowImplementationTypes(ResearchLoopWorkflowImpl.class);
     worker.registerActivitiesImplementations(activities);
-    factory.start();
+    startQuietly(factory);
     return factory;
+  }
+
+  /** 兑现本类 javadoc 的承诺：Temporal 未达不阻塞启动（三角色管线 TemporalPipelineConfig 同款） */
+  private static void startQuietly(WorkerFactory factory) {
+    try {
+      factory.start();
+    } catch (Exception e) {
+      org.slf4j.LoggerFactory.getLogger(TemporalLoopConfig.class)
+          .warn("Temporal 服务未达，worker 未启动（调用时将以超时暴露）: {}", e.getMessage());
+    }
   }
 
   @Bean
