@@ -53,6 +53,9 @@ public class AgentChatService implements ChatService {
   private final org.springframework.beans.factory.ObjectProvider<
           com.aievolution.loop.temporal.TemporalLoopEngine>
       temporalLoopEngine;
+  private final org.springframework.beans.factory.ObjectProvider<
+          com.aievolution.loop.temporal.TemporalPipelineEngine>
+      temporalPipelineEngine;
 
   public AgentChatService(
       ChatClient.Builder chatClientBuilder,
@@ -67,7 +70,10 @@ public class AgentChatService implements ChatService {
       @Value("${ai.loop.engine:inline}") String loopEngine,
       org.springframework.beans.factory.ObjectProvider<
               com.aievolution.loop.temporal.TemporalLoopEngine>
-          temporalLoopEngine) {
+          temporalLoopEngine,
+      org.springframework.beans.factory.ObjectProvider<
+              com.aievolution.loop.temporal.TemporalPipelineEngine>
+          temporalPipelineEngine) {
     if (!promptLibrary.exists(promptName)) {
       // prompt 缺失是部署事故，启动即 fail-fast
       throw new IllegalStateException("ReAct prompt 模板不存在: " + promptName);
@@ -83,6 +89,7 @@ public class AgentChatService implements ChatService {
     this.maxSteps = maxSteps;
     this.loopEngine = loopEngine;
     this.temporalLoopEngine = temporalLoopEngine;
+    this.temporalPipelineEngine = temporalPipelineEngine;
   }
 
   public ChatAnswer chat(String message, String conversationId) {
@@ -148,6 +155,20 @@ public class AgentChatService implements ChatService {
       if (engine == null) {
         // 旗标与装配同键（TemporalLoopConfig @ConditionalOnProperty），缺 Bean 即配置事故
         throw new IllegalStateException("ai.loop.engine=temporal 但 Temporal 引擎未装配");
+      }
+      return engine.newRun(
+          com.aievolution.loop.temporal.HistoryTurn.fromMessages(history),
+          MDC.get(TraceIdFilter.MDC_KEY),
+          this.maxSteps,
+          listener);
+    }
+    // W22 #1c：三角色管线引擎（Planner→Builder→Reviewer，Temporal activity 化）
+    if ("pipeline".equals(this.loopEngine)) {
+      com.aievolution.loop.temporal.TemporalPipelineEngine engine =
+          this.temporalPipelineEngine.getIfAvailable();
+      if (engine == null) {
+        // 旗标与装配同键（TemporalPipelineConfig @ConditionalOnProperty），缺 Bean 即配置事故
+        throw new IllegalStateException("ai.loop.engine=pipeline 但三角色管线引擎未装配");
       }
       return engine.newRun(
           com.aievolution.loop.temporal.HistoryTurn.fromMessages(history),

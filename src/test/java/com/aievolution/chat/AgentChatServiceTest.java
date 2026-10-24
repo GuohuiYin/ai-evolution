@@ -61,6 +61,7 @@ class AgentChatServiceTest {
         "agent-react-synthesis-v1",
         maxSteps,
         "inline",
+        org.mockito.Mockito.mock(org.springframework.beans.factory.ObjectProvider.class),
         org.mockito.Mockito.mock(org.springframework.beans.factory.ObjectProvider.class));
   }
 

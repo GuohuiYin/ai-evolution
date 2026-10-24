@@ -39,6 +39,30 @@ public class DeepSeekResearchModel implements ResearchModel {
       ReactProtocolParser parser,
       MeterRegistry meterRegistry,
       List<Message> conversationHistory) {
+    this(
+        chatClientBuilder,
+        promptLibrary,
+        registry.specs(),
+        promptName,
+        synthesisPromptName,
+        parser,
+        meterRegistry,
+        conversationHistory);
+  }
+
+  /**
+   * 显式手册构造（W22 #1c）：工具手册条目直接传入——Builder 按通路白名单收窄面板时， 手册与执行白名单同源由调用方保证（{@code
+   * ChannelToolExecutor.filteredSpecs}）。
+   */
+  public DeepSeekResearchModel(
+      ChatClient.Builder chatClientBuilder,
+      PromptLibrary promptLibrary,
+      List<ToolRegistry.ToolSpec> manualSpecs,
+      String promptName,
+      String synthesisPromptName,
+      ReactProtocolParser parser,
+      MeterRegistry meterRegistry,
+      List<Message> conversationHistory) {
     if (!promptLibrary.exists(promptName)) {
       // prompt 缺失是部署事故，启动即 fail-fast（AgentChatService 先例）
       throw new IllegalStateException("ReAct prompt 模板不存在: " + promptName);
@@ -52,7 +76,7 @@ public class DeepSeekResearchModel implements ResearchModel {
     this.parser = parser;
     this.meterRegistry = meterRegistry;
     this.systemPrompt =
-        promptLibrary.get(promptName).replace(TOOL_MANUAL_PLACEHOLDER, renderManual(registry));
+        promptLibrary.get(promptName).replace(TOOL_MANUAL_PLACEHOLDER, renderManual(manualSpecs));
     this.synthesisPrompt = promptLibrary.get(synthesisPromptName);
     this.conversationHistory = conversationHistory;
   }
@@ -144,8 +168,8 @@ public class DeepSeekResearchModel implements ResearchModel {
     sb.append('\n');
   }
 
-  private static String renderManual(ToolRegistry registry) {
-    return registry.specs().stream()
+  private static String renderManual(List<ToolRegistry.ToolSpec> specs) {
+    return specs.stream()
         .map(s -> "- %s：%s。入参 JSON：%s".formatted(s.name(), s.description(), s.paramsSchema()))
         .collect(Collectors.joining("\n"));
   }

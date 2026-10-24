@@ -15,9 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.client.ChatClient;
 
-/**
- * W22 #1c：Reviewer 组件——独立于作者的语义复核（裁判不进赛场）。 输出不可解析时 fail-closed 打回（宁可不答不可错答，设计 §1.3）。
- */
+/** W22 #1c：Reviewer 组件——独立于作者的语义复核（裁判不进赛场）。 输出不可解析时 fail-closed 打回（宁可不答不可错答，设计 §1.3）。 */
 class DeepSeekReviewerTest {
 
   private ChatClient.ChatClientRequestSpec spec;
@@ -74,8 +72,7 @@ class DeepSeekReviewerTest {
 
   @Test
   void rejectVerdictWithCommentParsed() {
-    when(callSpec.content())
-        .thenReturn("{\"verdict\":\"REJECT\",\"comment\":\"净利数字在证据包中无出处\"}");
+    when(callSpec.content()).thenReturn("{\"verdict\":\"REJECT\",\"comment\":\"净利数字在证据包中无出处\"}");
 
     ReviewVerdict verdict =
         reviewer().review("净利多少", sampleEvidence(), new DraftAnswer("净利 857 亿"));
@@ -88,8 +85,7 @@ class DeepSeekReviewerTest {
   void toleratesWhitespaceFenceAndLowercaseVerdict() {
     when(callSpec.content()).thenReturn("\n```json\n{\"verdict\":\"pass\"}\n```");
 
-    ReviewVerdict verdict =
-        reviewer().review("问题", sampleEvidence(), new DraftAnswer("草稿"));
+    ReviewVerdict verdict = reviewer().review("问题", sampleEvidence(), new DraftAnswer("草稿"));
 
     assertThat(verdict.isPass()).isTrue();
   }
@@ -119,24 +115,20 @@ class DeepSeekReviewerTest {
     // 复核输出不可解析 → 打回而非放行（fail-closed：宁可打回重来，不可放过未复核草稿）
     when(callSpec.content()).thenReturn("我觉得还行吧");
 
-    ReviewVerdict verdict =
-        reviewer().review("问题", sampleEvidence(), new DraftAnswer("草稿"));
+    ReviewVerdict verdict = reviewer().review("问题", sampleEvidence(), new DraftAnswer("草稿"));
 
     assertThat(verdict.isPass()).isFalse();
     assertThat(verdict.comment()).contains("不可解析");
-    assertThat(meterRegistry.get("reviewer.parse.fallback.total").counter().count())
-        .isEqualTo(1.0);
+    assertThat(meterRegistry.get("reviewer.parse.fallback.total").counter().count()).isEqualTo(1.0);
   }
 
   @Test
   void unknownVerdictValueFailsClosed() {
     when(callSpec.content()).thenReturn("{\"verdict\":\"MAYBE\",\"comment\":\"\"}");
 
-    ReviewVerdict verdict =
-        reviewer().review("问题", sampleEvidence(), new DraftAnswer("草稿"));
+    ReviewVerdict verdict = reviewer().review("问题", sampleEvidence(), new DraftAnswer("草稿"));
 
     assertThat(verdict.isPass()).isFalse();
-    assertThat(meterRegistry.get("reviewer.parse.fallback.total").counter().count())
-        .isEqualTo(1.0);
+    assertThat(meterRegistry.get("reviewer.parse.fallback.total").counter().count()).isEqualTo(1.0);
   }
 }
