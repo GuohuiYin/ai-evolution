@@ -166,6 +166,12 @@ ai:
     temporal:
       # Temporal 服务 gRPC 地址（CLI 注意显式 IPv4：localhost 会优先解析 ::1）
       target: ${TEMPORAL_TARGET:127.0.0.1:7233}
+  skill:
+    # 技能目录（W22 #2）：SkillRegistry 启动扫描，YAML 头 name/description/triggers
+    location: ${AI_SKILL_LOCATION:classpath*:skill/*/SKILL.md}
+    # 注入模式（W22 #2 实测期间默认 off 零行为变化）：off=不注入；full=全文常驻（对照臂）；
+    # progressive=元数据常驻+命中注入正文（渐进披露臂）——实测定档后调默认
+    mode: ${AI_SKILL_MODE:off}
   chat:
     # 统一入口路由策略（ChatRouter）：命中股票代码或下列关键词 → Agent 工具通路；其余 → RAG 管道
     agent-keywords: 股价,行情,走势,营收,净利,利润,财务

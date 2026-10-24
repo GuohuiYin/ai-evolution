@@ -45,6 +45,8 @@ public class ResearchPipelineActivitiesImpl implements ResearchPipelineActivitie
   private final ReactProtocolParser parser;
   private final MeterRegistry meterRegistry;
   private final LoopListenerRegistry listenerRegistry;
+  private final com.aievolution.skill.SkillRegistry skillRegistry;
+  private final String skillMode;
 
   public ResearchPipelineActivitiesImpl(
       ChatClient.Builder chatClientBuilder,
@@ -56,7 +58,9 @@ public class ResearchPipelineActivitiesImpl implements ResearchPipelineActivitie
       String reviewerPromptName,
       ReactProtocolParser parser,
       MeterRegistry meterRegistry,
-      LoopListenerRegistry listenerRegistry) {
+      LoopListenerRegistry listenerRegistry,
+      com.aievolution.skill.SkillRegistry skillRegistry,
+      String skillMode) {
     this.chatClientBuilder = chatClientBuilder;
     this.promptLibrary = promptLibrary;
     this.toolRegistry = toolRegistry;
@@ -67,6 +71,8 @@ public class ResearchPipelineActivitiesImpl implements ResearchPipelineActivitie
     this.parser = parser;
     this.meterRegistry = meterRegistry;
     this.listenerRegistry = listenerRegistry;
+    this.skillRegistry = skillRegistry;
+    this.skillMode = skillMode;
   }
 
   @Override
@@ -112,7 +118,9 @@ public class ResearchPipelineActivitiesImpl implements ResearchPipelineActivitie
                 this.synthesisPromptName,
                 this.parser,
                 this.meterRegistry,
-                messages);
+                messages,
+                this.skillRegistry,
+                this.skillMode);
         ResearchLoop loop =
             new ResearchLoop(
                 model,
@@ -135,12 +143,14 @@ public class ResearchPipelineActivitiesImpl implements ResearchPipelineActivitie
           new DeepSeekResearchModel(
               this.chatClientBuilder,
               this.promptLibrary,
-              this.toolRegistry,
+              this.toolRegistry.specs(),
               this.reactPromptName,
               this.synthesisPromptName,
               this.parser,
               this.meterRegistry,
-              messages);
+              messages,
+              this.skillRegistry,
+              this.skillMode);
       // 合成失败 = null 哨兵（诚实红线：workflow 层 answer=null 收尾，不送复核）
       String draft = synthesizer.synthesize(draftQuestion, List.copyOf(allSteps)).orElse(null);
       return new BuildOutcome(List.copyOf(allSteps), draft);

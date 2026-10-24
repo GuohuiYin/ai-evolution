@@ -54,7 +54,9 @@ public class TemporalPipelineConfig {
       @Value("${ai.loop.reviewer-prompt:reviewer-v1}") String reviewerPromptName,
       ReactProtocolParser parser,
       MeterRegistry meterRegistry,
-      LoopListenerRegistry pipelineListenerRegistry) {
+      LoopListenerRegistry pipelineListenerRegistry,
+      com.aievolution.skill.SkillRegistry skillRegistry,
+      @Value("${ai.skill.mode:off}") String skillMode) {
     return new ResearchPipelineActivitiesImpl(
         chatClientBuilder,
         promptLibrary,
@@ -65,7 +67,9 @@ public class TemporalPipelineConfig {
         reviewerPromptName,
         parser,
         meterRegistry,
-        pipelineListenerRegistry);
+        pipelineListenerRegistry,
+        skillRegistry,
+        skillMode);
   }
 
   @Bean(destroyMethod = "shutdown")
@@ -79,9 +83,7 @@ public class TemporalPipelineConfig {
     return factory;
   }
 
-  /**
-   * Temporal 未达不阻塞启动（W21 既定语义：故障在 run 时以超时暴露）—— 本地起服顺序与测试上下文（无 dev server）都依赖这一宽容
-   */
+  /** Temporal 未达不阻塞启动（W21 既定语义：故障在 run 时以超时暴露）—— 本地起服顺序与测试上下文（无 dev server）都依赖这一宽容 */
   private static void startQuietly(WorkerFactory factory) {
     try {
       factory.start();

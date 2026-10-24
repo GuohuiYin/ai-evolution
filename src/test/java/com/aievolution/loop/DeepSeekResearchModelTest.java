@@ -63,6 +63,29 @@ class DeepSeekResearchModelTest {
         history);
   }
 
+  /** W22 #2：带技能注入的构造（三档模式） */
+  private DeepSeekResearchModel modelWithSkill(
+      com.aievolution.skill.SkillRegistry skillRegistry, String skillMode) {
+    return new DeepSeekResearchModel(
+        builder,
+        promptLibrary,
+        List.of(),
+        "agent-react-v1",
+        "agent-react-synthesis-v1",
+        TestProtocolMarkers.parser(),
+        meterRegistry,
+        List.of(),
+        skillRegistry,
+        skillMode);
+  }
+
+  private static com.aievolution.skill.SkillRegistry dividendSkillRegistry() {
+    return new com.aievolution.skill.SkillRegistry(
+        List.of(
+            new com.aievolution.skill.Skill(
+                "dividend-caliber", "分红口径规程", List.of("分红"), "中期分红不计入年度预案口径")));
+  }
+
   @Test
   void failsFastWhenPromptMissing() {
     when(promptLibrary.exists("nope")).thenReturn(false);
@@ -173,5 +196,84 @@ class DeepSeekResearchModelTest {
     when(callSpec.content()).thenReturn("  ");
 
     assertThat(model(List.of()).synthesize("问题", List.of())).isEmpty();
+  }
+
+  @Test
+  void offModeInjectsNoSkillContent() {
+    when(callSpec.content()).thenReturn("Thought: 够了\nFinal Answer: 答案");
+
+    modelWithSkill(dividendSkillRegistry(), "off").nextTurn("分红多少", List.of());
+
+    ArgumentCaptor<String> systemCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<String> userCaptor = ArgumentCaptor.forClass(String.class);
+    verify(spec).system(systemCaptor.capture());
+    verify(spec).user(userCaptor.capture());
+    assertThat(systemCaptor.getValue()).doesNotContain("技能").doesNotContain("中期分红");
+    assertThat(userCaptor.getValue()).doesNotContain("中期分红");
+  }
+
+  @Test
+  void fullModeKeepsAllBodiesInSystemPrompt() {
+    // 对照臂语义：静态全量注入——正文常驻系统 prompt，当轮消息不带
+    when(callSpec.content()).thenReturn("Thought: 够了\nFinal Answer: 答案");
+
+    modelWithSkill(dividendSkillRegistry(), "full").nextTurn("分红多少", List.of());
+
+    ArgumentCaptor<String> systemCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<String> userCaptor = ArgumentCaptor.forClass(String.class);
+    verify(spec).system(systemCaptor.capture());
+    verify(spec).user(userCaptor.capture());
+    assertThat(systemCaptor.getValue()).contains("【技能规程】").contains("中期分红不计入年度预案口径");
+    assertThat(userCaptor.getValue()).doesNotContain("中期分红不计入年度预案口径");
+  }
+
+  @Test
+  void progressiveModeMetadataInSystemMatchedBodyInUserMessage() {
+    // 渐进披露：元数据常驻系统 prompt；命中触发的正文注入当轮 user 消息
+    when(callSpec.content()).thenReturn("Thought: 够了\nFinal Answer: 答案");
+
+    modelWithSkill(dividendSkillRegistry(), "progressive").nextTurn("分红多少", List.of());
+
+    ArgumentCaptor<String> systemCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<String> userCaptor = ArgumentCaptor.forClass(String.class);
+    verify(spec).system(systemCaptor.capture());
+    verify(spec).user(userCaptor.capture());
+    assertThat(systemCaptor.getValue())
+        .contains("【可用技能】")
+        .contains("- dividend-caliber：分红口径规程")
+        .doesNotContain("中期分红不计入年度预案口径");
+    assertThat(userCaptor.getValue()).contains("【命中技能规程】").contains("中期分红不计入年度预案口径");
+  }
+
+  @Test
+  void progressiveModeUnmatchedQuestionGetsNoBody() {
+    // 未命中：正文不进当轮消息——token 节省的全部来源
+    when(callSpec.content()).thenReturn("Thought: 够了\nFinal Answer: 答案");
+
+    modelWithSkill(dividendSkillRegistry(), "progressive").nextTurn("营收多少", List.of());
+
+    ArgumentCaptor<String> userCaptor = ArgumentCaptor.forClass(String.class);
+    verify(spec).user(userCaptor.capture());
+    assertThat(userCaptor.getValue()).doesNotContain("命中技能规程").doesNotContain("中期分红");
+  }
+
+  @Test
+  void progressiveModeInjectsIntoSynthesisMessage() {
+    // 合成步是措辞定稿处——命中规程同样注入（口径错误多发于收尾）
+    when(callSpec.content()).thenReturn("合成答案");
+
+    modelWithSkill(dividendSkillRegistry(), "progressive").synthesize("中期分红算在里面吗", List.of());
+
+    ArgumentCaptor<String> userCaptor = ArgumentCaptor.forClass(String.class);
+    verify(spec).user(userCaptor.capture());
+    assertThat(userCaptor.getValue()).contains("【命中技能规程】").contains("中期分红不计入年度预案口径");
+  }
+
+  @Test
+  void unknownSkillModeFailsFast() {
+    // 模式拼写错误是配置事故：fail-fast，不静默退化成 off（机制悄悄失效最难排查）
+    assertThatThrownBy(() -> modelWithSkill(dividendSkillRegistry(), "progessive"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("progessive");
   }
 }

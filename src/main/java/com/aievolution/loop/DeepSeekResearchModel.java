@@ -29,6 +29,8 @@ public class DeepSeekResearchModel implements ResearchModel {
   private final String systemPrompt;
   private final String synthesisPrompt;
   private final List<Message> conversationHistory;
+  private final com.aievolution.skill.SkillRegistry skillRegistry;
+  private final String skillMode;
 
   public DeepSeekResearchModel(
       ChatClient.Builder chatClientBuilder,
@@ -63,6 +65,35 @@ public class DeepSeekResearchModel implements ResearchModel {
       ReactProtocolParser parser,
       MeterRegistry meterRegistry,
       List<Message> conversationHistory) {
+    this(
+        chatClientBuilder,
+        promptLibrary,
+        manualSpecs,
+        promptName,
+        synthesisPromptName,
+        parser,
+        meterRegistry,
+        conversationHistory,
+        com.aievolution.skill.SkillRegistry.empty(),
+        "off");
+  }
+
+  /**
+   * 技能注入构造（W22 #2）：{@code skillMode} 三档——off=不注入（默认，零行为变化）； full=全部技能正文常驻系统
+   * prompt（对照臂：静态全量注入语义）；progressive=渐进披露 （元数据常驻系统 prompt + 命中触发的正文注入当轮 user
+   * 消息；合成步同样注入——措辞定稿处最需要规程）。
+   */
+  public DeepSeekResearchModel(
+      ChatClient.Builder chatClientBuilder,
+      PromptLibrary promptLibrary,
+      List<ToolRegistry.ToolSpec> manualSpecs,
+      String promptName,
+      String synthesisPromptName,
+      ReactProtocolParser parser,
+      MeterRegistry meterRegistry,
+      List<Message> conversationHistory,
+      com.aievolution.skill.SkillRegistry skillRegistry,
+      String skillMode) {
     if (!promptLibrary.exists(promptName)) {
       // prompt 缺失是部署事故，启动即 fail-fast（AgentChatService 先例）
       throw new IllegalStateException("ReAct prompt 模板不存在: " + promptName);
@@ -70,13 +101,20 @@ public class DeepSeekResearchModel implements ResearchModel {
     if (!promptLibrary.exists(synthesisPromptName)) {
       throw new IllegalStateException("ReAct 合成 prompt 模板不存在: " + synthesisPromptName);
     }
+    if (!List.of("off", "full", "progressive").contains(skillMode)) {
+      // 模式拼错是配置事故，启动即 fail-fast，不静默退化成 off
+      throw new IllegalArgumentException("ai.skill.mode 仅支持 off/full/progressive: " + skillMode);
+    }
     // 裸客户端：不挂工具（工具由 Loop 显式调度）、不挂记忆 advisor
     // ——记忆由调用方组装进构造入参，防 advisor 逐步重复追加同一条 user 消息
     this.chatClient = chatClientBuilder.build();
     this.parser = parser;
     this.meterRegistry = meterRegistry;
+    this.skillRegistry = skillRegistry;
+    this.skillMode = skillMode;
     this.systemPrompt =
-        promptLibrary.get(promptName).replace(TOOL_MANUAL_PLACEHOLDER, renderManual(manualSpecs));
+        promptLibrary.get(promptName).replace(TOOL_MANUAL_PLACEHOLDER, renderManual(manualSpecs))
+            + skillSystemSection();
     this.synthesisPrompt = promptLibrary.get(synthesisPromptName);
     this.conversationHistory = conversationHistory;
   }
@@ -123,6 +161,7 @@ public class DeepSeekResearchModel implements ResearchModel {
 
   private String buildSynthesisMessage(String question, List<LoopStep> history) {
     StringBuilder sb = new StringBuilder();
+    appendSkillSection(sb, question);
     appendConversationHistory(sb);
     sb.append("【用户问题】\n").append(question).append("\n\n【已完成的查证】\n");
     if (history.isEmpty()) {
@@ -140,6 +179,7 @@ public class DeepSeekResearchModel implements ResearchModel {
 
   private String buildUserMessage(String question, List<LoopStep> history) {
     StringBuilder sb = new StringBuilder();
+    appendSkillSection(sb, question);
     appendConversationHistory(sb);
     sb.append("【当前问题】\n").append(question).append("\n\n【已完成的研究步骤】\n");
     if (history.isEmpty()) {
@@ -154,6 +194,33 @@ public class DeepSeekResearchModel implements ResearchModel {
     }
     sb.append("\n请严格按协议输出下一步。");
     return sb.toString();
+  }
+
+  /** 技能注入·系统层（W22 #2）：full=全部正文常驻；progressive=仅元数据常驻；off/空注册表=空串 */
+  private String skillSystemSection() {
+    if (this.skillRegistry.all().isEmpty() || "off".equals(this.skillMode)) {
+      return "";
+    }
+    if ("full".equals(this.skillMode)) {
+      StringBuilder sb = new StringBuilder("\n\n【技能规程】\n");
+      this.skillRegistry.all().forEach(s -> sb.append(s.body()).append("\n\n"));
+      return sb.toString().stripTrailing();
+    }
+    return "\n\n【可用技能】（问题命中时，对应规程注入当轮消息）\n" + this.skillRegistry.metadataLines();
+  }
+
+  /** 技能注入·当轮层（progressive 档）：命中触发的技能正文注入 user 消息头部 */
+  private void appendSkillSection(StringBuilder sb, String question) {
+    if (!"progressive".equals(this.skillMode)) {
+      return;
+    }
+    java.util.List<com.aievolution.skill.Skill> hits = this.skillRegistry.match(question);
+    if (hits.isEmpty()) {
+      return;
+    }
+    sb.append("【命中技能规程】\n");
+    hits.forEach(s -> sb.append(s.body()).append("\n\n"));
+    sb.append('\n');
   }
 
   /** 会话历史注入（单点：nextTurn 与 synthesize 共用——A11 两次即收口） */

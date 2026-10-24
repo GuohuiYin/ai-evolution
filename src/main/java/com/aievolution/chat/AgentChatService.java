@@ -50,6 +50,8 @@ public class AgentChatService implements ChatService {
   private final String synthesisPromptName;
   private final int maxSteps;
   private final String loopEngine;
+  private final String skillMode;
+  private final com.aievolution.skill.SkillRegistry skillRegistry;
   private final org.springframework.beans.factory.ObjectProvider<
           com.aievolution.loop.temporal.TemporalLoopEngine>
       temporalLoopEngine;
@@ -68,6 +70,8 @@ public class AgentChatService implements ChatService {
       @Value("${ai.loop.synthesis-prompt:agent-react-synthesis-v1}") String synthesisPromptName,
       @Value("${ai.loop.max-steps:6}") int maxSteps,
       @Value("${ai.loop.engine:inline}") String loopEngine,
+      @Value("${ai.skill.mode:off}") String skillMode,
+      com.aievolution.skill.SkillRegistry skillRegistry,
       org.springframework.beans.factory.ObjectProvider<
               com.aievolution.loop.temporal.TemporalLoopEngine>
           temporalLoopEngine,
@@ -88,6 +92,8 @@ public class AgentChatService implements ChatService {
     this.synthesisPromptName = synthesisPromptName;
     this.maxSteps = maxSteps;
     this.loopEngine = loopEngine;
+    this.skillMode = skillMode;
+    this.skillRegistry = skillRegistry;
     this.temporalLoopEngine = temporalLoopEngine;
     this.temporalPipelineEngine = temporalPipelineEngine;
   }
@@ -180,12 +186,14 @@ public class AgentChatService implements ChatService {
         new DeepSeekResearchModel(
             chatClientBuilder,
             promptLibrary,
-            toolRegistry,
+            toolRegistry.specs(),
             promptName,
             synthesisPromptName,
             parser,
             meterRegistry,
-            history);
+            history,
+            skillRegistry,
+            skillMode);
     return new ResearchLoop(model, toolRegistry, maxSteps, listener);
   }
 }

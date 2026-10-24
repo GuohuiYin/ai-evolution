@@ -55,7 +55,9 @@ public class TemporalLoopConfig {
       @Value("${ai.loop.synthesis-prompt:agent-react-synthesis-v1}") String synthesisPromptName,
       ReactProtocolParser parser,
       MeterRegistry meterRegistry,
-      LoopListenerRegistry listenerRegistry) {
+      LoopListenerRegistry listenerRegistry,
+      com.aievolution.skill.SkillRegistry skillRegistry,
+      @Value("${ai.skill.mode:off}") String skillMode) {
     return new ResearchLoopActivitiesImpl(
         chatClientBuilder,
         promptLibrary,
@@ -64,7 +66,9 @@ public class TemporalLoopConfig {
         synthesisPromptName,
         parser,
         meterRegistry,
-        listenerRegistry);
+        listenerRegistry,
+        skillRegistry,
+        skillMode);
   }
 
   @Bean(destroyMethod = "shutdown")

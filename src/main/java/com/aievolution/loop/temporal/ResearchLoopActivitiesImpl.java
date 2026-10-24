@@ -34,6 +34,8 @@ public class ResearchLoopActivitiesImpl implements ResearchLoopActivities {
   private final ReactProtocolParser parser;
   private final MeterRegistry meterRegistry;
   private final LoopListenerRegistry listenerRegistry;
+  private final com.aievolution.skill.SkillRegistry skillRegistry;
+  private final String skillMode;
 
   public ResearchLoopActivitiesImpl(
       ChatClient.Builder chatClientBuilder,
@@ -43,7 +45,9 @@ public class ResearchLoopActivitiesImpl implements ResearchLoopActivities {
       String synthesisPromptName,
       ReactProtocolParser parser,
       MeterRegistry meterRegistry,
-      LoopListenerRegistry listenerRegistry) {
+      LoopListenerRegistry listenerRegistry,
+      com.aievolution.skill.SkillRegistry skillRegistry,
+      String skillMode) {
     this.chatClientBuilder = chatClientBuilder;
     this.promptLibrary = promptLibrary;
     this.toolRegistry = toolRegistry;
@@ -52,6 +56,8 @@ public class ResearchLoopActivitiesImpl implements ResearchLoopActivities {
     this.parser = parser;
     this.meterRegistry = meterRegistry;
     this.listenerRegistry = listenerRegistry;
+    this.skillRegistry = skillRegistry;
+    this.skillMode = skillMode;
   }
 
   @Override
@@ -109,12 +115,14 @@ public class ResearchLoopActivitiesImpl implements ResearchLoopActivities {
     return new DeepSeekResearchModel(
         this.chatClientBuilder,
         this.promptLibrary,
-        this.toolRegistry,
+        this.toolRegistry.specs(),
         this.promptName,
         this.synthesisPromptName,
         this.parser,
         this.meterRegistry,
-        messages);
+        messages,
+        this.skillRegistry,
+        this.skillMode);
   }
 
   // MDC 不跨线程：activity 在 worker 线程执行，请求侧 traceId 经入参手工交接，日志不断链
