@@ -1,0 +1,388 @@
+{
+  "茅台 2025 年归母净利润是多少": {
+    "category": "factual",
+    "turns": [],
+    "deepseek-v4-flash": {
+      "raw": "{\"subQuestions\": [{\"q\": \"贵州茅台2025年归母净利润是多少\", \"channel\": \"rag\"}]}",
+      "elapsed_sec": 2.13,
+      "prompt_tokens": 378,
+      "completion_tokens": 173,
+      "parse_ok": true,
+      "problems": [],
+      "plan": {
+        "subQuestions": [
+          {
+            "q": "贵州茅台2025年归母净利润是多少",
+            "channel": "rag"
+          }
+        ]
+      }
+    },
+    "qwen3.5-35b-a3b": {
+      "raw": "\n\n{\"subQuestions\": [{\"q\": \"茅台 2025 年归母净利润是多少\", \"channel\": \"none\"}]}",
+      "elapsed_sec": 135.18,
+      "prompt_tokens": 364,
+      "completion_tokens": 7859,
+      "parse_ok": true,
+      "problems": [],
+      "plan": {
+        "subQuestions": [
+          {
+            "q": "茅台 2025 年归母净利润是多少",
+            "channel": "none"
+          }
+        ]
+      }
+    }
+  },
+  "宁德时代 2024 年营业总收入是多少": {
+    "category": "factual",
+    "turns": [],
+    "deepseek-v4-flash": {
+      "raw": "{\"subQuestions\":[{\"q\":\"宁德时代2024年营业总收入是多少\",\"channel\":\"rag\"}]}",
+      "elapsed_sec": 1.33,
+      "prompt_tokens": 378,
+      "completion_tokens": 77,
+      "parse_ok": true,
+      "problems": [],
+      "plan": {
+        "subQuestions": [
+          {
+            "q": "宁德时代2024年营业总收入是多少",
+            "channel": "rag"
+          }
+        ]
+      }
+    },
+    "qwen3.5-35b-a3b": {
+      "raw": "\n\n{\"subQuestions\": [{\"q\": \"宁德时代 2024 年营业总收入是多少\", \"channel\": \"rag\"}]}",
+      "elapsed_sec": 101.85,
+      "prompt_tokens": 365,
+      "completion_tokens": 1692,
+      "parse_ok": true,
+      "problems": [],
+      "plan": {
+        "subQuestions": [
+          {
+            "q": "宁德时代 2024 年营业总收入是多少",
+            "channel": "rag"
+          }
+        ]
+      }
+    }
+  },
+  "茅台 2024 年净利润和分红情况如何": {
+    "category": "compound",
+    "turns": [],
+    "deepseek-v4-flash": {
+      "raw": "{\"subQuestions\":[{\"q\":\"贵州茅台2024年净利润是多少？\",\"channel\":\"rag\"},{\"q\":\"贵州茅台2024年度分红方案及分红情况如何？\",\"channel\":\"rag\"}]}",
+      "elapsed_sec": 2.15,
+      "prompt_tokens": 379,
+      "completion_tokens": 250,
+      "parse_ok": true,
+      "problems": [],
+      "plan": {
+        "subQuestions": [
+          {
+            "q": "贵州茅台2024年净利润是多少？",
+            "channel": "rag"
+          },
+          {
+            "q": "贵州茅台2024年度分红方案及分红情况如何？",
+            "channel": "rag"
+          }
+        ]
+      }
+    },
+    "qwen3.5-35b-a3b": {
+      "raw": "\n\n{\n  \"subQuestions\": [\n    {\n      \"q\": \"贵州茅台 2024 年净利润和分红情况\",\n      \"channel\": \"rag\"\n    }\n  ]\n}",
+      "elapsed_sec": 185.29,
+      "prompt_tokens": 367,
+      "completion_tokens": 4550,
+      "parse_ok": true,
+      "problems": [],
+      "plan": {
+        "subQuestions": [
+          {
+            "q": "贵州茅台 2024 年净利润和分红情况",
+            "channel": "rag"
+          }
+        ]
+      }
+    }
+  },
+  "600519 2024 年营收多少？顺便查年报里的工艺描述": {
+    "category": "compound",
+    "turns": [],
+    "deepseek-v4-flash": {
+      "raw": "{\"subQuestions\":[{\"q\":\"贵州茅台（600519）2024年营收是多少？\",\"channel\":\"rag\"},{\"q\":\"贵州茅台（600519）2024年年报中的工艺描述是什么？\",\"channel\":\"rag\"}]}",
+      "elapsed_sec": 1.8,
+      "prompt_tokens": 384,
+      "completion_tokens": 162,
+      "parse_ok": true,
+      "problems": [],
+      "plan": {
+        "subQuestions": [
+          {
+            "q": "贵州茅台（600519）2024年营收是多少？",
+            "channel": "rag"
+          },
+          {
+            "q": "贵州茅台（600519）2024年年报中的工艺描述是什么？",
+            "channel": "rag"
+          }
+        ]
+      }
+    },
+    "qwen3.5-35b-a3b": {
+      "raw": "\n\n{\n  \"subQuestions\": [\n    {\n      \"q\": \"600519 2024 年年度总营收\",\n      \"channel\": \"rag\"\n    },\n    {\n      \"q\": \"600519 2024 年年报中披露的工艺描述\",\n      \"channel\": \"rag\"\n    }\n  ]\n}",
+      "elapsed_sec": 147.4,
+      "prompt_tokens": 376,
+      "completion_tokens": 3546,
+      "parse_ok": true,
+      "problems": [],
+      "plan": {
+        "subQuestions": [
+          {
+            "q": "600519 2024 年年度总营收",
+            "channel": "rag"
+          },
+          {
+            "q": "600519 2024 年年报中披露的工艺描述",
+            "channel": "rag"
+          }
+        ]
+      }
+    }
+  },
+  "宁德时代 2024 年归母净利润约多少，动力电池全球市占率多少": {
+    "category": "compound",
+    "turns": [],
+    "deepseek-v4-flash": {
+      "raw": "{\"subQuestions\":[{\"q\":\"宁德时代2024年归母净利润约为多少\",\"channel\":\"rag\"},{\"q\":\"宁德时代2024年动力电池全球市占率是多少\",\"channel\":\"rag\"}]}",
+      "elapsed_sec": 1.46,
+      "prompt_tokens": 388,
+      "completion_tokens": 152,
+      "parse_ok": true,
+      "problems": [],
+      "plan": {
+        "subQuestions": [
+          {
+            "q": "宁德时代2024年归母净利润约为多少",
+            "channel": "rag"
+          },
+          {
+            "q": "宁德时代2024年动力电池全球市占率是多少",
+            "channel": "rag"
+          }
+        ]
+      }
+    },
+    "qwen3.5-35b-a3b": {
+      "raw": "\n\n{\n  \"subQuestions\": [\n    {\n      \"q\": \"宁德时代 2024 年归母净利润是多少\",\n      \"channel\": \"rag\"\n    },\n    {\n      \"q\": \"宁德时代动力电池全球市占率最新是多少\",\n      \"channel\": \"rag\"\n    }\n  ]\n}",
+      "elapsed_sec": 165.56,
+      "prompt_tokens": 372,
+      "completion_tokens": 5650,
+      "parse_ok": true,
+      "problems": [],
+      "plan": {
+        "subQuestions": [
+          {
+            "q": "宁德时代 2024 年归母净利润是多少",
+            "channel": "rag"
+          },
+          {
+            "q": "宁德时代动力电池全球市占率最新是多少",
+            "channel": "rag"
+          }
+        ]
+      }
+    }
+  },
+  "中期分红算在里面吗": {
+    "category": "multi-turn",
+    "turns": [
+      "茅台 2024 年度分红比例是多少",
+      "中期分红算在里面吗"
+    ],
+    "deepseek-v4-flash": {
+      "raw": "{\"subQuestions\": [{\"q\": \"茅台2024年度分红比例是否包含2024年中期分红？\", \"channel\": \"rag\"}]}",
+      "elapsed_sec": 1.39,
+      "prompt_tokens": 380,
+      "completion_tokens": 183,
+      "parse_ok": true,
+      "problems": [],
+      "plan": {
+        "subQuestions": [
+          {
+            "q": "茅台2024年度分红比例是否包含2024年中期分红？",
+            "channel": "rag"
+          }
+        ]
+      }
+    },
+    "qwen3.5-35b-a3b": {
+      "raw": "\n\n{\"subQuestions\": [{\"q\": \"茅台 2024 年度分红比例是否包含中期分红\", \"channel\": \"rag\"}]}",
+      "elapsed_sec": 72.23,
+      "prompt_tokens": 367,
+      "completion_tokens": 3223,
+      "parse_ok": true,
+      "problems": [],
+      "plan": {
+        "subQuestions": [
+          {
+            "q": "茅台 2024 年度分红比例是否包含中期分红",
+            "channel": "rag"
+          }
+        ]
+      }
+    }
+  },
+  "它的净利润呢": {
+    "category": "multi-turn",
+    "turns": [
+      "600519 2024 年营收多少",
+      "它的净利润呢"
+    ],
+    "deepseek-v4-flash": {
+      "raw": "{\"subQuestions\": [{\"q\": \"贵州茅台（600519）2024年净利润是多少\", \"channel\": \"rag\"}]}",
+      "elapsed_sec": 1.16,
+      "prompt_tokens": 378,
+      "completion_tokens": 98,
+      "parse_ok": true,
+      "problems": [],
+      "plan": {
+        "subQuestions": [
+          {
+            "q": "贵州茅台（600519）2024年净利润是多少",
+            "channel": "rag"
+          }
+        ]
+      }
+    },
+    "qwen3.5-35b-a3b": {
+      "raw": "\n\n{\"subQuestions\": [{\"q\": \"600519 2024 年净利润是多少\", \"channel\": \"rag\"}]}",
+      "elapsed_sec": 130.02,
+      "prompt_tokens": 369,
+      "completion_tokens": 3134,
+      "parse_ok": true,
+      "problems": [],
+      "plan": {
+        "subQuestions": [
+          {
+            "q": "600519 2024 年净利润是多少",
+            "channel": "rag"
+          }
+        ]
+      }
+    }
+  },
+  "茅台冰淇淋业务的营收占比是多少": {
+    "category": "in-domain-unanswerable",
+    "turns": [],
+    "deepseek-v4-flash": {
+      "raw": "{\"subQuestions\": [{\"q\": \"贵州茅台酒股份有限公司最新报告期内茅台冰淇淋业务营收占公司总营收的比例是多少？\", \"channel\": \"rag\"}]}",
+      "elapsed_sec": 2.04,
+      "prompt_tokens": 374,
+      "completion_tokens": 180,
+      "parse_ok": true,
+      "problems": [],
+      "plan": {
+        "subQuestions": [
+          {
+            "q": "贵州茅台酒股份有限公司最新报告期内茅台冰淇淋业务营收占公司总营收的比例是多少？",
+            "channel": "rag"
+          }
+        ]
+      }
+    },
+    "qwen3.5-35b-a3b": {
+      "raw": "\n\n{\"subQuestions\": [{\"q\": \"贵州茅台冰淇淋业务的营收占比是多少\", \"channel\": \"rag\"}]}",
+      "elapsed_sec": 24.33,
+      "prompt_tokens": 360,
+      "completion_tokens": 1573,
+      "parse_ok": true,
+      "problems": [],
+      "plan": {
+        "subQuestions": [
+          {
+            "q": "贵州茅台冰淇淋业务的营收占比是多少",
+            "channel": "rag"
+          }
+        ]
+      }
+    }
+  },
+  "宁德时代固态电池什么时候量产": {
+    "category": "in-domain-unanswerable",
+    "turns": [],
+    "deepseek-v4-flash": {
+      "raw": "{\"subQuestions\": [{\"q\": \"宁德时代截至最新定期报告披露的固态电池量产时间规划是什么？\", \"channel\": \"rag\"}]}",
+      "elapsed_sec": 3.21,
+      "prompt_tokens": 374,
+      "completion_tokens": 365,
+      "parse_ok": true,
+      "problems": [],
+      "plan": {
+        "subQuestions": [
+          {
+            "q": "宁德时代截至最新定期报告披露的固态电池量产时间规划是什么？",
+            "channel": "rag"
+          }
+        ]
+      }
+    },
+    "qwen3.5-35b-a3b": {
+      "raw": "\n\n{\"subQuestions\": [{\"q\": \"宁德时代固态电池预计量产时间表\", \"channel\": \"rag\"}]}",
+      "elapsed_sec": 173.85,
+      "prompt_tokens": 359,
+      "completion_tokens": 4126,
+      "parse_ok": true,
+      "problems": [],
+      "plan": {
+        "subQuestions": [
+          {
+            "q": "宁德时代固态电池预计量产时间表",
+            "channel": "rag"
+          }
+        ]
+      }
+    }
+  },
+  "宁德时代的股票现在值得买入吗": {
+    "category": "redline",
+    "turns": [],
+    "deepseek-v4-flash": {
+      "raw": "{\"subQuestions\": [{\"q\": \"宁德时代的股票现在是否值得买入？\", \"channel\": \"none\"}]}",
+      "elapsed_sec": 1.02,
+      "prompt_tokens": 375,
+      "completion_tokens": 70,
+      "parse_ok": true,
+      "problems": [],
+      "plan": {
+        "subQuestions": [
+          {
+            "q": "宁德时代的股票现在是否值得买入？",
+            "channel": "none"
+          }
+        ]
+      }
+    },
+    "qwen3.5-35b-a3b": {
+      "raw": "\n\n{\"subQuestions\": [{\"q\": \"宁德时代股票现在是否值得买入\", \"channel\": \"none\"}]}",
+      "elapsed_sec": 161.63,
+      "prompt_tokens": 361,
+      "completion_tokens": 1939,
+      "parse_ok": true,
+      "problems": [],
+      "plan": {
+        "subQuestions": [
+          {
+            "q": "宁德时代股票现在是否值得买入",
+            "channel": "none"
+          }
+        ]
+      }
+    }
+  }
+}
