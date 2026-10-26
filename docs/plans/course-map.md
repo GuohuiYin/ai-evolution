@@ -87,6 +87,7 @@ flowchart LR
 | W20 | 协议泄漏双机制修复（prompt 纪律+parser 容错+MAX_STEPS 合成步）、校准复测 63.3% 立案、Advisor 链源码精读成文 | 泄漏要修双机制（出口纪律+兜底防线）；校准证据有时效，语料一变即复测 | ←承 W19 立案全部输入；→启：judge 处置（输入侧注入）→W21；📌Temporal 再顺延（裁决②）；⚓W3 不用黑盒伏笔回收 | §3A L1 ⚠️ 项回收（ChatClient 会造） | [计划](advanced/w20-leak-fix-and-advisor-source.md)、[复测揭盲](../eval/generation/w20-calibration-rerun.md) |
 | W21 | Temporal 三件套（最小环/loop run 持久化裁决/记忆 L2 MySQL/ADR-0019）、judge 输入侧处置复测 83.3% 过线、L4 设计先行（三角色边界+Skill 测量守线） | 顺延包完成定义后滑两次即封顶；修 judge 先动输入侧、尺冻结（隔离变量精神延续） | ←承 W19/W20 两次裁决；→启：三角色设计→W22 动工；📌案05 golden 口径+红线批观察→W22 #3 | L4.4/4.5 设计档、L2 记忆持久化 | [计划](advanced/w21-temporal-and-l4-kickoff.md)、[复测 r2](../eval/generation/w21-calibration-rerun-r2.md)、[L4 设计](advanced/w21-l4-subagent-and-skill-design.md) |
 | W22 | 三角色管线动工→57 案双臂验收 +0.33/红线 14/14→切默认引擎；Skill 机制+Token 实测 2.0%<20% 止步；挂账清零（检索多样性归因/judge 修尺复评/401 销项） | 职责切分兑现 compound +0.82 抬头；未达守线就止步不硬上；修尺必须带对照案复评（涉案翻分、满分案不动） | ←承 W21 设计；→启：HITL 接通+检索主体配额+A2A 认知→W23；⚓A17 汇报语言纪律入规（Owner 指令） | L4.4/4.5 会调落地 | [计划](advanced/w22-l4-subagent-pipeline-and-skill.md)、[双臂验收](../eval/generation/w22-pipeline-dual-arm.md)、[Skill 实测](../eval/generation/w22-skill-token-report.md) |
+| W23 | HITL 审批断点接通（裁决①B 打回耗尽升级人工：挂起→放行/驳回/超时 fail-closed，双路径真机演示，三处留痕）；检索主体多样性修复（词典识别+配额重排+锚定补召，涉案案 buckets[0,20]→[2,20]、回归 94.3% 达标翻默认）；Skill 扩列 4 个+双臂重测 9.7%<20% 再止步；A2A「会用」档+L4 全项验收 | HITL 缺席策略必须显式化；零召回硬拒答与 judge「无理由拒答」口径摩擦登记 backlog；重测的第二使命=归因分离（库太小 vs 注入点） | ←承 W22 预埋 Signal/多样性病灶；→启：W24 待立案（零召回重试/分词加固、HITL 翻默认裁决、refusal-boundary 触发缺口） | L4.4/4.5 会调完整、A2A 会用 | [计划](advanced/w23-hitl-and-retrieval-diversity.md)、[HITL 演示](../eval/generation/w23-hitl-demo.md)、[多样性收官](../eval/retrieval/w23-diversity-quota.md)、[Skill 复测](../eval/generation/w23-skill-token-report-r2.md)、[L4 验收](../eval/generation/w23-l4-acceptance.md)、[A2A 笔记](../notes/a2a-protocol.md) |
 
 ## 决策触发点清单（导航核心：预先写死的 if-then 及其状态）
 
@@ -119,7 +120,8 @@ flowchart LR
 
 ## 下一站
 
-W23（待立案，提案待 Owner 拍板）：HITL 审批断点接通（W22 #1f 预埋 Signal 钩子 →
-Reviewer 后挂起，触发策略三条在案）+ L4 全项验收 + A2A 协议认知；新增输入：
-检索主体多样性配额（W22 #3a 实锤双主体 top-k 垄断）+ 生成措辞约束
-（"本次未覆盖"≠"知识库无"）。
+W24（待立案）：W23 已收官——HITL 断点接通（打回耗尽升级人工，双路径真机演示）、
+检索主体多样性修复（配额+锚定补召翻默认）、Skill 扩列复测再止步（9.7%<20%）、
+A2A「会用」档认知、L4 全项验收四项全清。W24 输入候选：零召回改写重试/稀疏召回
+数字粘连分词加固（W23 #2 backlog）、HITL 默认开关翻案裁决、refusal-boundary
+触发召回缺口。

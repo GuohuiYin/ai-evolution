@@ -57,6 +57,16 @@ Harness 工程（Constrain / Inform / Verify / Correct）不是概念，逐条�
 | 出入双向凭证（W12）：MCP Client 真实调通外部 fetch 服务 + API Key 鉴权 + 限流 + 模型自动降级 failover | ADR-0016 · `8f7deb1`→`270ffc8` |
 | 增量摄入自愈：chunk 参数签名入 manifest 判变键，参数变更触发自动重建，手工清库消失 | `2a65175` |
 
+## 六、L4 进阶（W21-W23，2026-10-26 收官）
+
+| 亮点 | 证据 |
+|---|---|
+| Temporal 持久化编排：三角色管线（Planner/Builder/Reviewer）activity 化，57 案双臂 +0.33、红线 14/14 满维后切默认引擎——子代理职责切分兑现 compound 案 +0.82 | [w22-pipeline-dual-arm](eval/generation/w22-pipeline-dual-arm.md) |
+| HITL 审批断点：打回耗尽挂起等人工 Signal（放行含背书标注/驳回/超时 fail-closed），审批 API + SSE/日志/Temporal 三处留痕，双路径真机演示 | [w23-hitl-demo](eval/generation/w23-hitl-demo.md) |
+| 检索主体多样性配额：双主体查询防 top-k 垄断（召回后配额重排 + 缺口主体锚定补召），涉案案 buckets[0,20]→[2,20]、黄金集回归 94.3% 达标后翻默认——第三次走完数据裁决翻案流程 | [w23-diversity-quota](eval/retrieval/w23-diversity-quota.md) |
+| Skill 渐进披露两轮实测均止步（2.0% → 9.7%，守线 ≥40%/<20%）——**负结果再登记：机制好坏由数据说了算**；扩列复测完成归因分离（库规模有效 vs 注入点结构上限） | [w22-skill-token-report](eval/generation/w22-skill-token-report.md) · [w23-skill-token-report-r2](eval/generation/w23-skill-token-report-r2.md) |
+| A2A 协议「会用」档认知：五对象/Task 八态/签名 Agent Card，对照自家 MCP 双侧落地讲清「MCP 够工具、A2A 够同事」分工 | [a2a-protocol](notes/a2a-protocol.md) |
+
 ## 使用说明
 
 - 叙事线索参考：若向他人介绍本项目，一条自然的线索是——反缝合规则案例（`f444792`，一次完整的"发现→修复→验证→立规"闭环）→ 双黄金集 → 红队先行 → MCP 协议贯通

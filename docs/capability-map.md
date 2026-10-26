@@ -45,7 +45,8 @@
 | 规划 | ✅ ReAct 显式化 W11 落地（ResearchLoop + 协议解析 + ADR-0015，回归 5.6/6 ≥ 基线）；三角色管线（Planner/Builder/Reviewer）W22 切默认引擎——57 案双臂 +0.33、红线 14/14 满维 | [w22-pipeline-dual-arm](eval/generation/w22-pipeline-dual-arm.md) |
 | 工具 | ✅ 三工具 + MCP Server + MCP Client（W12 #1 fetchWebPage 真实调通，ADR-0016） | ✅ W17 收口：行情/财务真源切换 Tushare pro 落地（`4e75ec3`，REST 直连，`ai.stock.data-source` env 切换，mock 留缺省；真源冒烟 IT + tushare 态全链路实测过——真实营收 1741.44 亿/全年日线，2026-10-10）。挂账：Tushare 官方 hosted MCP 体验（AI 宿主自然语言直达 30+ 接口取数，零代码接入）——与 StockDataClient 真源替换（REST 确定性管道）是两条链路，候选 W21-23 工具周（W17 裁决记录） |
 | Human-in-the-loop | ✅ W23 #1 接通（裁决①B）：打回耗尽挂起等人工 Signal（approve 放行含背书标注 / reject 驳回 / 超时 fail-closed），审批 API + SSE/日志/Temporal 三处留痕；真机双路径演示过 | [w23-hitl-demo](eval/generation/w23-hitl-demo.md) |
-| 多 Agent / A2A | ❌ | W14+ 进阶（单 Agent 扎实后） |
+| Skill 渐进披露 | 🔵 机制在库（4 技能：分红口径/年报横读/拒答边界/工具手册），W22 初测 2.0%、W23 扩列复测 9.7% 均 <20% 守线——两轮登记止步，默认 off；重启条件：库 ≥8 或 RAG 通路接注入点 | [w23-skill-token-report-r2](eval/generation/w23-skill-token-report-r2.md) |
+| 多 Agent / A2A | 🔵「会用」档认知（W23 #3a 精读笔记：五对象/Task 八态/Agent Card 签名，对照自家 MCP 双侧分工）；不落代码——单 Agent 形态，跨边界委派需求出现时重评 | [a2a-protocol](notes/a2a-protocol.md) |
 
 ## 五、评估体系
 
