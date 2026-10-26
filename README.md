@@ -131,6 +131,46 @@ flowchart TB
 > 本图为 W13 结构快照；W14-W22 演进（Temporal 引擎、三角色管线、Skill 机制、协议防线等）
 > 见下文「关键数据流」「当前能力」与 [docs/plans/](docs/plans/README.md)。
 
+## 通路全景图（W22 · 2026-10-26 实态）
+
+> 流程视角：一个问题从进门到出答的完整路径，与上节结构分层图互补。
+> **本图随项目演进实时更新**——每周收官 A8 核查时对照代码实态刷新（与 README 其余快照同纪律）。
+
+```mermaid
+flowchart TB
+    Q["用户问题"] --> ENTRY["入口层<br/>/ai/chat · /ai/chat/stream（SSE）<br/>/ai/agent 调试旁路 · /mcp（MCP Server）"]
+    ENTRY --> ROUTER{"ChatRouter 规则路由（ADR-0010）<br/>股票代码/取数关键词 → AGENT<br/>其余 → RAG（宁可偏 AGENT，误路由 RAG 才丢能力）"}
+
+    ROUTER -->|RAG 通路| RW["查询改写（W11）<br/>多轮指代消解"]
+    RW --> RET["KnowledgeRetriever 两阶段（W13）<br/>混合召回 dense+sparse+RRF（默认开）<br/>rerank 精排（+0pp 裁决，默认关）"]
+    RET -->|空检索| REF1["硬拒答<br/>（不过模型）"]
+    RET -->|命中| RGEN["上下文+prompt 模板 → DeepSeek<br/>回答+sources+免责声明"]
+
+    ROUTER -->|AGENT 通路| ENG{"ai.loop.engine<br/>三引擎切换"}
+    ENG -->|"pipeline（缺省，W22 #1）"| PLAN["① Planner 拆计划<br/>子问题+通路标注，无工具"]
+    PLAN --> BUILD["② Builder 取证+起草<br/>白名单四工具（ChannelToolExecutor）"]
+    BUILD --> REV["③ Reviewer 三条清单复核<br/>溯源 / 红线 / 口径，fail-closed"]
+    REV -->|"打回 ≤2 次，批注回流"| BUILD
+    REV -->|打回耗尽| REF2["拒答文案<br/>（升级人工=W23 HITL 触发策略之三）"]
+    REV -->|通过| HITL["HITL 断点位（W22 #1f 预埋，恒直透）<br/>W23 接通 Signal 挂起等人工放行/驳回"]
+    HITL --> FINAL["终答+免责声明"]
+    ENG -->|"temporal（W21）"| TLOOP["单循环事件历史版<br/>ResearchLoopWorkflow"]
+    ENG -->|"inline（对照臂）"| ILOOP["ResearchLoop 进程内直跑<br/>显式 ReAct，步数上限 6"]
+    TLOOP --> FINAL
+    ILOOP --> FINAL
+
+    ENTRY -.->|/ai/analyze 直达| ANA["StockAnalysisService<br/>取数（未知代码 404）→ CO-STAR+schema 强约束<br/>→ StockAnalysisReport JSON"]
+
+    subgraph CROSS["横切防线（全通路生效）"]
+        RL["金融三红线代码化<br/>免责声明 · 禁买卖建议 · 数字溯源"]
+        OBS["traceId 四级留痕 · SSE 轨迹 · token 账本"]
+        MEM["会话记忆 L1 窗口 20<br/>inmemory 缺省 / MySQL jdbc（W21）"]
+        SK["Skill 注入默认 off<br/>（W22 实测 2.0%<20% 止步，重启条件在案）"]
+        FO["FailoverChatModel<br/>DeepSeek 瞬态故障 → Qwen 自动降级"]
+    end
+```
+
+
 **部署形态**：ai-evolution + Qdrant + mcp-fetch（W12 起独立工作负载，MCP Client 出向 HTTP 端）同集群（Minikube），ConfigMap/Secret 分层，探针 + 优雅停机 + Jib 镜像。
 
 **关键数据流**：
