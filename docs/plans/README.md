@@ -41,6 +41,9 @@
 | W19 | [advanced/w19-rotation-first-run.md](advanced/w19-rotation-first-run.md)（黄金集轮换首演 v5/v3） | ✅ 已完成 |
 | W20 | [advanced/w20-leak-fix-and-advisor-source.md](advanced/w20-leak-fix-and-advisor-source.md)（泄漏修复 + 校准重生 + Advisor 源码精读） | ✅ 已完成（#4 Temporal 裁决顺延 W21） |
 | W21 | [advanced/w21-temporal-and-l4-kickoff.md](advanced/w21-temporal-and-l4-kickoff.md)（Temporal 顺延包 + judge 病灶处置 + L4 设计启动） | 🔵 提案定稿（Owner 三裁决在案） |
+| W22 | [advanced/w22-l4-subagent-pipeline-and-skill.md](advanced/w22-l4-subagent-pipeline-and-skill.md)（三角色管线动工 + Skill 机制实测） | ✅ 已完成（管线切默认引擎；Skill 止步登记） |
+| W23 | [advanced/w23-hitl-and-retrieval-diversity.md](advanced/w23-hitl-and-retrieval-diversity.md)（HITL 接通 + 检索主体多样性 + A2A 认知 + Skill 复测） | ✅ 已完成（L4 全项验收收官） |
+| W24 | [advanced/w24-recall-robustness-and-feedback-loop.md](advanced/w24-recall-robustness-and-feedback-loop.md)（零召回防线 + judge 拒答口径 + 人工反馈回路 + 挂账清仓） | 🔵 提案待 Owner 裁决 |
 
 ## 对账校准记录（2026-09-03）
 
