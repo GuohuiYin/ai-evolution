@@ -36,6 +36,7 @@ class ResearchPipelineWorkflowTest {
     int planCalls = 0;
     int buildCalls = 0;
     int reviewCalls = 0;
+    final List<String> hitlEvents = new ArrayList<>();
 
     @Override
     public Plan plan(String question, List<HistoryTurn> history, String traceId) {
@@ -61,6 +62,11 @@ class ResearchPipelineWorkflowTest {
     public ReviewVerdict review(String question, BuildOutcome outcome, String traceId) {
       this.reviewCalls++;
       return this.verdicts.removeFirst();
+    }
+
+    @Override
+    public void hitlEvent(String event, String detail, String traceId) {
+      this.hitlEvents.add(event + ":" + detail);
     }
   }
 
@@ -164,5 +170,85 @@ class ResearchPipelineWorkflowTest {
 
     assertThat(result.stopReason()).isEqualTo(StopReason.FINAL_ANSWER);
     assertThat(this.activities.buildCalls).isEqualTo(1);
+  }
+
+  // ── W23 #1 HITL：打回耗尽升级人工（裁决①B 唯一接通触发） ──
+
+  private static ResearchRunInput hitlInput() {
+    return new ResearchRunInput("茅台营收多少", 6, List.of(), "trace-test", true, 3600);
+  }
+
+  private void scriptAlwaysReject() {
+    this.activities.verdicts.add(ReviewVerdict.reject("第一批注"));
+    this.activities.verdicts.add(ReviewVerdict.reject("第二批注"));
+    this.activities.verdicts.add(ReviewVerdict.reject("第三批注"));
+  }
+
+  private static void awaitPending(ResearchPipelineWorkflow workflow) throws InterruptedException {
+    for (int i = 0; i < 200 && !workflow.pendingApproval(); i++) {
+      Thread.sleep(50);
+    }
+    assertThat(workflow.pendingApproval()).as("workflow 应挂起等人工决定").isTrue();
+    assertThat(workflow.status()).isEqualTo("awaiting-approval");
+  }
+
+  @Test
+  void hitlApproveReleasesLastDraftWithOverrideNote() throws Exception {
+    // 挂起→放行→续跑：人工背书放出最后草稿，如实标注自动复核未通过
+    scriptAlwaysReject();
+    ResearchPipelineWorkflow workflow = newWorkflow();
+    io.temporal.client.WorkflowClient.start(workflow::runResearch, hitlInput());
+
+    awaitPending(workflow);
+    assertThat(this.activities.hitlEvents.get(0)).startsWith("hold:");
+    workflow.approve("口径已人工核实，放行");
+
+    LoopResult result =
+        io.temporal.client.WorkflowStub.fromTyped(workflow).getResult(LoopResult.class);
+    assertThat(result.stopReason()).isEqualTo(StopReason.FINAL_ANSWER);
+    assertThat(result.answer()).contains("草稿答案").contains("人工审批放行");
+    assertThat(this.activities.hitlEvents.get(1)).startsWith("approve:口径已人工核实，放行");
+  }
+
+  @Test
+  void hitlRejectKeepsRefusal() throws Exception {
+    // 挂起→驳回→终止：维持 fail-closed 拒答
+    scriptAlwaysReject();
+    ResearchPipelineWorkflow workflow = newWorkflow();
+    io.temporal.client.WorkflowClient.start(workflow::runResearch, hitlInput());
+
+    awaitPending(workflow);
+    workflow.reject("草稿仍有口径问题，驳回");
+
+    LoopResult result =
+        io.temporal.client.WorkflowStub.fromTyped(workflow).getResult(LoopResult.class);
+    assertThat(result.stopReason()).isEqualTo(StopReason.REVIEW_REJECTED);
+    assertThat(result.answer()).contains("不予作答");
+    assertThat(this.activities.hitlEvents.get(1)).startsWith("reject:草稿仍有口径问题，驳回");
+  }
+
+  @Test
+  void hitlAwaitTimeoutFailsClosed() {
+    // 缺席策略：超时无人决定 → fail-closed 拒答（TestWorkflowEnvironment 自动跳时钟，不等真实 1 小时）
+    scriptAlwaysReject();
+
+    LoopResult result = newWorkflow().runResearch(hitlInput());
+
+    assertThat(result.stopReason()).isEqualTo(StopReason.REVIEW_REJECTED);
+    assertThat(result.answer()).contains("不予作答");
+    assertThat(this.activities.hitlEvents.get(0)).startsWith("hold:");
+    assertThat(this.activities.hitlEvents.get(1)).startsWith("timeout:");
+  }
+
+  @Test
+  void hitlPassPathNeverHolds() {
+    // 裁决①B 边界：复核通过即终答，永不挂起（红线擦边/低置信两条策略未启用）
+    this.activities.verdicts.add(ReviewVerdict.pass());
+
+    LoopResult result = newWorkflow().runResearch(hitlInput());
+
+    assertThat(result.stopReason()).isEqualTo(StopReason.FINAL_ANSWER);
+    assertThat(result.answer()).isEqualTo("草稿答案");
+    assertThat(this.activities.hitlEvents).isEmpty();
   }
 }

@@ -179,6 +179,12 @@ ai:
     # temporal=单循环事件历史版；inline=进程内直跑（对照臂留旗标）。
     # pipeline/temporal 均需本地 dev server：temporal server start-dev（见 docs/notes/temporal-minimal-loop.md）
     engine: ${AI_LOOP_ENGINE:pipeline}
+    # HITL 人工审批断点（W23 #1，裁决①B：只接「打回耗尽升级人工」一条触发，仅 pipeline 引擎有效）：
+    # true=复核 3 轮仍打回时挂起等人工 Signal（approve 放行 / reject 驳回），false=沿用即时拒答。
+    # 缺席策略显式化：await-timeout 内未决 fail-closed 拒答（宁可不答不可错答）。
+    hitl:
+      enabled: ${AI_LOOP_HITL_ENABLED:false}
+      await-timeout: ${AI_LOOP_HITL_AWAIT_TIMEOUT:PT2H}
     temporal:
       # Temporal 服务 gRPC 地址（CLI 注意显式 IPv4：localhost 会优先解析 ::1）
       target: ${TEMPORAL_TARGET:127.0.0.1:7233}

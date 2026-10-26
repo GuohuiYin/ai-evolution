@@ -22,8 +22,9 @@ import org.slf4j.Logger;
  * <p>重试：plan/review 单层重试（attempts=2，供应商瞬态故障由 FailoverChatModel 在 activity 内部兜底）； build
  * 含多轮模型+工具调用，超时放宽至 10 分钟。
  *
- * <p>HITL 预埋（W22 #1f）：{@link #shouldHoldForApproval} 是 Reviewer 通过后、
- * 终答发出前的断点评估位——触发策略三条（红线擦边/低置信证据/打回耗尽升级人工） 在案，本周恒 false 直透，W23 接通 Signal 挂起。
+ * <p>HITL（W23 #1 接通，裁决①B）：打回耗尽时挂起等人工 Signal（{@link #awaitHumanDecision}）——
+ * 唯一启用触发；红线擦边/低置信证据两条策略留待后续裁决。挂起/决定/超时经 hitlEvent activity 留痕 （SSE 轨迹可见断点），等待用 {@link
+ * Workflow#await} 确定性 API。
  */
 public class ResearchPipelineWorkflowImpl implements ResearchPipelineWorkflow {
 
@@ -35,9 +36,13 @@ public class ResearchPipelineWorkflowImpl implements ResearchPipelineWorkflow {
   /** 打回耗尽的拒答文案（宁可不答不可错答） */
   static final String REFUSAL = "经多轮独立复核仍无法满足溯源与合规要求，本次不予作答。可缩小问题范围或澄清口径后重试。";
 
+  /** 人工放行标注（W23 #1）：自动复核未通过、审批人背书放出——如实标注是红线文化 */
+  static final String HUMAN_OVERRIDE_NOTE = "\n\n（说明：本回答自动复核未通过，经人工审批放行，内容由审批人背书。）";
+
   private final List<LoopStep> steps = new ArrayList<>();
   private String status = "not-started";
-  private String approvalComment;
+  private String hitlDecision;
+  private String hitlComment;
   private boolean heldForApproval;
 
   private final ResearchPipelineActivities quickActivities =
@@ -72,10 +77,12 @@ public class ResearchPipelineWorkflowImpl implements ResearchPipelineWorkflow {
     traceLog.info("plan ready subQuestions={}", plan.subQuestions().size());
 
     String comment = "";
+    BuildOutcome lastOutcome = null;
     for (int attempt = 0; attempt <= MAX_REJECTIONS; attempt++) {
       BuildOutcome outcome =
           this.buildActivities.build(
               input.question(), plan, input.history(), comment, input.maxSteps(), input.traceId());
+      lastOutcome = outcome;
       this.steps.clear();
       this.steps.addAll(outcome.steps());
       if (outcome.draft() == null) {
@@ -87,10 +94,6 @@ public class ResearchPipelineWorkflowImpl implements ResearchPipelineWorkflow {
       ReviewVerdict verdict =
           this.quickActivities.review(input.question(), outcome, input.traceId());
       if (verdict.isPass()) {
-        if (shouldHoldForApproval(input, outcome)) {
-          // W23 接通：Workflow.await(() -> this.approvalComment != null)
-          this.status = "awaiting-approval";
-        }
         return finish(
             new LoopResult(outcome.draft(), List.copyOf(this.steps), StopReason.FINAL_ANSWER));
       }
@@ -98,17 +101,51 @@ public class ResearchPipelineWorkflowImpl implements ResearchPipelineWorkflow {
       comment = verdict.comment();
       this.status = "running";
     }
-    // 打回耗尽 → 拒答（升级人工是 HITL 触发策略之三，W23 接通）
+    // 打回耗尽：W23 #1（裁决①B）升级人工——挂起等放行/驳回；开关关闭时沿用即时拒答
+    if (input.hitlEnabled() && lastOutcome != null) {
+      return awaitHumanDecision(input, lastOutcome);
+    }
     traceLog.warn("review rejections exhausted, refuse to answer");
     return finish(new LoopResult(REFUSAL, List.copyOf(this.steps), StopReason.REVIEW_REJECTED));
   }
 
   /**
-   * HITL 断点评估（W22 #1f 预埋，本周恒 false 直透）。 W23 触发策略三条：①红线擦边（Reviewer 通过但批注非空）；
-   * ②低置信证据（证据包为空或单源）；③打回耗尽升级人工。
+   * 打回耗尽挂起点（W23 #1）：等人工 Signal 至 {@code hitlAwaitSeconds} 上限。 放行=放出最后草稿并如实标注人工背书；驳回/超时=fail-closed
+   * 拒答。 挂起原因/人工决定/等待耗时经 hitlEvent activity 入 SSE 轨迹与研究日志（留痕纪律）。
    */
-  private boolean shouldHoldForApproval(ResearchRunInput input, BuildOutcome outcome) {
-    return false;
+  private LoopResult awaitHumanDecision(ResearchRunInput input, BuildOutcome lastOutcome) {
+    this.status = "awaiting-approval";
+    this.heldForApproval = true;
+    long holdStart = Workflow.currentTimeMillis();
+    this.quickActivities.hitlEvent(
+        "hold", "打回耗尽升级人工：复核 " + (MAX_REJECTIONS + 1) + " 轮未过，挂起等人工放行/驳回", input.traceId());
+    traceLog.warn("hitl hold reason=review-rejections-exhausted, awaiting human decision");
+    boolean decided =
+        Workflow.await(
+            Duration.ofSeconds(input.hitlAwaitSeconds()), () -> this.hitlDecision != null);
+    this.heldForApproval = false;
+    long waitedMs = Workflow.currentTimeMillis() - holdStart;
+    if (!decided) {
+      // 缺席策略显式化：超时未决 fail-closed 拒答（宁可不答不可错答）
+      this.quickActivities.hitlEvent(
+          "timeout", "审批超时未决（等待 " + waitedMs + "ms），按缺席策略拒答", input.traceId());
+      traceLog.warn("hitl await timeout after {}ms, fail-closed refusal", waitedMs);
+      return finish(new LoopResult(REFUSAL, List.copyOf(this.steps), StopReason.REVIEW_REJECTED));
+    }
+    this.quickActivities.hitlEvent(
+        this.hitlDecision,
+        (this.hitlComment == null ? "" : this.hitlComment) + "（等待 " + waitedMs + "ms）",
+        input.traceId());
+    if ("approve".equals(this.hitlDecision)) {
+      traceLog.info("hitl approved comment={} waited={}ms", this.hitlComment, waitedMs);
+      return finish(
+          new LoopResult(
+              lastOutcome.draft() + HUMAN_OVERRIDE_NOTE,
+              List.copyOf(this.steps),
+              StopReason.FINAL_ANSWER));
+    }
+    traceLog.warn("hitl rejected comment={} waited={}ms", this.hitlComment, waitedMs);
+    return finish(new LoopResult(REFUSAL, List.copyOf(this.steps), StopReason.REVIEW_REJECTED));
   }
 
   private LoopResult finish(LoopResult result) {
@@ -129,8 +166,14 @@ public class ResearchPipelineWorkflowImpl implements ResearchPipelineWorkflow {
 
   @Override
   public void approve(String comment) {
-    this.approvalComment = comment;
-    this.heldForApproval = false;
+    this.hitlDecision = "approve";
+    this.hitlComment = comment;
+  }
+
+  @Override
+  public void reject(String comment) {
+    this.hitlDecision = "reject";
+    this.hitlComment = comment;
   }
 
   @Override

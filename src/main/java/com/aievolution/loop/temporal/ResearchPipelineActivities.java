@@ -26,4 +26,10 @@ public interface ResearchPipelineActivities {
 
   /** Reviewer：只读证据包独立复核（无工具）；输出不可解析由实现方 fail-closed 打回 */
   ReviewVerdict review(String question, BuildOutcome outcome, String traceId);
+
+  /**
+   * HITL 事件留痕（W23 #1）：挂起/放行/驳回/超时四事件——入研究轨迹日志（MDC 续链） 并经 listener 桥推 SSE 轨迹（合成一步
+   * tool=human-approval），不断链、可观测。
+   */
+  void hitlEvent(String event, String detail, String traceId);
 }

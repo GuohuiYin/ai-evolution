@@ -185,6 +185,19 @@ public class ResearchPipelineActivitiesImpl implements ResearchPipelineActivitie
     };
   }
 
+  @Override
+  public void hitlEvent(String event, String detail, String traceId) {
+    try {
+      setTraceId(traceId);
+      org.slf4j.LoggerFactory.getLogger("research-trace")
+          .info("hitl event={} detail={}", event, detail);
+      // SSE 轨迹可见断点：合成一步经 listener 桥推送（复用既有 Trajectory 通道，零 API 变更）
+      workflowListener().onStep(new LoopStep(-1, "HITL " + event, "human-approval", "", detail));
+    } finally {
+      clearTraceId();
+    }
+  }
+
   private LoopListener workflowListener() {
     return this.listenerRegistry.get(Activity.getExecutionContext().getInfo().getWorkflowId());
   }

@@ -19,12 +19,20 @@ public class TemporalPipelineEngine {
   private final WorkflowClient workflowClient;
   private final LoopListenerRegistry listenerRegistry;
   private final String taskQueue;
+  private final boolean hitlEnabled;
+  private final long hitlAwaitSeconds;
 
   public TemporalPipelineEngine(
-      WorkflowClient workflowClient, LoopListenerRegistry listenerRegistry, String taskQueue) {
+      WorkflowClient workflowClient,
+      LoopListenerRegistry listenerRegistry,
+      String taskQueue,
+      boolean hitlEnabled,
+      long hitlAwaitSeconds) {
     this.workflowClient = workflowClient;
     this.listenerRegistry = listenerRegistry;
     this.taskQueue = taskQueue;
+    this.hitlEnabled = hitlEnabled;
+    this.hitlAwaitSeconds = hitlAwaitSeconds;
   }
 
   public ResearchLoopEngine newRun(
@@ -45,7 +53,9 @@ public class TemporalPipelineEngine {
                     .setTaskQueue(this.taskQueue)
                     .build());
         LoopResult result =
-            workflow.runResearch(new ResearchRunInput(question, maxSteps, history, traceId));
+            workflow.runResearch(
+                new ResearchRunInput(
+                    question, maxSteps, history, traceId, this.hitlEnabled, this.hitlAwaitSeconds));
         // 与既有引擎同语义：退出回调由引擎层统一收口（管线内子循环不单独 onComplete）
         listener.onComplete(result);
         return result;

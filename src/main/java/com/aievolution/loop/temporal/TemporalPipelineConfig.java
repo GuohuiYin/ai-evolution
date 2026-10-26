@@ -95,7 +95,15 @@ public class TemporalPipelineConfig {
 
   @Bean
   public TemporalPipelineEngine temporalPipelineEngine(
-      WorkflowClient pipelineWorkflowClient, LoopListenerRegistry pipelineListenerRegistry) {
-    return new TemporalPipelineEngine(pipelineWorkflowClient, pipelineListenerRegistry, TASK_QUEUE);
+      WorkflowClient pipelineWorkflowClient,
+      LoopListenerRegistry pipelineListenerRegistry,
+      @Value("${ai.loop.hitl.enabled:false}") boolean hitlEnabled,
+      @Value("${ai.loop.hitl.await-timeout:PT2H}") java.time.Duration hitlAwaitTimeout) {
+    return new TemporalPipelineEngine(
+        pipelineWorkflowClient,
+        pipelineListenerRegistry,
+        TASK_QUEUE,
+        hitlEnabled,
+        hitlAwaitTimeout.toSeconds());
   }
 }
