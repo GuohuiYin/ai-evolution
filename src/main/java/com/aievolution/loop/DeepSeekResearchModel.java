@@ -222,9 +222,7 @@ public class DeepSeekResearchModel implements ResearchModel {
     hits.forEach(s -> sb.append(s.body()).append("\n\n"));
     sb.append('\n');
     // 触发逐案留痕（W22 #2 误判防线：质量分差超 ±1 的案先查触发日志再判机制优劣）
-    log.info(
-        "skill triggered: {}",
-        hits.stream().map(com.aievolution.skill.Skill::name).toList());
+    log.info("skill triggered: {}", hits.stream().map(com.aievolution.skill.Skill::name).toList());
   }
 
   /** 会话历史注入（单点：nextTurn 与 synthesize 共用——A11 两次即收口） */

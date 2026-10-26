@@ -19,7 +19,7 @@
 | 维度 | 现状 | 处置 |
 |---|---|---|
 | 构建（RAG/工具注入） | ✅ 双通道 | — |
-| 管理（会话记忆 L1-L5） | 🔵 L1 内存版 W10；**L2 已排 W21**（Temporal 顺延包，W20 裁决②）；L3-L5 W24-27 前流量裁决（见 plans/m3/README 五级路线） | 已排 |
+| 管理（会话记忆 L1-L5） | ✅ L1 内存版 W10；**L2 持久化 W21 #1③ 落地**（MySQL 8.4 仓储，`AI_CHAT_MEMORY_STORE=jdbc` 切换，inmemory 留缺省）；L3-L5 W24-27 前流量裁决（见 plans/m3/README 五级路线） | — |
 | 优化（压缩/摘要/窗口预算） | ❌ | W14+ |
 | 语义缓存（相似问题命中答案缓存） | ❌ | W14+（需流量数据） |
 
@@ -31,6 +31,7 @@
 | 分块 | ✅ chunk-size=800 经 400/800/1200 三轮对照数据裁决维持（三轮 Recall@5 均 72%） | [w13-chunk-size-comparison](eval/retrieval/w13-chunk-size-comparison.md) |
 | 向量化 | ✅ bge-m3（调研论证选型，重评触发在案）；实测对照（vs Qwen3-Embedding-8B）挂 W15-16 | [embedding-selection-v1](eval/selection/embedding-selection-v1.md) |
 | 召回 | ✅ 混合检索（dense+sparse+RRF）W13 数据裁决启用：Recall@5 72%→93%，负例零回归 | [w13-hybrid-eval](eval/retrieval/w13-hybrid-eval.md) |
+| 多主体检索多样性 | ❌ W22 #3a 实锤：双主体查询 top-5 被单一主体年报片段垄断（宁德/茅台比价案），另主体零进上下文——无配额保障 | W23 立项（主体配额+多样性约束） |
 | 查询理解 | ✅ 改写 W11 落地（多轮 eval 6.0/6 vs 关闭 4.5/6 量化收益）；HyDE/查询扩展 ⛔ 现阶段不采纳（W11 #8） | 调研裁决：[hyde-query-expansion-v1](../eval/selection/hyde-query-expansion-v1.md)，重评触发条件在案 |
 | 精排 | ✅ rerank 管线 W13 落地（bge-reranker-v2-m3 薄封装+故障降级）；数据裁决 +0pp 保持默认关，重评触发在案 | [w13-rerank-eval](eval/retrieval/w13-rerank-eval.md) |
 | 生成 | ✅ prompt 版本化资产 + 空检索硬拒答 + 反缝合规则（W9-2）+ 红线告警 | — |
@@ -41,16 +42,16 @@
 
 | 维度 | 现状 | 处置 |
 |---|---|---|
-| 规划 | ✅ ReAct 显式化 W11 落地（ResearchLoop + 协议解析 + ADR-0015，回归 5.6/6 ≥ 基线） | — |
+| 规划 | ✅ ReAct 显式化 W11 落地（ResearchLoop + 协议解析 + ADR-0015，回归 5.6/6 ≥ 基线）；三角色管线（Planner/Builder/Reviewer）W22 切默认引擎——57 案双臂 +0.33、红线 14/14 满维 | [w22-pipeline-dual-arm](eval/generation/w22-pipeline-dual-arm.md) |
 | 工具 | ✅ 三工具 + MCP Server + MCP Client（W12 #1 fetchWebPage 真实调通，ADR-0016） | ✅ W17 收口：行情/财务真源切换 Tushare pro 落地（`4e75ec3`，REST 直连，`ai.stock.data-source` env 切换，mock 留缺省；真源冒烟 IT + tushare 态全链路实测过——真实营收 1741.44 亿/全年日线，2026-10-10）。挂账：Tushare 官方 hosted MCP 体验（AI 宿主自然语言直达 30+ 接口取数，零代码接入）——与 StockDataClient 真源替换（REST 确定性管道）是两条链路，候选 W21-23 工具周（W17 裁决记录） |
-| Human-in-the-loop | ❌ 高风险动作人工确认（金融域正当性足） | W14+（ReAct 轨迹成型后加确认节点） |
+| Human-in-the-loop | 🔵 W22 #1f 预埋：Temporal Signal 钩子（Reviewer 后挂点位，触发策略三条在案），本周直透 | W23 接通 |
 | 多 Agent / A2A | ❌ | W14+ 进阶（单 Agent 扎实后） |
 
 ## 五、评估体系
 
 | 维度 | 现状 | 处置 |
 |---|---|---|
-| 检索/生成黄金集 + judge 锚定 | ⚠️ 黄金集 ✅（检索 69 / 生成 57，changelog 台账）；**judge 校准 W20 复测 63.3% 不达标立案**——病灶=时效先验误判/rubric 维度误用，处置（语料时点清单注入，rubric 冻结）已排 W21 | [w20-calibration-rerun](eval/generation/w20-calibration-rerun.md) |
+| 检索/生成黄金集 + judge 锚定 | ✅ 黄金集（检索 69 / 生成 57，changelog 台账）；judge 校准 W20 复测 63.3% 立案 → W21 输入侧处置（语料时点清单注入）复测 83.3% 过线 → W22 accuracy 维修尺（工具取数如实标注不视为编造）+ 对照案复评确认不松尺 | [w21-calibration-rerun-r2](eval/generation/w21-calibration-rerun-r2.md)、[w22-judge-rescore-3b](eval/generation/w22-judge-rescore-3b.json) |
 | 多轮评测 | ✅ W11（multi-turn 6 条 + 同会话执行器，改写开/关对照入报告） | — |
 | Agent 轨迹评估 | ✅ W13 #4 落地：三指标口径 + 批量采集脚本（docs/scripts/trajectory-metrics.py），M3 验收 6/6 收敛 100%、冗余 0 | [m3-acceptance](plans/m3/m3-acceptance.md) 门② |
 | 人工反馈回路 | ❌ | W14+ |

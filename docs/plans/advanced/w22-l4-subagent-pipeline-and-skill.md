@@ -13,9 +13,9 @@
 
 | # | 任务 | 验收条件 | 状态 |
 |---|---|---|---|
-| 1 | **三角色管线落地（上半周）**：a. Planner activity（计划=子问题+通路标注，无工具）；b. Builder 收窄（按计划取证+起草，现 ResearchLoop 继承）；c. Reviewer activity（只读证据包，打回 ≤2 次，不过则拒答文案）；d. 消息契约四记录（Plan/EvidencePack/DraftAnswer/ReviewVerdict，Temporal payload 压平先例）；e. inline 单循环留对照臂不拆；f. **HITL 钩子预埋**——Reviewer 后留 Signal 断点位（本周直透不断点），触发策略三条在案（红线擦边/低置信证据/打回耗尽升级人工，W23 接通） | TDD 单测全绿；真机冒烟三角色轨迹（Temporal UI 逐 activity 留痕）；**57 案双臂对照**：三角色 vs 单循环，红线类 6/6 守线，总分判读走 jitter 带口径 | ⬜ |
-| 2 | **SkillRegistry + Token 降幅实测（下半周）**：a. `skill/` 目录扫描（YAML front-matter：name/description/triggers），元数据层常驻 + 命中触发注入正文；b. 首批 skill 落地（数量见裁决②）；c. 按设计 §2.4 执行双臂测量（57 案，usage.prompt_tokens 真账，触发日志逐案） | 降幅报告入库：平均/P50/P95 + 单批成本折算；**守线：B 臂降幅 ≥40% 判值得，<20% 登记止步**；质量分跌落须在 jitter 带内；触发误判有逐案排查记录 | ⬜ |
-| 3 | **挂账处置（穿插）**：a. 红线批"知识库无茅台资料"案归因（生成侧，取 trace 还原检索/工具证据链）；b. judge"清单外=编造"偏向判定（对照轮 2 复评理由 + 必要时专项复跑 2 案）；c. 瞬态 401 观察项——再现即立案，不再现周末销项 | 归因/判定结论入周记；确属缺陷的立项进 W23 输入 | ⬜ |
+| 1 | **三角色管线落地（上半周）**：a. Planner activity（计划=子问题+通路标注，无工具）；b. Builder 收窄（按计划取证+起草，现 ResearchLoop 继承）；c. Reviewer activity（只读证据包，打回 ≤2 次，不过则拒答文案）；d. 消息契约四记录（Plan/EvidencePack/DraftAnswer/ReviewVerdict，Temporal payload 压平先例）；e. inline 单循环留对照臂不拆；f. **HITL 钩子预埋**——Reviewer 后留 Signal 断点位（本周直透不断点），触发策略三条在案（红线擦边/低置信证据/打回耗尽升级人工，W23 接通） | TDD 单测全绿；真机冒烟三角色轨迹（Temporal UI 逐 activity 留痕）；**57 案双臂对照**：三角色 vs 单循环，红线类 6/6 守线，总分判读走 jitter 带口径 | ✅ 2026-10-24（#1a `0552f88` Planner 定档实验 deepseek 10/10 → #1b+d `fd83fe9` 契约四记录+Planner → #1c 前半 `10875d5` Reviewer fail-closed → #1c 后半+#1f `f33f928` 编排层+HITL 预埋 → 验收 `6b92e2a`：**57 案双臂 pipeline 5.44 vs inline 5.11（+0.33 超抖动带），红线 compliance 双臂 14/14 满维**，按裁决③切默认引擎 pipeline） |
+| 2 | **SkillRegistry + Token 降幅实测（下半周）**：a. `skill/` 目录扫描（YAML front-matter：name/description/triggers），元数据层常驻 + 命中触发注入正文；b. 首批 skill 落地（数量见裁决②）；c. 按设计 §2.4 执行双臂测量（57 案，usage.prompt_tokens 真账，触发日志逐案） | 降幅报告入库：平均/P50/P95 + 单批成本折算；**守线：B 臂降幅 ≥40% 判值得，<20% 登记止步**；质量分跌落须在 jitter 带内；触发误判有逐案排查记录 | ✅ 2026-10-24（`4897f02` 分红口径 skill + SkillRegistry + 三档注入接线默认 off → `a1c11f7` 实测：**降幅 2.0% <20% 守线，登记止步**；归因：技能库太小 + 注入点仅覆盖 Agent 通路；报告 w22-skill-token-report.md，重启条件在案） |
+| 3 | **挂账处置（穿插）**：a. 红线批"知识库无茅台资料"案归因（生成侧，取 trace 还原检索/工具证据链）；b. judge"清单外=编造"偏向判定（对照轮 2 复评理由 + 必要时专项复跑 2 案）；c. 瞬态 401 观察项——再现即立案，不再现周末销项 | 归因/判定结论入周记；确属缺陷的立项进 W23 输入 | ✅ 2026-10-26（a. 归因=检索主体多样性缺陷（top-5 被宁德时代片段垄断）主因 + 生成措辞越界（"本次未覆盖"误称"知识库无"）次因，立项进 W23；b. judge 偏向实锤在 accuracy 维"语料之外"措辞，修尺加工具取数豁免 + 专项复评 2 案（0/2/2→2/2/2、对照案 6/6 不变不松尺）；c. 本周 7 次启动零 401，销项） |
 
 ## Owner 裁决点（动工前拍板）
 

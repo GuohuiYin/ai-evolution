@@ -26,7 +26,7 @@
 | AI 编排 | Spring AI 2.0.1 | ADR-0001 |
 | 模型供应商 | DeepSeek（对话）+ SiliconFlow bge-m3（Embedding，OpenAI 兼容协议） | [模型选型笔记 v1](docs/eval/selection/model-selection-v1.md)（双模型实测） |
 | 向量数据库 | Qdrant v1.18.2 | W3 落地 |
-| 工作流引擎 | Temporal（可选第二循环引擎，`AI_LOOP_ENGINE=temporal` 激活，inline 留缺省） | [ADR-0019](docs/adr/0019-temporal-observability.md)（W21 #1②） |
+| 循环引擎 | Temporal 编排的三角色管线缺省（W22 #1：Planner→Builder→Reviewer，`AI_LOOP_ENGINE=pipeline`）；`temporal`=单循环事件历史版（W21）、`inline`=进程内对照臂 | [ADR-0019](docs/adr/0019-temporal-observability.md)（W21 #1②）+ [双臂验收](docs/eval/generation/w22-pipeline-dual-arm.md)（W22 #1） |
 | 会话记忆存储 | MySQL 8.4（可选持久化，`AI_CHAT_MEMORY_STORE=jdbc` 激活，inmemory 留缺省） | W21 #1③ |
 | 镜像构建 | Jib | [ADR-0002](docs/adr/0002-image-build-with-jib.md) |
 | 部署 | Kubernetes（本地 Minikube）——云原生第一天 | W2 落地 |
@@ -38,9 +38,9 @@
 # 前置：.env 配置 AI_API_KEY / SILICONFLOW_API_KEY；本地 Qdrant 容器
 docker run -d --name qdrant -p 6333:6333 -p 6334:6334 qdrant/qdrant:v1.18.2
 
-# 可选基础设施（W21，按需——缺省配置均不需要）：
-# Temporal dev server（AI_LOOP_ENGINE=temporal 时）：temporal server start-dev（CLI 见 docs/notes/temporal-minimal-loop.md）
-# MySQL 容器（AI_CHAT_MEMORY_STORE=jdbc 时）：docker run -d --name ai-evolution-mysql -p 3306:3306 \
+# 基础设施（W21-W22）：
+# Temporal dev server（缺省 pipeline 引擎必需；AI_LOOP_ENGINE=inline 可免）：temporal server start-dev（CLI 见 docs/notes/temporal-minimal-loop.md）
+# MySQL 容器（可选，AI_CHAT_MEMORY_STORE=jdbc 时）：docker run -d --name ai-evolution-mysql -p 3306:3306 \
 #   -e MYSQL_ROOT_PASSWORD=<见.env> -e MYSQL_DATABASE=ai_evolution -v ai-evolution-mysql-data:/var/lib/mysql mysql:8.4
 
 # 本地运行（对话页 http://localhost:18080/，Swagger UI /swagger-ui/index.html，MCP /mcp）
@@ -128,12 +128,16 @@ flowchart TB
     services -.-> cross
 ```
 
+> 本图为 W13 结构快照；W14-W22 演进（Temporal 引擎、三角色管线、Skill 机制、协议防线等）
+> 见下文「关键数据流」「当前能力」与 [docs/plans/](docs/plans/README.md)。
+
 **部署形态**：ai-evolution + Qdrant + mcp-fetch（W12 起独立工作负载，MCP Client 出向 HTTP 端）同集群（Minikube），ConfigMap/Secret 分层，探针 + 优雅停机 + Jib 镜像。
 
 **关键数据流**：
 
 - **通路一（RAG）**：问题 → 查询改写（W11，多轮指代消解）→ bge-m3 向量化 → Qdrant 两阶段检索（W13 ADR-0017：混合召回 dense+sparse+RRF 默认开 → rerank 精排管线落地、数据裁决 +0pp 默认关）→ 空检索硬拒答，命中则上下文 + prompt 模板 → DeepSeek → 回答 + sources + 免责声明
 - **通路二（Agent）**：问题 → 显式 ReAct 研究循环（W11 ADR-0015：thought/action/observation 逐步可见，SSE 轨迹推送，步数上限 6）→ 模型逐步决策调用四工具（AOP 审计留痕）→ 数据回注 → 终答 + 免责声明；数据与问题实体不匹配时禁止拼接推算（agent-chat-v2 反缝合规则）；协议防线（W20 #1）：英文标记纪律 prompt（agent-react-v2 反例 few-shot）+ parser 中文标记容错（protocol 子包策略 Bean）+ MAX_STEPS 触顶合成步（诚实红线兜底）+ `react.protocol.violation.total` 计数
+- **通路二引擎演进（W22 #1）**：三角色管线为缺省引擎——Planner 拆计划 → Builder 白名单工具取证 → Reviewer 三条清单复核（fail-closed 打回、批注回流、耗尽拒答），Temporal 编排 + HITL Signal 钩子预埋（W23 接通）；57 案双臂对照 +0.33、红线 14/14 满维后切默认（[验收](docs/eval/generation/w22-pipeline-dual-arm.md)），inline 单循环留旗标对照
 - **通路三（Analyze）**：股票代码 → StockDataClient 取数（未知代码 404，空数据不过模型）→ CO-STAR + few-shot + `.entity()` schema 强约束 → `StockAnalysisReport` JSON
 
 ## 当前能力
@@ -149,6 +153,11 @@ flowchart TB
 - 对话统一入口 `/ai/chat`：规则路由自动分发 RAG/Agent 双通路（ADR-0010）
 - 结构化个股分析 `/ai/analyze`：CO-STAR + few-shot + schema 强约束输出
 - 知识摄入：md + PDF 年报，元数据三件套过滤（"只查 2024 年报"），SHA-256 增量摄入
+
+**Sub-Agent 与 Skill（W22）**
+
+- 三角色管线为缺省循环引擎：Planner/Builder/Reviewer 职责切分（设计：[w21-l4-subagent-and-skill-design](docs/plans/advanced/w21-l4-subagent-and-skill-design.md)），打回批注回流、打回耗尽拒答；真机冒烟红线案 Reviewer 首轮打回、重写后放行——打回循环真实生效
+- Skill 渐进披露机制落地：SkillRegistry 启动扫描 `skill/*/SKILL.md` + 三档注入（`ai.skill.mode`=off/full/progressive，默认 off）；Token 实测降幅 2.0% <20% 守线 → 登记止步不硬上（[实测报告](docs/eval/generation/w22-skill-token-report.md)）
 
 **协议与部署**
 
@@ -170,7 +179,7 @@ flowchart TB
 - 全链路 traceId 串链：路由 / 检索 / 工具 / 模型四级留痕
 - prompt/response 日志：开关受控（本地开 / 生产关）
 - token 成本账本：含 DeepSeek 缓存命中率
-- 检索黄金集 69 条（W17 扩容 39→60 + W19 v5 轮换 60→69；Recall@5 基线 72% → W13 混合检索裁决启用后 **93%**，+21pp；W19 轮换复测 94.3%）+ 生成黄金集 57 条（W17-W19 扩库轮换；LLM judge 三维评分；judge 校准 W18 95.5% → W19 36.7% 时效破产 → W20 复测 63.3% 不达标立案，处置已排 W21——[揭盲登记](docs/eval/generation/w20-calibration-rerun.md)）+ Agent 轨迹评估（收敛率/冗余/步数，M3 验收 6/6 收敛）
+- 检索黄金集 69 条（W17 扩容 39→60 + W19 v5 轮换 60→69；Recall@5 基线 72% → W13 混合检索裁决启用后 **93%**，+21pp；W19 轮换复测 94.3%）+ 生成黄金集 57 条（W17-W19 扩库轮换；LLM judge 三维评分；judge 校准 W18 95.5% → W19 36.7% 时效破产 → W20 复测 63.3% 立案（[揭盲登记](docs/eval/generation/w20-calibration-rerun.md)）→ W21 输入侧处置复测 83.3% 过线（[r2](docs/eval/generation/w21-calibration-rerun-r2.md)）→ W22 accuracy 维修尺（工具取数如实标注不视为编造）+ 对照案复评确认修尺不松尺）+ Agent 轨迹评估（收敛率/冗余/步数，M3 验收 6/6 收敛）
 - 一页成本账：单次问答 ¥0.0054，一轮生成 eval ¥0.17
 
 **路线图**：W5 工具调用（@Tool）+ M1 验收门 ✅ → M2 MCP/护栏/Eval（W6 MCP 协议贯通 ✅，W7 安全加固 ✅，W8 评估体系 ✅——检索/生成双黄金集 + LLM judge + 成本账；few-shot A/B 裁决不启用）→ M3 最小研究 Loop ✅（2026-09-18 验收收官：显式 ReAct + 会话记忆 + SSE 轨迹 / 查询改写 / MCP Client 出向凭证 / 检索两阶段化——hybrid +21pp 启用、rerank +0pp 不启用，数据裁决；[验收记录](docs/plans/m3/m3-acceptance.md)）→ W14+ 进阶。
@@ -188,6 +197,8 @@ flowchart TB
 | [docs/security/](docs/security/) | 安全基线（W7 红队 10 用例等） |
 | [docs/retro/](docs/retro/) | 阶段复盘（误解档案——错在哪、证据链、纠正动作） |
 | [docs/journal/](docs/journal/) | 周记（PPT 机制篇约定：每周末 5 行） |
+| [docs/scripts/](docs/scripts/) | 度量与探针脚本（轨迹评估采集、BM25 对照探针、judge 复评等） |
+| [docs/term/](docs/term/) | AI 工程术语词汇卡（A17 汇报语言纪律配套） |
 | [docs/portfolio.md](docs/portfolio.md) | 项目亮点清单（作品集，每条挂 commit/报告证据链） |
 | [docs/capability-map.md](docs/capability-map.md) | 生产级 Agent 能力地图（A15 差距台账活文档，里程碑刷新） |
 | [k8s/](k8s/README.md) | 部署清单与配置分层原则 |
