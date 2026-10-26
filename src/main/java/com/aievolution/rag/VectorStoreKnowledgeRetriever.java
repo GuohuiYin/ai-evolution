@@ -36,6 +36,7 @@ public class VectorStoreKnowledgeRetriever implements KnowledgeRetriever {
   private final RrfFuser rrfFuser;
   private final RerankerClient reranker; // null = 无精排段
   private final int rerankTopN;
+  private final RetrievalDiversityGuard diversityGuard; // null = 无配额段（单阶段/测试构造）
 
   /** 单阶段构造（hybrid/rerank 全关语义）：测试与回退路径共用。 */
   public VectorStoreKnowledgeRetriever(
@@ -50,7 +51,8 @@ public class VectorStoreKnowledgeRetriever implements KnowledgeRetriever {
         60,
         Optional.empty(),
         false,
-        5);
+        5,
+        Optional.empty());
   }
 
   /** hybrid 接线构造（rerank 关语义）：#2 测试与回退路径共用。 */
@@ -72,7 +74,8 @@ public class VectorStoreKnowledgeRetriever implements KnowledgeRetriever {
         rrfK,
         Optional.empty(),
         false,
-        5);
+        5,
+        Optional.empty());
   }
 
   @Autowired
@@ -86,7 +89,8 @@ public class VectorStoreKnowledgeRetriever implements KnowledgeRetriever {
       @Value("${ai.rag.hybrid.rrf-k:60}") int rrfK,
       Optional<RerankerClient> reranker,
       @Value("${ai.rag.rerank.enabled:false}") boolean rerankEnabled,
-      @Value("${ai.rag.rerank.top-n:5}") int rerankTopN) {
+      @Value("${ai.rag.rerank.top-n:5}") int rerankTopN,
+      Optional<RetrievalDiversityGuard> diversityGuard) {
     this.vectorStore = vectorStore;
     this.similarityThreshold = similarityThreshold;
     this.topK = topK;
@@ -95,6 +99,7 @@ public class VectorStoreKnowledgeRetriever implements KnowledgeRetriever {
     this.rrfFuser = new RrfFuser(rrfK);
     this.reranker = rerankEnabled ? reranker.orElse(null) : null;
     this.rerankTopN = rerankTopN;
+    this.diversityGuard = diversityGuard.orElse(null);
   }
 
   @Override
@@ -137,7 +142,13 @@ public class VectorStoreKnowledgeRetriever implements KnowledgeRetriever {
             ? dense
             : rrfFuser.fuse(dense, sparseRecall.recall(query, filter, recallTopK));
     if (reranker == null) {
-      List<Document> hits = recalled.stream().limit(topK).toList();
+      // W23 #2：截断前过主体配额（双主体查询防 top-k 垄断）；单阶段无过取、rerank 段暂不接
+      // （rerank 默认关且末端已截到 topN，配额要接需先放大 rerankTopN——启用重评时再议）
+      List<Document> hits =
+          diversityGuard == null
+              ? recalled.stream().limit(topK).toList()
+              : diversityGuard.apply(
+                  query, recalled, topK, q -> denseSearch(q, filter, recallTopK));
       log.info(
           "stage=RETRIEVE mode=hybrid recallHits={} returnTop={} recallTopK={} filter={} query={}",
           recalled.size(),

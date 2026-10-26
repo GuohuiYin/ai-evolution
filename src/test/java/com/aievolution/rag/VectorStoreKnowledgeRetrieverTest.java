@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -93,6 +94,53 @@ class VectorStoreKnowledgeRetrieverTest {
   }
 
   @Test
+  void hybridPathAppliesDiversityQuotaWhenGuardPresent() {
+    // W23 #2 接线：hybrid 截口过主体配额——召回池垄断（宁德前 6 茅台第 7 起）被配额打破
+    SparseRecall sparse = mock(SparseRecall.class);
+    List<Document> pool = new ArrayList<>();
+    for (int i = 0; i < 6; i++) {
+      pool.add(docWithSource("c" + i, "宁德时代：2025年年度报告.pdf"));
+    }
+    for (int i = 0; i < 3; i++) {
+      pool.add(docWithSource("m" + i, "贵州茅台：贵州茅台2025年年度报告.pdf"));
+    }
+    when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(pool);
+    when(sparse.recall(any(), any(), eq(20))).thenReturn(List.of());
+    RetrievalDiversityGuard guard =
+        new RetrievalDiversityGuard(
+            true,
+            List.of(
+                new SubjectEntry("贵州茅台", List.of("茅台"), "600519"),
+                new SubjectEntry("宁德时代", List.of("宁德"), "300750")));
+    KnowledgeRetriever retriever =
+        new VectorStoreKnowledgeRetriever(
+            vectorStore,
+            0.5,
+            5,
+            Optional.of(sparse),
+            true,
+            20,
+            60,
+            Optional.empty(),
+            false,
+            5,
+            Optional.of(guard));
+
+    List<Document> hits = retriever.retrieve("宁德时代和贵州茅台哪个更值得长期持有");
+
+    long maotai =
+        hits.stream()
+            .filter(d -> String.valueOf(d.getMetadata().get("source")).contains("贵州茅台"))
+            .count();
+    assertThat(hits).hasSize(5);
+    assertThat(maotai).isGreaterThanOrEqualTo(2);
+  }
+
+  private static Document docWithSource(String id, String source) {
+    return Document.builder().id(id).text("text-" + id).metadata(Map.of("source", source)).build();
+  }
+
+  @Test
   void hybridOnWithoutSparseBeanFallsBackToSingleStage() {
     when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(List.of(doc("d1")));
     KnowledgeRetriever retriever =
@@ -163,7 +211,17 @@ class VectorStoreKnowledgeRetrieverTest {
             List.of(doc("d2").mutate().score(0.9).build(), doc("d1").mutate().score(0.7).build()));
     KnowledgeRetriever retriever =
         new VectorStoreKnowledgeRetriever(
-            vectorStore, 0.5, 5, Optional.empty(), false, 20, 60, Optional.of(reranker), true, 3);
+            vectorStore,
+            0.5,
+            5,
+            Optional.empty(),
+            false,
+            20,
+            60,
+            Optional.of(reranker),
+            true,
+            3,
+            Optional.empty());
 
     List<Document> hits = retriever.retrieve("茅台工艺");
 
@@ -184,7 +242,17 @@ class VectorStoreKnowledgeRetrieverTest {
         .thenThrow(new RerankerClient.RerankException("供应商 5xx", null));
     KnowledgeRetriever retriever =
         new VectorStoreKnowledgeRetriever(
-            vectorStore, 0.5, 5, Optional.empty(), false, 20, 60, Optional.of(reranker), true, 3);
+            vectorStore,
+            0.5,
+            5,
+            Optional.empty(),
+            false,
+            20,
+            60,
+            Optional.of(reranker),
+            true,
+            3,
+            Optional.empty());
 
     List<Document> hits = retriever.retrieve("茅台工艺");
 
@@ -198,7 +266,17 @@ class VectorStoreKnowledgeRetrieverTest {
     when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(List.of());
     KnowledgeRetriever retriever =
         new VectorStoreKnowledgeRetriever(
-            vectorStore, 0.5, 5, Optional.empty(), false, 20, 60, Optional.of(reranker), true, 5);
+            vectorStore,
+            0.5,
+            5,
+            Optional.empty(),
+            false,
+            20,
+            60,
+            Optional.of(reranker),
+            true,
+            5,
+            Optional.empty());
 
     assertThat(retriever.retrieve("茅台工艺")).isEmpty();
     verifyNoInteractions(reranker);

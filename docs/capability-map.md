@@ -31,7 +31,7 @@
 | 分块 | ✅ chunk-size=800 经 400/800/1200 三轮对照数据裁决维持（三轮 Recall@5 均 72%） | [w13-chunk-size-comparison](eval/retrieval/w13-chunk-size-comparison.md) |
 | 向量化 | ✅ bge-m3（调研论证选型，重评触发在案）；实测对照（vs Qwen3-Embedding-8B）挂 W15-16 | [embedding-selection-v1](eval/selection/embedding-selection-v1.md) |
 | 召回 | ✅ 混合检索（dense+sparse+RRF）W13 数据裁决启用：Recall@5 72%→93%，负例零回归 | [w13-hybrid-eval](eval/retrieval/w13-hybrid-eval.md) |
-| 多主体检索多样性 | ❌ W22 #3a 实锤：双主体查询 top-5 被单一主体年报片段垄断（宁德/茅台比价案），另主体零进上下文——无配额保障 | W23 立项（主体配额+多样性约束） |
+| 多主体检索多样性 | ✅ W23 #2 落地：词典制主体识别 + 召回段配额重排（每主体保底 ⌊topK/n⌋ 轮流出列）+ 缺口主体锚定补召；涉案案 buckets=[0,20]→[2,20]，回归 Recall@5 94.3% ≥ 93%，默认启用 | [w23-diversity-quota](eval/retrieval/w23-diversity-quota.md) |
 | 查询理解 | ✅ 改写 W11 落地（多轮 eval 6.0/6 vs 关闭 4.5/6 量化收益）；HyDE/查询扩展 ⛔ 现阶段不采纳（W11 #8） | 调研裁决：[hyde-query-expansion-v1](../eval/selection/hyde-query-expansion-v1.md)，重评触发条件在案 |
 | 精排 | ✅ rerank 管线 W13 落地（bge-reranker-v2-m3 薄封装+故障降级）；数据裁决 +0pp 保持默认关，重评触发在案 | [w13-rerank-eval](eval/retrieval/w13-rerank-eval.md) |
 | 生成 | ✅ prompt 版本化资产 + 空检索硬拒答 + 反缝合规则（W9-2）+ 红线告警 | — |
