@@ -44,7 +44,7 @@
 | W22 | [advanced/w22-l4-subagent-pipeline-and-skill.md](advanced/w22-l4-subagent-pipeline-and-skill.md)（三角色管线动工 + Skill 机制实测） | ✅ 已完成（管线切默认引擎；Skill 止步登记） |
 | W23 | [advanced/w23-hitl-and-retrieval-diversity.md](advanced/w23-hitl-and-retrieval-diversity.md)（HITL 接通 + 检索主体多样性 + A2A 认知 + Skill 复测） | ✅ 已完成（L4 全项验收收官） |
 | W24 | [advanced/w24-recall-robustness-and-feedback-loop.md](advanced/w24-recall-robustness-and-feedback-loop.md)（零召回防线 + judge 拒答口径 + 人工反馈回路 + 挂账清仓） | ✅ 已完成（四项全清，2026-10-27 收官） |
-| W25 | [advanced/w25-cost-engineering-and-bm25-revisit.md](advanced/w25-cost-engineering-and-bm25-revisit.md)（成本仪表盘+预算熔断 + 模型路由 + bm25 重评 + 反馈最后一公里） | 🔵 已立案（Owner 裁决①B②A③数据裁决；24h 运行顺延 W26） |
+| W25 | [advanced/w25-cost-engineering-and-bm25-revisit.md](advanced/w25-cost-engineering-and-bm25-revisit.md)（可观测性平台 ADR-0020 + 成本仪表盘+预算熔断 + 模型路由 + bm25 重评 + 反馈最后一公里） | 🔵 已立案（Owner 裁决①B②A③数据裁决 + 追加：可观测性进 W25 #1；24h 运行顺延 W26） |
 
 ## 对账校准记录（2026-09-03）
 
