@@ -57,8 +57,7 @@
       background: var(--panel);
       max-width: 260px;
       overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      text-overflow: ellipsis;      white-space: nowrap;
     }
     .new-chat {
       margin-left: auto;
@@ -139,6 +138,15 @@
     /* 引用来源卡片 */
     .sources { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); }
     .sources-title { font-size: 12px; font-weight: 600; color: var(--text-2nd); margin-bottom: 6px; }
+    /* W24 #3 人工反馈：回答气泡下的 👍/👎 入口 */
+    .feedback { margin-top: 8px; display: flex; gap: 6px; align-items: center; }
+    .feedback button {
+      border: 1px solid var(--border); background: var(--panel); border-radius: 8px;
+      font-size: 13px; padding: 2px 8px; cursor: pointer; color: var(--text-2nd);
+    }
+    .feedback button:hover { border-color: var(--accent); color: var(--accent); }
+    .feedback button:disabled { opacity: 0.45; cursor: default; }
+    .feedback .fb-hint { font-size: 12px; color: var(--text-2nd); }
     .source-card {
       background: #f4f5f9;
       border: 1px solid var(--border);
@@ -446,6 +454,7 @@
             conversationId = c.conversationId;
             updateBadge();
             if (c.sources && c.sources.length) bubble.appendChild(renderSources(c.sources));
+            bubble.appendChild(renderFeedbackBar(text));
             scrollBox.scrollTop = scrollBox.scrollHeight;
           }
         });
@@ -458,6 +467,39 @@
     }
 
     function ask(chip) { input.value = chip.textContent; send(); }
+
+    /* W24 #3 人工反馈最小环：👎 登记 badcase 入库（人工裁定后才回流黄金集候选区），👍 仅留痕 */
+    function renderFeedbackBar(query) {
+      const bar = document.createElement('div');
+      bar.className = 'feedback';
+      const up = document.createElement('button'); up.textContent = '👍';
+      const down = document.createElement('button'); down.textContent = '👎';
+      const hint = document.createElement('span'); hint.className = 'fb-hint';
+      bar.append(up, down, hint);
+      const submit = async rating => {
+        up.disabled = down.disabled = true;
+        let comment = null;
+        if (rating === 'down') {
+          comment = prompt('这条回答哪里有问题？（可选，将作为人工裁定的依据）');
+          if (comment === null) { up.disabled = down.disabled = false; return; } // 取消不登记
+        }
+        try {
+          const resp = await fetch('/ai/feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
+            body: JSON.stringify({ conversationId, rating, comment, query })
+          });
+          if (!resp.ok) throw new Error('HTTP ' + resp.status);
+          hint.textContent = rating === 'down' ? '已登记 badcase，待人工裁定' : '已收到，感谢反馈';
+        } catch (e) {
+          hint.textContent = '反馈提交失败（' + e.message + '）';
+          up.disabled = down.disabled = false;
+        }
+      };
+      up.onclick = () => submit('up');
+      down.onclick = () => submit('down');
+      return bar;
+    }
 
     /* 输入行为：Enter 发送 / Shift+Enter 换行 / 自动增高 */
     input.addEventListener('keydown', e => {

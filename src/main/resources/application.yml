@@ -243,6 +243,11 @@ ai:
   eval:
     # M1 验收门阈值：正例 Recall@topK 低于此值不得进入下一阶段
     gate-threshold: 0.7
+  feedback:
+    # W24 #3 人工反馈回路最小环：👍/👎 badcase 登记库（JSON 文件，不依赖 DataSource，
+    # 记忆仓储 inmemory/jdbc 两态皆可用）。👎 进 PENDING_REVIEW，回流黄金集必须人工裁定
+    # （Owner 裁决②A）——scripts/badcase_review.py list/approve/reject
+    file: ${AI_FEEDBACK_FILE:data/feedback.jsonl}
 
 management:
   endpoints:

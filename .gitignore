@@ -31,3 +31,6 @@ target/
 *.iml
 build/
 __pycache__/
+
+# W24 #3 badcase 库（人工反馈登记，本地数据不入库）
+data/
