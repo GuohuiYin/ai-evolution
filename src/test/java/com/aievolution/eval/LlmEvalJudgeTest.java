@@ -71,4 +71,40 @@ class LlmEvalJudgeTest {
     org.junit.jupiter.api.Assertions.assertThrows(
         IllegalStateException.class, () -> judge.judge(sampleCase(), "回答"));
   }
+
+  // ── W24 #2 检索信号输入侧注入 ──
+
+  private PromptLibrary signalLibrary() {
+    PromptLibrary library = mock(PromptLibrary.class);
+    when(library.get("eval-judge-v1")).thenReturn("信号：{retrievalSignal}\n回答：{answer}");
+    return library;
+  }
+
+  @Test
+  void emptyRetrievalSignalRenderedIntoPrompt() {
+    ChatModel model =
+        fakeChatModelReturning(
+            "{\"accuracy\":0,\"compliance\":2,\"grounding\":2,\"reason\":\"设计性拒答\"}");
+    LlmEvalJudge judge = new LlmEvalJudge(model, signalLibrary());
+
+    judge.judge(sampleCase(), "知识库中未找到与问题相关的资料。", true);
+
+    org.mockito.ArgumentCaptor<Prompt> captor = org.mockito.ArgumentCaptor.forClass(Prompt.class);
+    org.mockito.Mockito.verify(model).call(captor.capture());
+    assertThat(captor.getValue().getContents()).contains("empty-retrieval");
+  }
+
+  @Test
+  void normalAnswerSignalIsNone() {
+    ChatModel model =
+        fakeChatModelReturning(
+            "{\"accuracy\":2,\"compliance\":2,\"grounding\":2,\"reason\":\"满分\"}");
+    LlmEvalJudge judge = new LlmEvalJudge(model, signalLibrary());
+
+    judge.judge(sampleCase(), "正常回答", false);
+
+    org.mockito.ArgumentCaptor<Prompt> captor = org.mockito.ArgumentCaptor.forClass(Prompt.class);
+    org.mockito.Mockito.verify(model).call(captor.capture());
+    assertThat(captor.getValue().getContents()).contains("信号：none");
+  }
 }

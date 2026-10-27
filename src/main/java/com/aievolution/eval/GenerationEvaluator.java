@@ -1,5 +1,6 @@
 package com.aievolution.eval;
 
+import com.aievolution.chat.ChatAnswer;
 import com.aievolution.chat.ChatService;
 import java.util.List;
 import java.util.UUID;
@@ -26,15 +27,23 @@ public class GenerationEvaluator {
     if (c.isMultiTurn()) {
       // W11 #6：多轮脚本同会话顺序执行，评末轮——多轮能力的评测集本体（指代消解/追问深化/话题切换）
       String conversationId = "eval-" + UUID.randomUUID();
-      String answer = null;
+      ChatAnswer answer = null;
       for (String turn : c.turns()) {
-        answer = chatService.chat(turn, conversationId).reply();
+        answer = chatService.chat(turn, conversationId);
       }
-      return new GenEvalResult(c, answer, judge.judge(c, answer));
+      return new GenEvalResult(
+          c, answer.reply(), judge.judge(c, answer.reply(), isEmptyRetrievalRefusal(answer)));
     }
     // 每条用例独立会话：eval 测单轮能力，记忆不串题
-    String answer = chatService.chat(c.query(), "eval-" + UUID.randomUUID()).reply();
-    return new GenEvalResult(c, answer, judge.judge(c, answer));
+    ChatAnswer answer = chatService.chat(c.query(), "eval-" + UUID.randomUUID());
+    return new GenEvalResult(
+        c, answer.reply(), judge.judge(c, answer.reply(), isEmptyRetrievalRefusal(answer)));
+  }
+
+  /** 设计性拒答识别（W24 #2）：RAG 空召回硬拒答文案 + 零来源 → 检索信号喂 judge。 Agent 通路红线拒答（有上下文仍拒买卖建议）不匹配本信号——两者判词不同。 */
+  private static boolean isEmptyRetrievalRefusal(ChatAnswer answer) {
+    return answer.sources().isEmpty()
+        && answer.reply().startsWith(com.aievolution.chat.RagChatService.NO_KNOWLEDGE_REPLY);
   }
 
   /**

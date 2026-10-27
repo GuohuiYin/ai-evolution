@@ -32,4 +32,13 @@ public interface EvalJudge {
    * @throws IllegalStateException judge 输出不可解析时 fail-fast——评估事故不兜底打分
    */
   JudgeScore judge(GenerationCase generationCase, String answer);
+
+  /**
+   * 带检索信号的评分（W24 #2 输入侧对齐）：{@code emptyRetrievalRefusal=true} 表示 本次拒答是「召回为空」的设计性行为（红线闸门），judge
+   * 输入侧据此区分 设计性拒答与无理由拒答——准确性照判（用户没拿到答案就是没拿到）， 遵循度不按「无理由拒答」扣。默认忽略信号（人工评审替身等实现零改动）。
+   */
+  default JudgeScore judge(
+      GenerationCase generationCase, String answer, boolean emptyRetrievalRefusal) {
+    return judge(generationCase, answer);
+  }
 }

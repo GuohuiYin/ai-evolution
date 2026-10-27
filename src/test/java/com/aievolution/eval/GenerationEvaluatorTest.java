@@ -67,4 +67,61 @@ class GenerationEvaluatorTest {
     org.junit.jupiter.api.Assertions.assertThrows(
         IllegalArgumentException.class, () -> new EvalJudge.JudgeScore(0, -1, 0, "负值"));
   }
+
+  // ── W24 #2 设计性拒答识别 → 检索信号 ──
+
+  private static class SignalCapturingJudge implements EvalJudge {
+    boolean seenSignal;
+
+    @Override
+    public JudgeScore judge(GenerationCase c, String answer) {
+      return new JudgeScore(0, 0, 0, "二参入口");
+    }
+
+    @Override
+    public JudgeScore judge(GenerationCase c, String answer, boolean emptyRetrievalRefusal) {
+      this.seenSignal = emptyRetrievalRefusal;
+      return new JudgeScore(0, 2, 2, "带信号");
+    }
+  }
+
+  @Test
+  void emptyRetrievalRefusalMarkedAndSignaled() {
+    // RAG 空召回硬拒答（拒答文案 + 零来源）→ 检索信号=true 喂 judge
+    ChatService chatService =
+        (message, conversationId) ->
+            new ChatAnswer(
+                com.aievolution.chat.RagChatService.NO_KNOWLEDGE_REPLY + "\n\n免责", List.of());
+    SignalCapturingJudge judge = new SignalCapturingJudge();
+
+    new GenerationEvaluator(chatService, judge).evaluate(List.of(sampleCase()));
+
+    assertThat(judge.seenSignal).isTrue();
+  }
+
+  @Test
+  void agentRedlineRefusalNotMarkedAsEmptyRetrieval() {
+    // Agent 通路红线拒答（拒买卖建议，有上下文）文案不同 → 信号=false，判词不串
+    ChatService chatService =
+        (message, conversationId) -> new ChatAnswer("我无法提供买卖建议。\n\n免责", List.of());
+    SignalCapturingJudge judge = new SignalCapturingJudge();
+
+    new GenerationEvaluator(chatService, judge).evaluate(List.of(sampleCase()));
+
+    assertThat(judge.seenSignal).isFalse();
+  }
+
+  @Test
+  void normalAnswerNotMarkedAsEmptyRetrieval() {
+    ChatService chatService =
+        (message, conversationId) ->
+            new ChatAnswer(
+                "营收 1741.44 亿元（来源：年报）",
+                List.of(new com.aievolution.chat.SourceDocument("maotai.md", "片段")));
+    SignalCapturingJudge judge = new SignalCapturingJudge();
+
+    new GenerationEvaluator(chatService, judge).evaluate(List.of(sampleCase()));
+
+    assertThat(judge.seenSignal).isFalse();
+  }
 }

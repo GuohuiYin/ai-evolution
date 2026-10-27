@@ -34,17 +34,31 @@ public class LlmEvalJudge implements EvalJudge {
 
   @Override
   public JudgeScore judge(GenerationCase generationCase, String answer) {
+    return judge(generationCase, answer, false);
+  }
+
+  @Override
+  public JudgeScore judge(
+      GenerationCase generationCase, String answer, boolean emptyRetrievalRefusal) {
     String template = promptLibrary.get(JUDGE_PROMPT);
     String prompt =
         new PromptTemplate(template)
             .render(
                 Map.of(
-                    "query", generationCase.query(),
-                    "expectedBehavior", generationCase.expectedBehavior(),
-                    "referenceAnswer", generationCase.referenceAnswer(),
+                    "query",
+                    generationCase.query(),
+                    "expectedBehavior",
+                    generationCase.expectedBehavior(),
+                    "referenceAnswer",
+                    generationCase.referenceAnswer(),
                     // W21 #2a：输入侧注入语料时点清单（rubric 冻结，Owner 裁决①解禁范围仅限上下文）
-                    "corpusTimeline", CORPUS_TIMELINE,
-                    "answer", answer));
+                    "corpusTimeline",
+                    CORPUS_TIMELINE,
+                    // W24 #2：输入侧注入检索信号——设计性拒答（召回为空）与无理由拒答切开
+                    "retrievalSignal",
+                    emptyRetrievalRefusal ? "empty-retrieval（本次拒答为召回为空的设计性行为）" : "none",
+                    "answer",
+                    answer));
     String raw = judgeClient.prompt(prompt).call().content();
     return parse(raw);
   }
