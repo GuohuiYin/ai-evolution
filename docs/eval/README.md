@@ -49,6 +49,8 @@ CI 侧 `GoldenRetrievalEvalIT` 用哈希向量替身只覆盖 normal 正例。
 | W16 | [w16-sparse-bm25-eval.md](retrieval/w16-sparse-bm25-eval.md) | ADR-0017 候选 A 全流程：A1 服务端 BM25 中文单 token 出局 → A3-lite 落地（应用侧分词+服务端 IDF）；对照正例 93.1%→96.6% 但负例 7/10→3/10 破守线 → 裁决不切换，实现留 `impl=bm25` 旗标后待召回门槛重评 |
 | W17 | [w17-golden-v4-baseline.md](retrieval/w17-golden-v4-baseline.md) | 黄金集 v4 扩容 39→60（造数规范同立）首跑基线：正例 43/45=96%、负例 11/15，新增 16 正例全过、旧案零回归；2 条新 adversarial 失败留集挂账（金融词面 dense 交叠带 + sparse 标识符网新失败面） |
 | W19 | [w19-golden-v5-baseline.md](retrieval/w19-golden-v5-baseline.md) | 轮换首演重锚定（语料 3→8 源联动，Owner 逐案审 + pypdf 字面核验）：v5 60→69，正例 50/53=94.3% 守线 ≥93% 三轮复跑达标；负例 8/16 三轮稳定；半年报时效案（旧库不可答→新库可答）3/3 |
+| W23 | [w23-diversity-quota.md](retrieval/w23-diversity-quota.md) | 检索主体多样性修复（词典识别+配额重排+锚定补召）：涉案案 buckets [0,20]→[2,20]，回归 Recall@5 94.3% ≥93% 守线 → 默认启用 |
+| W24 | [w24-zero-recall-retry.md](retrieval/w24-zero-recall-retry.md) | 零召回病灶根因=dense 阈值悬崖（涉案案 top 0.4817 惜败 0.5，分词假设作废）；重述重试防线 A/B 活探针 关=3/3 拒答/开=3/3 救回 → 默认翻 true；回归 94.3% 过门；sparse 长问句零产出登记 bm25 重评（W25 #3） |
 
 ### [generation/](generation/) — 生成质量回归
 
@@ -71,6 +73,10 @@ CI 定时回归门见 `.github/workflows/eval-generation.yml`（每天 UTC 21:23
 | W18 | [w18-gen-v2-baseline.md](generation/w18-gen-v2-baseline.md) · [w18-gen-v21-baseline.md](generation/w18-gen-v21-baseline.md) | 黄金集两批扩容 22→52（新案全部年报 PDF 字面锚定）：v2 总体 5.5/6、v2.1 总体 5.6/6，旧案零回归均取证成立；judge 过 W18 校准（95.5%） |
 | W19 | [w19-gen-v3-baseline.md](generation/w19-gen-v3-baseline.md) | v3 语料轮换联动（翻案 2 + 参照修正 3 + 新增 5，52→57）：R1 4.9/6、R2 5.0/6，降分三机制全归因（Thought 泄漏爆发/速览召回挤压/参照时效）；校准复测 36.7% 不达标——judge 对泄漏系统性偏松 |
 | W20 | [w20-leak-fix-verification.md](generation/w20-leak-fix-verification.md) · [w20-calibration-rerun.md](generation/w20-calibration-rerun.md) | 泄漏专项修复后 6 案复跑零 preamble、双 eval 批总体 5.1/6 零回归、protocol violation 0；校准复测揭盲 63.3% 不达标立案（方向反转：judge 偏松→偏严 9:2），处置候选排 W21 |
+| W21 | [w21-calibration-rerun-r2.md](generation/w21-calibration-rerun-r2.md) | judge 输入侧处置（语料时点清单注入，rubric 冻结）复测 83.3% ≥80% 过线——修 judge 先动输入侧范式确立 |
+| W22 | [w22-pipeline-dual-arm.md](generation/w22-pipeline-dual-arm.md) · [w22-skill-token-report.md](generation/w22-skill-token-report.md) | 三角色管线 57 案双臂对照 +0.33、红线 14/14 满维 → 切默认引擎；accuracy 维补「工具取数如实标注不视为编造」+ 对照案复评（涉案翻分、满分案不动）；Skill token 实测 2.0%<20% 止步 |
+| W23 | [w23-hitl-demo.md](generation/w23-hitl-demo.md) · [w23-skill-token-report-r2.md](generation/w23-skill-token-report-r2.md) | HITL 双路径真机演示（放行含背书/驳回/超时 fail-closed）；ragv3 批 5.3/6 基线；Skill 扩列 4 技能复测 9.7%<20% 再止步；涉案案零召回 0/0/2 登记（W24 #1 立案输入） |
+| W24 | [w24-zero-recall-retry.md](retrieval/w24-zero-recall-retry.md) · [w24-judge-rescore-2.json](generation/w24-judge-rescore-2.json) | 重试批 5.55/6（涉案案翻 2→6 系改写运气，重试零触发——归因只认 A/B 探针）；judge 检索信号注入复评：涉案案 compliance 0→2、accuracy 照判、两满分案不动 |
 
 ### 红线安全 — 单列的评估域
 

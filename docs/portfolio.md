@@ -67,6 +67,15 @@ Harness 工程（Constrain / Inform / Verify / Correct）不是概念，逐条�
 | Skill 渐进披露两轮实测均止步（2.0% → 9.7%，守线 ≥40%/<20%）——**负结果再登记：机制好坏由数据说了算**；扩列复测完成归因分离（库规模有效 vs 注入点结构上限） | [w22-skill-token-report](eval/generation/w22-skill-token-report.md) · [w23-skill-token-report-r2](eval/generation/w23-skill-token-report-r2.md) |
 | A2A 协议「会用」档认知：五对象/Task 八态/签名 Agent Card，对照自家 MCP 双侧落地讲清「MCP 够工具、A2A 够同事」分工 | [a2a-protocol](notes/a2a-protocol.md) |
 
+## 七、鲁棒性与反馈闭环（W24，2026-10-27 收官）
+
+| 亮点 | 证据 |
+|---|---|
+| 零召回防线：根因坐实为 dense 阈值悬崖（涉案案 top 0.4817 惜败 0.5，分词假设作废）→ 空召回重述重试默认开；**证据归因落到机制执行路径**——证据批翻分系措辞运气（70 轮零触发），A/B 活探针 关=3/3 拒答/开=3/3 救回才是真凭据 | [w24-zero-recall-retry](eval/retrieval/w24-zero-recall-retry.md) · `a9e75c3` |
+| judge 拒答口径对齐：空召回硬拒答（设计行为）经检索信号注入与「无理由拒答」切开，rubric 冻结——涉案案 compliance 0→2、accuracy 照判、两满分案不动（修尺证据范式第三次复用） | [w24-judge-rescore-2](eval/generation/w24-judge-rescore-2.json) · `e08983f` |
+| 人工反馈回路最小环：👍/👎 → badcase 登记（问答快照留证）→ 人工裁定台 → 黄金集候选区（裁决②A 入集必过人），真实 badcase 走通全流程；走通中实踩「记忆巨 prompt 快照不可读」当场修掉 | [golden-candidates](eval/generation/golden-candidates.json) · `0cf310e` |
+| 挂账清仓两件：HITL 翻默认 true（裁决①A）+ Tushare 官方 hosted MCP 体验销项（258 工具实测，定位免开发广覆盖备用通道，与 REST 确定性管道分工在案） | [tushare-hosted-mcp](notes/tushare-hosted-mcp.md) · `c5b1cb8` |
+
 ## 使用说明
 
 - 叙事线索参考：若向他人介绍本项目，一条自然的线索是——反缝合规则案例（`f444792`，一次完整的"发现→修复→验证→立规"闭环）→ 双黄金集 → 红队先行 → MCP 协议贯通

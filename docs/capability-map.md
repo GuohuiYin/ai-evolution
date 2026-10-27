@@ -11,7 +11,7 @@
 |---|---|---|
 | 模型选型评测 | ✅ DeepSeek vs Qwen 实测（eval/selection/） | — |
 | 模型降级/容错 | ✅ W12 #4 FailoverChatModel：瞬态故障自动切 Qwen，告警+计数器可见，故障注入实测通过 | — |
-| 模型路由（档位分流） | ❌ 仅通路规则路由 | W14+ |
+| 模型路由（档位分流） | 🔵 W25 #2 已排期（规则先行：ROUTE 结果即分档信号，裁决②A） | [w25 计划](plans/advanced/w25-cost-engineering-and-bm25-revisit.md) |
 | token 优化 | ✅ prompt 缓存命中率入观测 | — |
 
 ## 二、上下文工程
@@ -30,11 +30,11 @@
 | 摄入 | ✅ md + PDF 增量摄入：SHA-256 manifest 三类分派 + 分块参数签名自愈（参数变更自动重建） | [ADR-0012](adr/0012-incremental-ingestion-manifest.md) |
 | 分块 | ✅ chunk-size=800 经 400/800/1200 三轮对照数据裁决维持（三轮 Recall@5 均 72%） | [w13-chunk-size-comparison](eval/retrieval/w13-chunk-size-comparison.md) |
 | 向量化 | ✅ bge-m3（调研论证选型，重评触发在案）；实测对照（vs Qwen3-Embedding-8B）挂 W15-16 | [embedding-selection-v1](eval/selection/embedding-selection-v1.md) |
-| 召回 | ✅ 混合检索（dense+sparse+RRF）W13 数据裁决启用：Recall@5 72%→93%，负例零回归 | [w13-hybrid-eval](eval/retrieval/w13-hybrid-eval.md) |
+| 召回 | ✅ 混合检索（dense+sparse+RRF）W13 数据裁决启用：Recall@5 72%→93%，负例零回归；⚠️ W24 #1a 实锤 sparse 腿长问句近零产出（涉案案两措辞均零命中）——bm25 路线重评排期 W25 #3，数据裁决加固或摘除 | [w13-hybrid-eval](eval/retrieval/w13-hybrid-eval.md) |
 | 多主体检索多样性 | ✅ W23 #2 落地：词典制主体识别 + 召回段配额重排（每主体保底 ⌊topK/n⌋ 轮流出列）+ 缺口主体锚定补召；涉案案 buckets=[0,20]→[2,20]，回归 Recall@5 94.3% ≥ 93%，默认启用 | [w23-diversity-quota](eval/retrieval/w23-diversity-quota.md) |
 | 查询理解 | ✅ 改写 W11 落地（多轮 eval 6.0/6 vs 关闭 4.5/6 量化收益）；HyDE/查询扩展 ⛔ 现阶段不采纳（W11 #8） | 调研裁决：[hyde-query-expansion-v1](../eval/selection/hyde-query-expansion-v1.md)，重评触发条件在案 |
 | 精排 | ✅ rerank 管线 W13 落地（bge-reranker-v2-m3 薄封装+故障降级）；数据裁决 +0pp 保持默认关，重评触发在案 | [w13-rerank-eval](eval/retrieval/w13-rerank-eval.md) |
-| 生成 | ✅ prompt 版本化资产 + 空检索硬拒答 + 反缝合规则（W9-2）+ 红线告警 | — |
+| 生成 | ✅ prompt 版本化资产 + 零召回防线（W24 #1：空召回重述重试默认开，A/B 探针 3/3 vs 0/3）+ 空检索硬拒答 + 反缝合规则（W9-2）+ 红线告警 | [w24-zero-recall-retry](eval/retrieval/w24-zero-recall-retry.md) |
 | 引用忠实度 | ✅ W18 #3 论述结案：三层概念切开（标注率/忠实度/结构化一致性），防线分层 L0/L2 已有、L1 程序化一致性校验候选 W19+、L3 逐句归因明确不做 | [citation-faithfulness](eval/citation-faithfulness.md) |
 | 知识图谱/GraphRAG | ❌ | ⛔ 27 周范围外，记录在案 |
 
@@ -52,10 +52,10 @@
 
 | 维度 | 现状 | 处置 |
 |---|---|---|
-| 检索/生成黄金集 + judge 锚定 | ✅ 黄金集（检索 69 / 生成 57，changelog 台账）；judge 校准 W20 复测 63.3% 立案 → W21 输入侧处置（语料时点清单注入）复测 83.3% 过线 → W22 accuracy 维修尺（工具取数如实标注不视为编造）+ 对照案复评确认不松尺 | [w21-calibration-rerun-r2](eval/generation/w21-calibration-rerun-r2.md)、[w22-judge-rescore-3b](eval/generation/w22-judge-rescore-3b.json) |
+| 检索/生成黄金集 + judge 锚定 | ✅ 黄金集（检索 69 / 生成 57，changelog 台账）；judge 校准 W20 复测 63.3% 立案 → W21 输入侧处置（语料时点清单注入）复测 83.3% 过线 → W22 accuracy 维修尺（工具取数如实标注不视为编造）+ 对照案复评确认不松尺 → W24 拒答口径对齐（检索信号注入，涉案案 compliance 0→2、满分案不动） | [w21-calibration-rerun-r2](eval/generation/w21-calibration-rerun-r2.md)、[w24-judge-rescore-2](eval/generation/w24-judge-rescore-2.json) |
 | 多轮评测 | ✅ W11（multi-turn 6 条 + 同会话执行器，改写开/关对照入报告） | — |
 | Agent 轨迹评估 | ✅ W13 #4 落地：三指标口径 + 批量采集脚本（docs/scripts/trajectory-metrics.py），M3 验收 6/6 收敛 100%、冗余 0 | [m3-acceptance](plans/m3/m3-acceptance.md) 门② |
-| 人工反馈回路 | ❌ | W14+ |
+| 人工反馈回路 | ✅ W24 #3 最小环落地：👍/👎 API + 对话页入口 → badcase 登记（问答快照留证）→ 人工裁定台（scripts/badcase_review.py）→ 黄金集候选区（裁决②A 不自动入集）；真实 badcase 694fcbe6 已走通全流程 | [w24 计划](plans/advanced/w24-recall-robustness-and-feedback-loop.md) |
 | 线上影子评估 | ❌ | W14+（需流量） |
 | 数据集版本管理 | ✅ golden-set-changelog 台账 | — |
 
