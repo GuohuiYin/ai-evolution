@@ -76,7 +76,8 @@ class RagChatIT {
                           new org.springframework.ai.chat.memory.InMemoryChatMemoryRepository())
                       .maxMessages(10)
                       .build(),
-                  (query, history) -> query) // 直通改写：本测试聚焦检索链路
+                  (query, history) -> query, // 直通改写：本测试聚焦检索链路
+                  false)
               .chat("酱香白酒的酿造工艺", "conv-it");
 
       // 引用的来源必须命中知识库文档

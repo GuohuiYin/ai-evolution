@@ -45,12 +45,15 @@ class QueryRewriterTest {
     promptLibrary = mock(PromptLibrary.class);
     when(promptLibrary.exists("query-rewrite-v1")).thenReturn(true);
     when(promptLibrary.get("query-rewrite-v1")).thenReturn("改写规则");
+    when(promptLibrary.exists("query-rephrase-v1")).thenReturn(true);
+    when(promptLibrary.get("query-rephrase-v1")).thenReturn("重述规则");
   }
 
   private ChatClient.Builder builder;
 
   private DeepSeekQueryRewriter rewriter() {
-    return new DeepSeekQueryRewriter(builder, promptLibrary, "query-rewrite-v1", 0.0);
+    return new DeepSeekQueryRewriter(
+        builder, promptLibrary, "query-rewrite-v1", "query-rephrase-v1", 0.0);
   }
 
   @Test
@@ -114,7 +117,7 @@ class QueryRewriterTest {
     // 改写是确定性任务（指代消解/格式变换，非创作）：温度策略外置 ai.rag.rewrite-temperature
     // （默认 0）——R3/R4 实测默认温度下同查询两轮措辞不同，检索排序漂移 ±2 条；
     // 本测试锁定"配置值被真实采信"而非硬编码（故意用非默认 0.7 注入）
-    new DeepSeekQueryRewriter(builder, promptLibrary, "query-rewrite-v1", 0.7);
+    new DeepSeekQueryRewriter(builder, promptLibrary, "query-rewrite-v1", "query-rephrase-v1", 0.7);
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     org.mockito.ArgumentCaptor<ChatOptions.Builder> captor =
@@ -126,8 +129,58 @@ class QueryRewriterTest {
   @Test
   void failsFastWhenPromptMissing() {
     when(promptLibrary.exists("nope")).thenReturn(false);
-    assertThatThrownBy(() -> new DeepSeekQueryRewriter(builder, promptLibrary, "nope", 0.0))
+    assertThatThrownBy(
+            () ->
+                new DeepSeekQueryRewriter(builder, promptLibrary, "nope", "query-rephrase-v1", 0.0))
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("nope");
+  }
+
+  // ── W24 #1b 零召回重述 ──
+
+  @Test
+  void rephraseUsesRephrasePromptWithFailedQuery() {
+    when(callSpec.content()).thenReturn("茅台 12987 工艺 含义");
+
+    String variant = rewriter().rephrase("贵州茅台酿造工艺中的12987是什么含义");
+
+    assertThat(variant).isEqualTo("茅台 12987 工艺 含义");
+    org.mockito.ArgumentCaptor<String> systemCaptor =
+        org.mockito.ArgumentCaptor.forClass(String.class);
+    verify(spec).system(systemCaptor.capture());
+    assertThat(systemCaptor.getValue()).isEqualTo("重述规则");
+    verify(spec).user("贵州茅台酿造工艺中的12987是什么含义");
+  }
+
+  @Test
+  void rephraseBlankOutputFallsBackToOriginal() {
+    when(callSpec.content()).thenReturn(" ");
+
+    assertThat(rewriter().rephrase("原查询")).isEqualTo("原查询");
+  }
+
+  @Test
+  void rephraseExceptionFallsBackToOriginal() {
+    when(spec.user(anyString())).thenThrow(new RuntimeException("HTTP 402 Insufficient Balance"));
+
+    assertThat(rewriter().rephrase("原查询")).isEqualTo("原查询");
+  }
+
+  @Test
+  void passThroughRephraseReturnsOriginal() {
+    // 直通改写器的重述=原查询（调用方据此跳过重试）——默认方法契约
+    PassThroughQueryRewriter pass = new PassThroughQueryRewriter();
+    assertThat(pass.rephrase("任意查询")).isEqualTo("任意查询");
+  }
+
+  @Test
+  void failsFastWhenRephrasePromptMissing() {
+    when(promptLibrary.exists("query-rephrase-v1")).thenReturn(false);
+    assertThatThrownBy(
+            () ->
+                new DeepSeekQueryRewriter(
+                    builder, promptLibrary, "query-rewrite-v1", "query-rephrase-v1", 0.0))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("query-rephrase-v1");
   }
 }

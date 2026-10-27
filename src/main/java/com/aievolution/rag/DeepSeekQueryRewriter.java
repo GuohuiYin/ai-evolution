@@ -27,15 +27,20 @@ public class DeepSeekQueryRewriter implements QueryRewriter {
 
   private final ChatClient chatClient;
   private final String systemPrompt;
+  private final String rephrasePrompt;
 
   public DeepSeekQueryRewriter(
       ChatClient.Builder chatClientBuilder,
       PromptLibrary promptLibrary,
       @Value("${ai.rag.rewrite-prompt:query-rewrite-v1}") String promptName,
+      @Value("${ai.rag.rephrase-prompt:query-rephrase-v1}") String rephrasePromptName,
       @Value("${ai.rag.rewrite-temperature:0.0}") double rewriteTemperature) {
     if (!promptLibrary.exists(promptName)) {
       // prompt 缺失是部署事故，启动即 fail-fast
       throw new IllegalStateException("查询改写 prompt 模板不存在: " + promptName);
+    }
+    if (!promptLibrary.exists(rephrasePromptName)) {
+      throw new IllegalStateException("零召回重述 prompt 模板不存在: " + rephrasePromptName);
     }
     // 裸客户端：改写是单次无状态调用，不挂记忆 advisor（历史由入参显式携带）；
     // 温度策略外置（ai.rag.rewrite-temperature，默认 0）——改写是确定性任务（指代消解/
@@ -45,6 +50,21 @@ public class DeepSeekQueryRewriter implements QueryRewriter {
             .defaultOptions(DeepSeekChatOptions.builder().temperature(rewriteTemperature))
             .build();
     this.systemPrompt = promptLibrary.get(promptName);
+    this.rephrasePrompt = promptLibrary.get(rephrasePromptName);
+  }
+
+  @Override
+  public String rephrase(String failedQuery) {
+    // 零召回防线（W24 #1b）：单次无状态调用换措辞；失败/空白退化为原查询
+    // （调用方据此跳过重试）——重述是增强不是必经，绝不阻塞拒答红线
+    String variant;
+    try {
+      variant = chatClient.prompt().system(this.rephrasePrompt).user(failedQuery).call().content();
+    } catch (RuntimeException e) {
+      log.warn("零召回重述降级为原查询 errorType={}", e.getClass().getSimpleName());
+      return failedQuery;
+    }
+    return variant == null || variant.isBlank() ? failedQuery : variant.strip();
   }
 
   @Override

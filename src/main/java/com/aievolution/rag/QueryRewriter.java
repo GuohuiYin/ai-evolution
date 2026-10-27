@@ -18,4 +18,16 @@ public interface QueryRewriter {
    * @return 自足查询；无法改写时返回原 query（兜底，永不返回空）
    */
   String rewrite(String query, List<Message> history);
+
+  /**
+   * 零召回换措辞重述（W24 #1b 零召回防线）：召回为空时产出一个语义等价、措辞不同的变体 再试一次——主治病灶=dense 阈值悬崖（改写措辞运气决定 top 分落在 0.5 哪一侧）。
+   *
+   * <p>默认直通（返回原查询）：调用方据此跳过重试——同查询重试纯属浪费。
+   *
+   * @param failedQuery 刚召回为空的那条查询（已是改写后的自足查询）
+   * @return 措辞变体；给不出变体时返回原查询
+   */
+  default String rephrase(String failedQuery) {
+    return failedQuery;
+  }
 }

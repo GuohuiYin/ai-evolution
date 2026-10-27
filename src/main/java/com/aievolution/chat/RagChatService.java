@@ -7,6 +7,8 @@ import com.aievolution.rag.QueryRewriter;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
@@ -26,10 +28,13 @@ import org.springframework.stereotype.Service;
 @Service
 public class RagChatService implements ChatService {
 
+  private static final Logger log = LoggerFactory.getLogger(RagChatService.class);
   private static final int EXCERPT_MAX_LENGTH = 120;
   // 红线 01：免责声明引用全项目单点定义（约定 A12），不各自拷贝
   private static final String DISCLAIMER = "\n\n" + Disclaimers.AI_GENERATED;
-  private static final String NO_KNOWLEDGE_REPLY = "知识库中未找到与问题相关的资料。为避免误导，我不凭空作答；请先补充相关文档再提问。";
+  // 空召回硬拒答文案（防幻觉闸门）：公开常量——eval 侧靠它识别「设计性拒答」
+  // 喂给 judge 作检索信号（W24 #2 输入侧对齐，判词与生成解耦）
+  public static final String NO_KNOWLEDGE_REPLY = "知识库中未找到与问题相关的资料。为避免误导，我不凭空作答；请先补充相关文档再提问。";
 
   // prompt 是资产不是字符串常量：模板存 resources/prompts/，版本化随 git 管理；
   // 模板名配置化（A11）——A/B 实验（如 few-shot 对照）经配置切换，不改代码
@@ -40,6 +45,7 @@ public class RagChatService implements ChatService {
   private final PromptLibrary promptLibrary;
   private final QueryRewriter queryRewriter;
   private final ChatMemory chatMemory;
+  private final boolean zeroRecallRetry;
 
   public RagChatService(
       ChatClient.Builder chatClientBuilder,
@@ -47,7 +53,8 @@ public class RagChatService implements ChatService {
       PromptLibrary promptLibrary,
       @Value("${ai.rag.chat-prompt:rag-chat-v1}") String promptName,
       ChatMemory chatMemory,
-      QueryRewriter queryRewriter) {
+      QueryRewriter queryRewriter,
+      @Value("${ai.rag.zero-recall-retry:false}") boolean zeroRecallRetry) {
     if (!promptLibrary.exists(promptName)) {
       // prompt 缺失是部署事故，启动即 fail-fast
       throw new IllegalStateException("RAG prompt 模板不存在: " + promptName);
@@ -62,6 +69,7 @@ public class RagChatService implements ChatService {
     this.chatMemory = chatMemory;
     this.queryRewriter = queryRewriter;
     this.promptName = promptName;
+    this.zeroRecallRetry = zeroRecallRetry;
   }
 
   @Override
@@ -114,7 +122,21 @@ public class RagChatService implements ChatService {
   /** 检索前改写（W11 #5）：追问先经指代消解成自足查询再向量化——证据 #4 的修复点 */
   private List<Document> retrieveWithRewrite(String message, String conversationId) {
     String retrievalQuery = queryRewriter.rewrite(message, chatMemory.get(conversationId));
-    return knowledgeRetriever.retrieve(retrievalQuery);
+    List<Document> docs = knowledgeRetriever.retrieve(retrievalQuery);
+    if (docs.isEmpty() && this.zeroRecallRetry) {
+      // W24 #1b 零召回防线：dense 阈值悬崖病灶（措辞运气决定 top 分落在 0.5 哪侧，
+      // 涉案案 0.4817 惜败）——换措辞重述再试一次；仍空才硬拒答（红线语义不变）
+      String variant = queryRewriter.rephrase(retrievalQuery);
+      if (!variant.equals(retrievalQuery)) {
+        docs = knowledgeRetriever.retrieve(variant);
+        log.info(
+            "stage=RETRIEVE zero-recall-retry hits={} origin={} variant={}",
+            docs.size(),
+            retrievalQuery,
+            variant);
+      }
+    }
+    return docs;
   }
 
   private List<SourceDocument> toSources(List<Document> docs) {

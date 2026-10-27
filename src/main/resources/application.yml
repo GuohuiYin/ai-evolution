@@ -142,6 +142,12 @@ ai:
     chat-prompt: rag-chat-v3
     # W11 #5 查询改写 prompt 模板名
     rewrite-prompt: query-rewrite-v1
+    # W24 #1b 零召回防线：召回为空时换措辞重述再试一次（dense 阈值悬崖病灶——
+    # 涉案案 top 分 0.4817 惜败 0.5 阈值，措辞差 0.06 分定生死）。重述 prompt 模板名见下。
+    # 翻 true。证据：A/B 活探针同一必败查询 关=3/3 硬拒答、开=3/3 救回且重试日志全触发；
+    # 无资料案拒答语义保持；检索回归 Recall@5 94.3% 过门。报告 docs/eval/retrieval/w24-zero-recall-retry.md
+    zero-recall-retry: ${AI_RAG_ZERO_RECALL_RETRY:true}
+    rephrase-prompt: query-rephrase-v1
   rewrite:
     # W11 #5 查询改写总开关：false 时切直通实现（#6 改写开/关两轮 eval 对比的对照组）
     # 环境变量 AI_REWRITE_ENABLED=false 即关闭
