@@ -1,5 +1,6 @@
 package com.aievolution.infra;
 
+import com.aievolution.cost.BudgetGuardAdvisor;
 import com.aievolution.cost.TokenLedger;
 import io.micrometer.tracing.Tracer;
 import io.micrometer.tracing.otel.bridge.Slf4JEventListener;
@@ -22,6 +23,16 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class ModelObservabilityConfig {
+
+  /**
+   * W25 #2b 预算熔断（fail-closed）：{@link BudgetGuardAdvisor} 挂链首， 每次模型调用前查台账，达日预算（默认 200k token，{@code
+   * ai.cost.daily-token-budget} 可配）即拒答——超额后零真实模型调用。账本读故障同样拒答。
+   */
+  @Bean
+  public ChatClientCustomizer budgetGuardCustomizer(
+      TokenLedger ledger, @Value("${ai.cost.daily-token-budget:200000}") long dailyTokenBudget) {
+    return builder -> builder.defaultAdvisors(new BudgetGuardAdvisor(ledger, dailyTokenBudget));
+  }
 
   @Bean
   public ChatClientCustomizer tokenUsageCustomizer(TokenLedger ledger) {

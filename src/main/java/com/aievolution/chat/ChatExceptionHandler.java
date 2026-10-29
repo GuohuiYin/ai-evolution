@@ -1,5 +1,6 @@
 package com.aievolution.chat;
 
+import com.aievolution.cost.BudgetExceededException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.retry.NonTransientAiException;
@@ -50,6 +51,17 @@ class ChatExceptionHandler {
   ResponseEntity<ProblemDetail> handleOpenAiClient(com.openai.errors.OpenAIException ex) {
     log.error("上游模型调用失败（OpenAI 兼容通道）: {}", ex.getMessage());
     return problem(HttpStatus.BAD_GATEWAY, "upstream_model_error", "上游模型调用失败");
+  }
+
+  /** 日 token 预算熔断（W25 #2b fail-closed）→ 503：预算用尽或账本不可读。 调用方语义同「可重试」——明日零点界天后自动恢复。 */
+  @ExceptionHandler(BudgetExceededException.class)
+  ResponseEntity<ProblemDetail> handleBudgetExceeded(BudgetExceededException ex) {
+    log.warn("预算熔断拒答: {}", ex.getMessage());
+    ProblemDetail detail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
+    detail.setTitle("预算熔断拒答");
+    detail.setProperty("error", "daily_budget_exceeded");
+    return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(detail);
   }
 
   /** RFC 7807：title 给人看，扩展属性 error 给程序判断。 */
