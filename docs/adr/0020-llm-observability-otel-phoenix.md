@@ -2,6 +2,9 @@
 
 - 状态：已接受
 - 日期：2026-10-27（W25 #1 立项，Owner 三裁决：①A ②A ③排期进 W25 步骤一）
+- 后续：2026-10-29 Langfuse 对照完成（v4.71.0 OSS 实机），裁决**不常驻**——功能面
+  与自建路线重叠、运维 6 倍（2.9 GiB vs 483 MiB），Phoenix 维持日常面板地位。
+  依据：[对照笔记](../notes/llm-observability-phoenix-vs-langfuse.md)
 
 ## 背景
 
