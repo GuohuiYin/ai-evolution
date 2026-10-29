@@ -1,5 +1,6 @@
 package com.aievolution.analysis;
 
+import com.aievolution.cost.CostChannel;
 import com.aievolution.prompt.InvalidPromptVersionException;
 import com.aievolution.prompt.PromptLibrary;
 import com.aievolution.stock.DailyQuote;
@@ -34,6 +35,8 @@ public class StockAnalysisService {
       StockDataClient stockDataClient,
       PromptLibrary promptLibrary,
       @Value("${ai.stock.analysis-year:2024}") int analysisYear) {
+    // W25 #2a-ii 通路标记：语句式而非链式挂载（理由见 RagChatService）
+    chatClientBuilder.defaultAdvisors(a -> a.param(CostChannel.CONTEXT_KEY, CostChannel.ANALYSIS));
     this.chatClient = chatClientBuilder.build();
     this.stockDataClient = stockDataClient;
     this.promptLibrary = promptLibrary;

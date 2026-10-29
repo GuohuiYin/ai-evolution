@@ -1,5 +1,7 @@
 package com.aievolution.infra;
 
+import com.aievolution.cost.CostChannel;
+import com.aievolution.cost.TokenLedger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClientRequest;
@@ -22,6 +24,12 @@ public class TokenUsageAdvisor implements CallAdvisor {
 
   private static final Logger log = LoggerFactory.getLogger(TokenUsageAdvisor.class);
 
+  private final TokenLedger ledger;
+
+  public TokenUsageAdvisor(TokenLedger ledger) {
+    this.ledger = ledger;
+  }
+
   @Override
   public ChatClientResponse adviseCall(ChatClientRequest request, CallAdvisorChain chain) {
     ChatClientResponse response = chain.nextCall(request);
@@ -31,6 +39,16 @@ public class TokenUsageAdvisor implements CallAdvisor {
     boolean reported =
         usage != null && usage.getTotalTokens() != null && usage.getTotalTokens() > 0;
     Long cacheRead = reported ? resolveCacheRead(usage) : null;
+    if (reported) {
+      // W25 #2a-ii：台账落账——账本（#2b 熔断的唯一依据）与日志（人看）同源同点，杜绝两套账
+      Object channel = request.context().get(CostChannel.CONTEXT_KEY);
+      ledger.record(
+          model == null || model.isBlank() ? CostChannel.UNKNOWN : model,
+          channel instanceof String s && !s.isBlank() ? s : CostChannel.UNKNOWN,
+          usage.getPromptTokens(),
+          usage.getCompletionTokens(),
+          cacheRead);
+    }
     log.info(
         "stage=MODEL model={} tokens_in={} tokens_out={} cache_read={} native={}",
         model == null || model.isBlank() ? "--" : model,

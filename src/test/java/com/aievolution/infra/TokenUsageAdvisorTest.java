@@ -7,10 +7,16 @@ import static org.mockito.Mockito.when;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import com.aievolution.cost.CostChannel;
+import com.aievolution.cost.TokenLedger;
+import java.nio.file.Path;
+import java.time.Clock;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClientRequest;
 import org.springframework.ai.chat.client.ChatClientResponse;
@@ -25,11 +31,16 @@ import org.springframework.ai.deepseek.api.DeepSeekApi;
 /** token 成本观测测试：每次模型调用的用量账必须留痕（W7-Step2，成本治理的度量基座）。 */
 class TokenUsageAdvisorTest {
 
-  private final TokenUsageAdvisor advisor = new TokenUsageAdvisor();
+  @TempDir Path tempDir;
+
+  private TokenLedger ledger;
+  private TokenUsageAdvisor advisor;
   private ListAppender<ILoggingEvent> appender;
 
   @BeforeEach
   void attachAppender() {
+    ledger = new TokenLedger(tempDir.resolve("ledger.jsonl"), Clock.systemDefaultZone());
+    advisor = new TokenUsageAdvisor(ledger);
     ch.qos.logback.classic.Logger logger =
         (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(TokenUsageAdvisor.class);
     appender = new ListAppender<>();
@@ -49,7 +60,7 @@ class TokenUsageAdvisorTest {
     CallAdvisorChain chain = mock(CallAdvisorChain.class);
     when(chain.nextCall(any())).thenReturn(new ChatClientResponse(response, Map.of()));
 
-    advisor.adviseCall(mock(ChatClientRequest.class), chain);
+    advisor.adviseCall(requestWithChannel("rag"), chain);
 
     assertThat(appender.list)
         .anySatisfy(
@@ -71,7 +82,7 @@ class TokenUsageAdvisorTest {
     CallAdvisorChain chain = mock(CallAdvisorChain.class);
     when(chain.nextCall(any())).thenReturn(new ChatClientResponse(response, Map.of()));
 
-    advisor.adviseCall(mock(ChatClientRequest.class), chain);
+    advisor.adviseCall(requestWithChannel("rag"), chain);
 
     assertThat(appender.list)
         .anySatisfy(e -> assertThat(e.getFormattedMessage()).contains("tokens_in=--"));
@@ -96,9 +107,52 @@ class TokenUsageAdvisorTest {
     CallAdvisorChain chain = mock(CallAdvisorChain.class);
     when(chain.nextCall(any())).thenReturn(new ChatClientResponse(response, Map.of()));
 
-    advisor.adviseCall(mock(ChatClientRequest.class), chain);
+    advisor.adviseCall(requestWithChannel("rag"), chain);
 
     assertThat(appender.list)
         .anySatisfy(e -> assertThat(e.getFormattedMessage()).contains("cache_read=896"));
+  }
+
+  @Test
+  void recordsToLedgerWithChannelTag() {
+    // W25 #2a-ii：上报用量必须落台账（#2b 熔断的数据源），通路标记随请求上下文进账
+    ChatResponse response =
+        new ChatResponse(
+            List.of(new Generation(new AssistantMessage("回答"))),
+            ChatResponseMetadata.builder()
+                .model("deepseek-v4-flash")
+                .usage(new DefaultUsage(1234, 56))
+                .build());
+    CallAdvisorChain chain = mock(CallAdvisorChain.class);
+    when(chain.nextCall(any())).thenReturn(new ChatClientResponse(response, Map.of()));
+
+    advisor.adviseCall(requestWithChannel("rag"), chain);
+
+    TokenLedger.DailySummary summary = ledger.summarize(LocalDate.now());
+    assertThat(summary.calls()).isEqualTo(1);
+    assertThat(summary.promptTokens()).isEqualTo(1234);
+    assertThat(summary.byChannel()).containsKey("rag");
+    assertThat(summary.byChannel().get("rag")[0]).isEqualTo(1290);
+  }
+
+  @Test
+  void unreportedUsageNotRecorded() {
+    // 供应商未上报时不落账：台账只记真实发生的调用，不记占位 0
+    ChatResponse response =
+        new ChatResponse(
+            List.of(new Generation(new AssistantMessage("回答"))),
+            ChatResponseMetadata.builder().build());
+    CallAdvisorChain chain = mock(CallAdvisorChain.class);
+    when(chain.nextCall(any())).thenReturn(new ChatClientResponse(response, Map.of()));
+
+    advisor.adviseCall(requestWithChannel("rag"), chain);
+
+    assertThat(ledger.summarize(LocalDate.now()).calls()).isZero();
+  }
+
+  private static ChatClientRequest requestWithChannel(String channel) {
+    ChatClientRequest request = mock(ChatClientRequest.class);
+    when(request.context()).thenReturn(Map.of(CostChannel.CONTEXT_KEY, channel));
+    return request;
   }
 }

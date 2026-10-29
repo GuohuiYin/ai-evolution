@@ -1,5 +1,6 @@
 package com.aievolution.loop.pipeline;
 
+import com.aievolution.cost.CostChannel;
 import com.aievolution.infra.LogSummaries;
 import com.aievolution.prompt.PromptLibrary;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,6 +34,8 @@ public class DeepSeekReviewer implements Reviewer {
       throw new IllegalStateException("Reviewer prompt 模板不存在: " + promptName);
     }
     // 裸客户端：Reviewer 无工具（只读证据包，设计 §1.3）
+    // W25 #2a-ii 通路标记：语句式而非链式挂载（理由见 RagChatService）
+    chatClientBuilder.defaultAdvisors(a -> a.param(CostChannel.CONTEXT_KEY, CostChannel.PIPELINE));
     this.chatClient = chatClientBuilder.build();
     this.promptTemplate = promptLibrary.get(promptName);
     this.meterRegistry = meterRegistry;

@@ -1,5 +1,6 @@
 package com.aievolution.rag;
 
+import com.aievolution.cost.CostChannel;
 import com.aievolution.prompt.PromptLibrary;
 import java.util.List;
 import org.slf4j.Logger;
@@ -45,6 +46,8 @@ public class DeepSeekQueryRewriter implements QueryRewriter {
     // 裸客户端：改写是单次无状态调用，不挂记忆 advisor（历史由入参显式携带）；
     // 温度策略外置（ai.rag.rewrite-temperature，默认 0）——改写是确定性任务（指代消解/
     // 格式变换，非创作），低温消除同查询多轮措辞漂移（W15 R3/R4 实测默认温度下检索排序翻转 ±2 条）
+    // W25 #2a-ii 通路标记：语句式而非链式挂载（理由见 RagChatService）
+    chatClientBuilder.defaultAdvisors(a -> a.param(CostChannel.CONTEXT_KEY, CostChannel.RAG));
     this.chatClient =
         chatClientBuilder
             .defaultOptions(DeepSeekChatOptions.builder().temperature(rewriteTemperature))

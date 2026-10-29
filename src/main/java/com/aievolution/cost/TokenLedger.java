@@ -104,6 +104,11 @@ public class TokenLedger {
     return new DailySummary(day, calls, prompt, completion, cache, byModel, byChannel);
   }
 
+  /** 今日汇总（端点 #2a-ii 的直接素材）：按台账时钟取「今天」 */
+  public DailySummary summarizeToday() {
+    return summarize(LocalDate.now(clock));
+  }
+
   /** 维度桶累加：[0]=total tokens，[1]=调用次数 */
   private static void accumulate(Map<String, long[]> bucket, String key, long tokens) {
     long[] cell = bucket.computeIfAbsent(key, k -> new long[2]);

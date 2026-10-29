@@ -1,5 +1,6 @@
 package com.aievolution.infra;
 
+import com.aievolution.cost.TokenLedger;
 import io.micrometer.tracing.Tracer;
 import io.micrometer.tracing.otel.bridge.Slf4JEventListener;
 import org.springframework.ai.chat.client.ChatClientCustomizer;
@@ -23,8 +24,8 @@ import org.springframework.context.annotation.Configuration;
 public class ModelObservabilityConfig {
 
   @Bean
-  public ChatClientCustomizer tokenUsageCustomizer() {
-    return builder -> builder.defaultAdvisors(new TokenUsageAdvisor());
+  public ChatClientCustomizer tokenUsageCustomizer(TokenLedger ledger) {
+    return builder -> builder.defaultAdvisors(new TokenUsageAdvisor(ledger));
   }
 
   /**

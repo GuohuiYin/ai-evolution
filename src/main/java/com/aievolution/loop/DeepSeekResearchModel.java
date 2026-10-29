@@ -1,5 +1,6 @@
 package com.aievolution.loop;
 
+import com.aievolution.cost.CostChannel;
 import com.aievolution.infra.LogSummaries;
 import com.aievolution.prompt.PromptLibrary;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -107,6 +108,8 @@ public class DeepSeekResearchModel implements ResearchModel {
     }
     // 裸客户端：不挂工具（工具由 Loop 显式调度）、不挂记忆 advisor
     // ——记忆由调用方组装进构造入参，防 advisor 逐步重复追加同一条 user 消息
+    // W25 #2a-ii 通路标记：语句式而非链式挂载（理由见 RagChatService）
+    chatClientBuilder.defaultAdvisors(a -> a.param(CostChannel.CONTEXT_KEY, CostChannel.AGENT));
     this.chatClient = chatClientBuilder.build();
     this.parser = parser;
     this.meterRegistry = meterRegistry;

@@ -1,6 +1,7 @@
 package com.aievolution.chat;
 
 import com.aievolution.compliance.Disclaimers;
+import com.aievolution.cost.CostChannel;
 import com.aievolution.prompt.PromptLibrary;
 import com.aievolution.rag.KnowledgeRetriever;
 import com.aievolution.rag.QueryRewriter;
@@ -60,6 +61,8 @@ public class RagChatService implements ChatService {
       throw new IllegalStateException("RAG prompt 模板不存在: " + promptName);
     }
     // 会话记忆定点挂载（对话域专属，不全局织入——分析与 eval 通路不共享）
+    // W25 #2a-ii 通路标记：语句式而非链式挂载——单测的 builder mock 未桩接该重载，链式调用会 NPE
+    chatClientBuilder.defaultAdvisors(a -> a.param(CostChannel.CONTEXT_KEY, CostChannel.RAG));
     this.chatClient =
         chatClientBuilder
             .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
