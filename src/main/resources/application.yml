@@ -158,6 +158,13 @@ ai:
       # 降级期延迟显著升高（选型实测 30-60x），告警日志 + model.failover.total 计数器可见
       enabled: ${AI_MODEL_FAILOVER_ENABLED:true}
       model: ${AI_MODEL_FAILOVER_MODEL:Qwen/Qwen3.5-35B-A3B}
+    # W25 #3 模型分档（裁决②A 规则先行）：按通路切模型档，空 = 不切（默认零行为变化，可关可切）。
+    # 升档示例：AI_MODEL_TIER_AGENT=deepseek-v4-pro；台账 /ai/cost/summary 的 byModel 立见分账
+    tiers:
+      rag: ${AI_MODEL_TIER_RAG:}
+      agent: ${AI_MODEL_TIER_AGENT:}
+      pipeline: ${AI_MODEL_TIER_PIPELINE:}
+      analysis: ${AI_MODEL_TIER_ANALYSIS:}
   stock:
     # 个股分析默认会计年度（mock 种子数据按 2024 口径）
     analysis-year: 2024

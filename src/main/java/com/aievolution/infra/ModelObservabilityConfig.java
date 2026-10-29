@@ -1,9 +1,12 @@
 package com.aievolution.infra;
 
 import com.aievolution.cost.BudgetGuardAdvisor;
+import com.aievolution.cost.CostChannel;
 import com.aievolution.cost.TokenLedger;
 import io.micrometer.tracing.Tracer;
 import io.micrometer.tracing.otel.bridge.Slf4JEventListener;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.springframework.ai.chat.client.ChatClientCustomizer;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
 import org.springframework.beans.factory.ObjectProvider;
@@ -32,6 +35,24 @@ public class ModelObservabilityConfig {
   public ChatClientCustomizer budgetGuardCustomizer(
       TokenLedger ledger, @Value("${ai.cost.daily-token-budget:200000}") long dailyTokenBudget) {
     return builder -> builder.defaultAdvisors(new BudgetGuardAdvisor(ledger, dailyTokenBudget));
+  }
+
+  /**
+   * W25 #3 模型分档（裁决②A 规则先行）：{@link com.aievolution.infra.ModelTierAdvisor} 按通路切档，
+   * 空档不切（默认零行为变化）。升档示例：{@code AI_MODEL_TIER_AGENT=deepseek-v4-pro}。
+   */
+  @Bean
+  public ChatClientCustomizer modelTierCustomizer(
+      @Value("${ai.model.tiers.rag:}") String ragTier,
+      @Value("${ai.model.tiers.agent:}") String agentTier,
+      @Value("${ai.model.tiers.pipeline:}") String pipelineTier,
+      @Value("${ai.model.tiers.analysis:}") String analysisTier) {
+    Map<String, String> tiers = new LinkedHashMap<>();
+    tiers.put(CostChannel.RAG, ragTier);
+    tiers.put(CostChannel.AGENT, agentTier);
+    tiers.put(CostChannel.PIPELINE, pipelineTier);
+    tiers.put(CostChannel.ANALYSIS, analysisTier);
+    return builder -> builder.defaultAdvisors(new ModelTierAdvisor(tiers));
   }
 
   @Bean
