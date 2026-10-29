@@ -1,6 +1,7 @@
 package com.aievolution.loop.temporal;
 
 import com.aievolution.infra.TraceIdFilter;
+import com.aievolution.infra.TraceSpans;
 import com.aievolution.loop.DeepSeekResearchModel;
 import com.aievolution.loop.LoopListener;
 import com.aievolution.loop.LoopResult;
@@ -47,6 +48,7 @@ public class ResearchPipelineActivitiesImpl implements ResearchPipelineActivitie
   private final LoopListenerRegistry listenerRegistry;
   private final com.aievolution.skill.SkillRegistry skillRegistry;
   private final String skillMode;
+  private final TraceSpans traceSpans;
 
   public ResearchPipelineActivitiesImpl(
       ChatClient.Builder chatClientBuilder,
@@ -60,7 +62,8 @@ public class ResearchPipelineActivitiesImpl implements ResearchPipelineActivitie
       MeterRegistry meterRegistry,
       LoopListenerRegistry listenerRegistry,
       com.aievolution.skill.SkillRegistry skillRegistry,
-      String skillMode) {
+      String skillMode,
+      TraceSpans traceSpans) {
     this.chatClientBuilder = chatClientBuilder;
     this.promptLibrary = promptLibrary;
     this.toolRegistry = toolRegistry;
@@ -73,6 +76,7 @@ public class ResearchPipelineActivitiesImpl implements ResearchPipelineActivitie
     this.listenerRegistry = listenerRegistry;
     this.skillRegistry = skillRegistry;
     this.skillMode = skillMode;
+    this.traceSpans = traceSpans;
   }
 
   @Override
@@ -126,7 +130,8 @@ public class ResearchPipelineActivitiesImpl implements ResearchPipelineActivitie
                 model,
                 new ChannelToolExecutor(this.toolRegistry, sq.channel()),
                 maxSteps,
-                listener);
+                listener,
+                this.traceSpans);
         LoopResult result = loop.run(sq.q());
         for (LoopStep s : result.steps()) {
           // 步号跨子问题全局重排（轨迹与 LoopResult 一致）

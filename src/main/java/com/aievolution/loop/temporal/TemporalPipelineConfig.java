@@ -1,14 +1,18 @@
 package com.aievolution.loop.temporal;
 
+import com.aievolution.infra.TraceSpans;
 import com.aievolution.loop.ReactProtocolParser;
 import com.aievolution.loop.ToolRegistry;
 import com.aievolution.prompt.PromptLibrary;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.temporal.client.WorkflowClient;
+import io.temporal.client.WorkflowClientOptions;
 import io.temporal.serviceclient.WorkflowServiceStubs;
 import io.temporal.serviceclient.WorkflowServiceStubsOptions;
 import io.temporal.worker.Worker;
 import io.temporal.worker.WorkerFactory;
+import io.temporal.worker.WorkerFactoryOptions;
+import java.util.List;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -35,7 +39,12 @@ public class TemporalPipelineConfig {
 
   @Bean
   public WorkflowClient pipelineWorkflowClient(WorkflowServiceStubs pipelineServiceStubs) {
-    return WorkflowClient.newInstance(pipelineServiceStubs);
+    // 链路上下文随 workflow/activity header 传播（W25 #1a）：worker 侧 activity 不再是孤儿 root
+    return WorkflowClient.newInstance(
+        pipelineServiceStubs,
+        WorkflowClientOptions.newBuilder()
+            .setContextPropagators(List.of(new TraceContextPropagator()))
+            .build());
   }
 
   @Bean
@@ -56,7 +65,8 @@ public class TemporalPipelineConfig {
       MeterRegistry meterRegistry,
       LoopListenerRegistry pipelineListenerRegistry,
       com.aievolution.skill.SkillRegistry skillRegistry,
-      @Value("${ai.skill.mode:off}") String skillMode) {
+      @Value("${ai.skill.mode:off}") String skillMode,
+      TraceSpans traceSpans) {
     return new ResearchPipelineActivitiesImpl(
         chatClientBuilder,
         promptLibrary,
@@ -69,13 +79,19 @@ public class TemporalPipelineConfig {
         meterRegistry,
         pipelineListenerRegistry,
         skillRegistry,
-        skillMode);
+        skillMode,
+        traceSpans);
   }
 
   @Bean(destroyMethod = "shutdown")
   public WorkerFactory pipelineWorkerFactory(
       WorkflowClient pipelineWorkflowClient, ResearchPipelineActivitiesImpl activities) {
-    WorkerFactory factory = WorkerFactory.newInstance(pipelineWorkflowClient);
+    WorkerFactory factory =
+        WorkerFactory.newInstance(
+            pipelineWorkflowClient,
+            WorkerFactoryOptions.newBuilder()
+                .setWorkerInterceptors(new TraceContextWorkerInterceptor())
+                .build());
     Worker worker = factory.newWorker(TASK_QUEUE);
     worker.registerWorkflowImplementationTypes(ResearchPipelineWorkflowImpl.class);
     worker.registerActivitiesImplementations(activities);

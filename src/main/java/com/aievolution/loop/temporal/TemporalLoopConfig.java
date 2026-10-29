@@ -5,10 +5,13 @@ import com.aievolution.loop.ToolRegistry;
 import com.aievolution.prompt.PromptLibrary;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.temporal.client.WorkflowClient;
+import io.temporal.client.WorkflowClientOptions;
 import io.temporal.serviceclient.WorkflowServiceStubs;
 import io.temporal.serviceclient.WorkflowServiceStubsOptions;
 import io.temporal.worker.Worker;
 import io.temporal.worker.WorkerFactory;
+import io.temporal.worker.WorkerFactoryOptions;
+import java.util.List;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -38,7 +41,12 @@ public class TemporalLoopConfig {
 
   @Bean
   public WorkflowClient temporalWorkflowClient(WorkflowServiceStubs serviceStubs) {
-    return WorkflowClient.newInstance(serviceStubs);
+    // 链路上下文随 workflow/activity header 传播（W25 #1a）：worker 侧 activity 不再是孤儿 root
+    return WorkflowClient.newInstance(
+        serviceStubs,
+        WorkflowClientOptions.newBuilder()
+            .setContextPropagators(List.of(new TraceContextPropagator()))
+            .build());
   }
 
   @Bean
@@ -74,7 +82,12 @@ public class TemporalLoopConfig {
   @Bean(destroyMethod = "shutdown")
   public WorkerFactory temporalWorkerFactory(
       WorkflowClient workflowClient, ResearchLoopActivitiesImpl activities) {
-    WorkerFactory factory = WorkerFactory.newInstance(workflowClient);
+    WorkerFactory factory =
+        WorkerFactory.newInstance(
+            workflowClient,
+            WorkerFactoryOptions.newBuilder()
+                .setWorkerInterceptors(new TraceContextWorkerInterceptor())
+                .build());
     Worker worker = factory.newWorker(TASK_QUEUE);
     worker.registerWorkflowImplementationTypes(ResearchLoopWorkflowImpl.class);
     worker.registerActivitiesImplementations(activities);
