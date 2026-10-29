@@ -1,8 +1,11 @@
 package com.aievolution.infra;
 
+import io.micrometer.tracing.Tracer;
 import io.micrometer.tracing.otel.bridge.Slf4JEventListener;
 import org.springframework.ai.chat.client.ChatClientCustomizer;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -41,5 +44,20 @@ public class ModelObservabilityConfig {
       matchIfMissing = true)
   public ChatClientCustomizer promptLoggingCustomizer() {
     return builder -> builder.defaultAdvisors(new SimpleLoggerAdvisor());
+  }
+
+  /**
+   * W25 #1a 收尾（Owner 裁决默认开）：{@link ContentTraceAdvisor} 把消息内容打上链路 span—— 库级开关已被上游移除（2.0.1
+   * 仅剩告警日志），自研 advisor 走同一 ChatClientCustomizer 挂点。 默认开的前提见类 javadoc：OTLP 端点本地自托管不出本机。
+   */
+  @Bean
+  @ConditionalOnProperty(
+      name = "ai.chat.content-tracing.enabled",
+      havingValue = "true",
+      matchIfMissing = true)
+  public ChatClientCustomizer contentTracingCustomizer(
+      ObjectProvider<Tracer> tracer,
+      @Value("${ai.chat.content-tracing.max-chars:4000}") int maxChars) {
+    return builder -> builder.defaultAdvisors(new ContentTraceAdvisor(tracer, maxChars));
   }
 }

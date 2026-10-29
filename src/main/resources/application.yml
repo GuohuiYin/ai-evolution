@@ -204,6 +204,14 @@ ai:
   chat:
     # 统一入口路由策略（ChatRouter）：命中股票代码或下列关键词 → Agent 工具通路；其余 → RAG 管道
     agent-keywords: 股价,行情,走势,营收,净利,利润,财务
+    # 消息内容进链路 span（W25 #1a 收尾，Owner 裁决 2026-10-29 默认开）：prompt/回复全文作为
+    # input.value/output.value 打在 advisor 段上，Phoenix/Langfuse 面板直接可读（#1c 实测两家通吃）。
+    # Spring AI 2.0.1 库级开关（log-prompt/log-completion）已移除内容上报只剩告警日志，故自研。
+    # 默认开的前提：OTLP 端点是本地 Phoenix 不出本机——接任何外部观测后端时必须翻 false
+    # （消息内容即隐私面/攻击面）。max-chars 防检索上下文拼出的巨型 prompt 撑爆 span
+    content-tracing:
+      enabled: ${AI_CHAT_CONTENT_TRACING_ENABLED:true}
+      max-chars: 4000
     memory:
       # 会话记忆滑动窗口（条数）：超出后最旧消息淘汰
       window: 20
