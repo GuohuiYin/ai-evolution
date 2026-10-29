@@ -239,7 +239,7 @@ flowchart TB
 
 - 全链路 traceId 串链：路由 / 检索 / 工具 / 模型四级留痕
 - prompt/response 日志：开关受控（本地开 / 生产关）
-- token 成本账本：含 DeepSeek 缓存命中率
+- token 成本账本：JSONL 台账（重启不丢）+ `/ai/cost/summary` 日聚总端点 + 日预算熔断 fail-closed（W25 #2）；含 DeepSeek 缓存命中率
 - 检索黄金集 69 条（W17 扩容 39→60 + W19 v5 轮换 60→69；Recall@5 基线 72% → W13 混合检索裁决启用后 **93%**，+21pp；W19 轮换复测 94.3%）+ 生成黄金集 57 条（W17-W19 扩库轮换；LLM judge 三维评分；judge 校准 W18 95.5% → W19 36.7% 时效破产 → W20 复测 63.3% 立案（[揭盲登记](docs/eval/generation/w20-calibration-rerun.md)）→ W21 输入侧处置复测 83.3% 过线（[r2](docs/eval/generation/w21-calibration-rerun-r2.md)）→ W22 accuracy 维修尺（工具取数如实标注不视为编造）+ 对照案复评确认修尺不松尺 → W24 拒答口径对齐（空召回设计性拒答经检索信号与「无理由拒答」切开，[复评](docs/eval/generation/w24-judge-rescore-2.json)））+ Agent 轨迹评估（收敛率/冗余/步数，M3 验收 6/6 收敛）
 - 一页成本账：单次问答 ¥0.0054（W8 口径）；生成 eval 单轮成本随黄金集扩容漂移中（W24 补记登记，实数待 W25 成本仪表盘）
 

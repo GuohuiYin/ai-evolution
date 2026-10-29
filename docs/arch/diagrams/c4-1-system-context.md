@@ -48,4 +48,5 @@ C4Context
 - **人在环上三种姿态**：终端用户（提问+反馈）、审批人（HITL 断点裁决）、评估运营
   （离线跑批与校准）——三者当前都是 Owner 一人，架构上已分立。
 - **W25 落地**：Phoenix 接通后，「trace 上报」成为第四条出向数据通路（ADR-0020）——
-  链路面板真实可查（证据：`docs/notes/images/w25-phoenix-*.png`）；metrics 通道随 #2 成本仪表盘再开
+  链路面板真实可查（证据：`docs/notes/images/w25-phoenix-*.png`）；metrics 通道保持关闭——
+  #2 成本台账走本地 JSONL 文件（账本须独立于观测栈存活，fail-closed 前提），未复用 OTel 指标通道

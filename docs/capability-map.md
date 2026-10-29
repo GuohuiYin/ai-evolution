@@ -74,7 +74,7 @@
 |---|---|---|
 | 日志/traceId/token 账本 | ✅ 四级留痕 | — |
 | LLM 可观测平台（Langfuse 类） | ✅ Phoenix 落地（W25 #1 全项：OTel GenAI 埋点 + 检索/工具/ReAct 步段 + Temporal 传播 + 消息内容捕获，证据 [RAG 链路](notes/images/w25-phoenix-rag-trace.png)/[Agent 工具链路](notes/images/w25-phoenix-agent-tool-trace.png)/[内容可读](notes/images/w25-phoenix-content-trace.png)）；Langfuse 对照完成（#1c）：功能面重叠 + 运维 6 倍，裁决不常驻——[对照笔记](notes/llm-observability-phoenix-vs-langfuse.md)；遗留：advisor 自动段 kind=unknown 的翻译层，Owner 裁决暂不动 | [ADR-0020](adr/0020-llm-observability-otel-phoenix.md) |
-| 成本账 | ✅ 一页制 | — |
+| 成本账 | ✅ 一页制 + W25 #2 成本工程：JSONL 台账（重启不丢）+ `/ai/cost/summary` 日聚总端点（按模型/通路）+ 日预算熔断 fail-closed（实机验证 503 零调用留痕） | — |
 
 ## 八、交付与工程
 

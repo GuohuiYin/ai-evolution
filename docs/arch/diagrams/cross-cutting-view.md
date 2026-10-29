@@ -72,5 +72,5 @@ flowchart TB
 
 - **安全**：① 鉴权限流 + ④ 工具边界 + ⑤ 内容合规（三层纵深）
 - **可观测**：traceId 四面同键（日志/Temporal UI/反馈快照/W25 OTel 链路）
-- **成本**：token 账（W7 TokenUsageAdvisor → W8 一页账 → W25 成本仪表盘）
+- **成本**：token 账（W7 TokenUsageAdvisor → W8 一页账 → W25 JSONL 台账 + 仪表盘端点 + 预算熔断）
 - **韧性**：failover 快速失败 + Temporal 崩溃重放 + manifest 损坏自愈
