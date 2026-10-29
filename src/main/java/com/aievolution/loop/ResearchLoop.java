@@ -1,8 +1,13 @@
 package com.aievolution.loop;
 
 import com.aievolution.infra.LogSummaries;
+import com.aievolution.infra.TraceSpans;
+import io.micrometer.tracing.Span;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +29,8 @@ public class ResearchLoop implements ResearchLoopEngine {
   private final ToolExecutor toolExecutor;
   private final int maxSteps;
   private final LoopListener listener;
+  // 可空：测试/老装配位缺席时直执——埋点永不改变业务语义（TraceSpans 同款约定）
+  private final TraceSpans traceSpans;
 
   public ResearchLoop(ResearchModel model, ToolExecutor toolExecutor, int maxSteps) {
     this(model, toolExecutor, maxSteps, LoopListener.NONE);
@@ -31,6 +38,15 @@ public class ResearchLoop implements ResearchLoopEngine {
 
   public ResearchLoop(
       ResearchModel model, ToolExecutor toolExecutor, int maxSteps, LoopListener listener) {
+    this(model, toolExecutor, maxSteps, listener, null);
+  }
+
+  public ResearchLoop(
+      ResearchModel model,
+      ToolExecutor toolExecutor,
+      int maxSteps,
+      LoopListener listener,
+      TraceSpans traceSpans) {
     if (maxSteps < 1) {
       // 上限必须为正，否则循环形同虚设——配置错误 fail-fast（A11：该值是策略，接线处走配置）
       throw new IllegalArgumentException("maxSteps 必须 ≥ 1: " + maxSteps);
@@ -39,18 +55,54 @@ public class ResearchLoop implements ResearchLoopEngine {
     this.toolExecutor = toolExecutor;
     this.maxSteps = maxSteps;
     this.listener = listener;
+    this.traceSpans = traceSpans;
   }
 
   public LoopResult run(String question) {
     List<LoopStep> steps = new ArrayList<>();
     while (steps.size() < maxSteps) {
-      ModelTurn turn = model.nextTurn(question, List.copyOf(steps));
+      int index = steps.size();
+      // 一轮 ReAct 步 = 模型决策 + 至多一次工具执行：收口为一个 react.step 父段（W25 #1a），
+      // 内层 chat_client/tool.* 自动段挂在其下，面板可按 react.step.index 逐轮过滤
+      ModelTurn turn =
+          tracedStep(
+              index,
+              () -> {
+                ModelTurn t = model.nextTurn(question, List.copyOf(steps));
+                if (t instanceof ModelTurn.Act act) {
+                  steps.add(executeStep(index, act));
+                }
+                return t;
+              },
+              (span, t) -> {
+                span.tag("react.step.decision", t instanceof ModelTurn.Final ? "final" : "act");
+                if (t instanceof ModelTurn.Act act) {
+                  span.tag("gen_ai.tool.name", act.tool());
+                }
+              });
       if (turn instanceof ModelTurn.Final f) {
         return finish(new LoopResult(f.answer(), List.copyOf(steps), StopReason.FINAL_ANSWER));
       }
-      steps.add(executeStep(steps.size(), (ModelTurn.Act) turn));
     }
     return finish(synthesizeAtMaxSteps(question, steps));
+  }
+
+  /** react.step 父段：TraceSpans 缺席直执；受检异常永不发生（body 不抛），原语义透传 */
+  private <T> T tracedStep(int index, Supplier<T> body, BiConsumer<Span, T> onSuccess) {
+    if (traceSpans == null) {
+      return body.get();
+    }
+    try {
+      return traceSpans.traced(
+          "react.step",
+          Map.of("openinference.span.kind", "CHAIN", "react.step.index", String.valueOf(index)),
+          body::get,
+          onSuccess);
+    } catch (RuntimeException | Error e) {
+      throw e;
+    } catch (Throwable t) {
+      throw new IllegalStateException(t);
+    }
   }
 
   /**

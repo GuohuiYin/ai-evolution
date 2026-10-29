@@ -64,6 +64,10 @@ class AgentChatServiceTest {
         "off",
         com.aievolution.skill.SkillRegistry.empty(),
         org.mockito.Mockito.mock(org.springframework.beans.factory.ObjectProvider.class),
+        org.mockito.Mockito.mock(org.springframework.beans.factory.ObjectProvider.class),
+        // TraceSpans 配返回 null 的 ObjectProvider：无 tracing 环境直执业务体（生产同款降级路径）
+        new com.aievolution.infra.TraceSpans(
+            org.mockito.Mockito.mock(org.springframework.beans.factory.ObjectProvider.class)),
         org.mockito.Mockito.mock(org.springframework.beans.factory.ObjectProvider.class));
   }
 

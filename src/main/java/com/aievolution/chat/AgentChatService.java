@@ -2,6 +2,7 @@ package com.aievolution.chat;
 
 import com.aievolution.compliance.Disclaimers;
 import com.aievolution.infra.TraceIdFilter;
+import com.aievolution.infra.TraceSpans;
 import com.aievolution.loop.DeepSeekResearchModel;
 import com.aievolution.loop.LoopListener;
 import com.aievolution.loop.LoopResult;
@@ -13,6 +14,7 @@ import com.aievolution.loop.ResearchModel;
 import com.aievolution.loop.ToolRegistry;
 import com.aievolution.prompt.PromptLibrary;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.tracing.Tracer;
 import java.util.List;
 import org.slf4j.MDC;
 import org.springframework.ai.chat.client.ChatClient;
@@ -58,6 +60,8 @@ public class AgentChatService implements ChatService {
   private final org.springframework.beans.factory.ObjectProvider<
           com.aievolution.loop.temporal.TemporalPipelineEngine>
       temporalPipelineEngine;
+  private final TraceSpans traceSpans;
+  private final org.springframework.beans.factory.ObjectProvider<Tracer> tracerProvider;
 
   public AgentChatService(
       ChatClient.Builder chatClientBuilder,
@@ -77,7 +81,9 @@ public class AgentChatService implements ChatService {
           temporalLoopEngine,
       org.springframework.beans.factory.ObjectProvider<
               com.aievolution.loop.temporal.TemporalPipelineEngine>
-          temporalPipelineEngine) {
+          temporalPipelineEngine,
+      TraceSpans traceSpans,
+      org.springframework.beans.factory.ObjectProvider<Tracer> tracerProvider) {
     if (!promptLibrary.exists(promptName)) {
       // prompt 缺失是部署事故，启动即 fail-fast
       throw new IllegalStateException("ReAct prompt 模板不存在: " + promptName);
@@ -96,6 +102,8 @@ public class AgentChatService implements ChatService {
     this.skillRegistry = skillRegistry;
     this.temporalLoopEngine = temporalLoopEngine;
     this.temporalPipelineEngine = temporalPipelineEngine;
+    this.traceSpans = traceSpans;
+    this.tracerProvider = tracerProvider;
   }
 
   public ChatAnswer chat(String message, String conversationId) {
@@ -112,6 +120,10 @@ public class AgentChatService implements ChatService {
     Sinks.Many<ChatStreamPart> sink = Sinks.many().unicast().onBackpressureBuffer();
     // MDC 不跨线程：请求线程的 traceId 手工交接，研究轨迹日志不断链
     String traceId = MDC.get(TraceIdFilter.MDC_KEY);
+    // OTel 上下文同样不跨线程（W25 #1a）：当前 span 手工交接进弹性线程，
+    // react.step 等子段才能挂回请求 trace 而非沦为孤儿 root
+    Tracer tracer = tracerProvider.getIfAvailable();
+    io.micrometer.tracing.Span parentSpan = tracer == null ? null : tracer.currentSpan();
     LoopListener listener =
         new LoopListener() {
           @Override
@@ -126,7 +138,9 @@ public class AgentChatService implements ChatService {
           if (traceId != null) {
             MDC.put(TraceIdFilter.MDC_KEY, traceId);
           }
-          try {
+          // parentSpan 为 null 时资源为 null——try-with-resources 跳过关闭，安全
+          try (Tracer.SpanInScope ignored =
+              parentSpan == null ? null : tracer.withSpan(parentSpan)) {
             LoopResult result = newLoop(conversationId, listener).run(message);
             String answer = answerOf(result);
             chatMemory.add(
@@ -194,6 +208,6 @@ public class AgentChatService implements ChatService {
             history,
             skillRegistry,
             skillMode);
-    return new ResearchLoop(model, toolRegistry, maxSteps, listener);
+    return new ResearchLoop(model, toolRegistry, maxSteps, listener, traceSpans);
   }
 }
