@@ -11,7 +11,7 @@
 |---|---|---|
 | 模型选型评测 | ✅ DeepSeek vs Qwen 实测（eval/selection/） | — |
 | 模型降级/容错 | ✅ W12 #4 FailoverChatModel：瞬态故障自动切 Qwen，告警+计数器可见，故障注入实测通过 | — |
-| 模型路由（档位分流） | 🔵 W25 #2 已排期（规则先行：ROUTE 结果即分档信号，裁决②A） | [w25 计划](plans/advanced/w25-cost-engineering-and-bm25-revisit.md) |
+| 模型路由（档位分流） | ✅ W25 #3 落地：`ModelTierAdvisor` 按通路切档（空档不切=默认零行为变化，配置即换档）；定档实测 flash vs pro（成本 15-20x 换不来正确性，裁决不升档备而不用，[报告](eval/selection/agent-tier-v1.md)） | [w25 计划](plans/advanced/w25-cost-engineering-and-bm25-revisit.md) |
 | token 优化 | ✅ prompt 缓存命中率入观测 | — |
 
 ## 二、上下文工程
