@@ -113,6 +113,8 @@
 | Collector | /kəˈlektər/ | 收集器 | OTel 的接收→处理→转发管道 |
 | GenAI semantic conventions | — | GenAI 语义约定 | OTel 记录 LLM 调用(token/模型/prompt)的标准字段 |
 | Micrometer | /maɪˈkrɑːmɪtər/ | (JVM 指标库) | Java 指标采集门面,只管 metrics |
+| Phoenix (Arize Phoenix) | /ˈfiːnɪks/ | (LLM 观测平台) | LLM 应用专用观测+评估,吃 OTel 数据 |
+| Jaeger | /ˈjeɪɡər/ "耶格尔" | (链路追踪后端) | 通用分布式 tracing,CNCF 毕业项目 |
 
 ## 六、读音常见坑
 
