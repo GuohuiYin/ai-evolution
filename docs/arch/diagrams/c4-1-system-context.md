@@ -2,11 +2,11 @@
 
 > C4 第一级：系统全貌——ai-evolution 与「人」和「外部系统」的关系。
 > 视角问题：**这个系统给谁用、依赖谁、被谁依赖？**
-> 截止 2026-10-28（W24 收官 / W25 立案态）；W25 在途项以虚线标注。
+> 截止 2026-10-29（W25 #1a/#1b 落地：Phoenix 接通）。
 
 ```mermaid
 C4Context
-  title ai-evolution 系统上下文（W24 收官态）
+  title ai-evolution 系统上下文（W25 #1b 落地态）
 
   Person(user, "终端用户", "Web 聊天页提问，SSE 流式看回答与过程轨迹；可对回答点 👍/👎")
   Person(owner, "Owner / 审批人", "HITL 挂起时放行/驳回；eval 打分校准；badcase 人工裁定")
@@ -22,7 +22,7 @@ C4Context
   System_Ext(temporal, "Temporal Server", "workflow 编排与事件历史：三角色管线/单循环的执行底座")
   System_Ext(mcpfetch, "MCP fetch 服务", "外部网页抓取（本地 uvx stdio 子进程 / K8s 独立工作负载）")
   System_Ext(mcpclient, "外部 MCP 客户端", "经 MCP Server（Streamable HTTP）调用本系统能力")
-  System_Ext(phoenix, "Phoenix（W25 在途）", "LLM 可观测平台：OTLP 接收 trace/metrics，web console")
+  System_Ext(phoenix, "Phoenix", "LLM 可观测平台：OTLP 接收 trace，web console（W25 #1b 落地）")
 
   Rel(user, aievo, "提问/流式接收/反馈", "HTTPS + SSE")
   Rel(owner, aievo, "审批 Signal（approve/reject）", "HTTPS /api/approvals")
@@ -36,7 +36,7 @@ C4Context
   Rel(aievo, mysql, "会话历史读写", "JDBC 3306")
   Rel(aievo, temporal, "workflow 任务派发/事件历史", "gRPC 7233")
   Rel(aievo, mcpfetch, "网页抓取", "MCP stdio / HTTP")
-  Rel(aievo, phoenix, "trace/metrics 上报", "OTLP gRPC 4317（W25 在途）")
+  Rel(aievo, phoenix, "trace 上报（metrics 通道 #2 再开）", "OTLP HTTP 6006")
 ```
 
 ## 读图要点
@@ -47,5 +47,5 @@ C4Context
   降级到 SiliconFlow 托管的 Qwen（W12 failover）。
 - **人在环上三种姿态**：终端用户（提问+反馈）、审批人（HITL 断点裁决）、评估运营
   （离线跑批与校准）——三者当前都是 Owner 一人，架构上已分立。
-- **W25 变量**：Phoenix 接入后，「trace/metrics 上报」成为第四条出向数据通路
-  （ADR-0020）。
+- **W25 落地**：Phoenix 接通后，「trace 上报」成为第四条出向数据通路（ADR-0020）——
+  链路面板真实可查（证据：`docs/notes/images/w25-phoenix-*.png`）；metrics 通道随 #2 成本仪表盘再开

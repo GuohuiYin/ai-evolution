@@ -2,7 +2,7 @@
 
 > 补充视图（非 C4 静态层级）：任何一个 HTTP 请求从进来到出去，依次穿过哪些横切层、
 > 每层由哪个组件把守、在哪留痕。读法：**自上而下是请求流向，右侧是每层挂载的横切关注点**。
-> 截止 2026-10-28（W24 收官态，W25 在途项虚线标注）。
+> 截止 2026-10-29（W25 #1b Phoenix 落地）。
 
 ```mermaid
 flowchart TB
@@ -49,7 +49,7 @@ flowchart TB
     LOG["控制台日志带 traceId"]
     EVENT["Temporal 事件历史<br/>（loop 域）"]
     METRIC["metrics 端点<br/>failover 计数器等"]
-    OTEL["OTel trace/metrics 上报 Phoenix<br/>（W25 在途）"]
+    OTEL["OTel trace 上报 Phoenix（W25 落地）<br/>gen_ai.* + app.trace_id 同键互查"]
   end
 
   TID -.-> LOG

@@ -73,7 +73,7 @@
 | 维度 | 现状 | 处置 |
 |---|---|---|
 | 日志/traceId/token 账本 | ✅ 四级留痕 | — |
-| LLM 可观测平台（Langfuse 类） | 🔵 W25 #1 已排期（ADR-0020：OTel GenAI 语义埋点 + Phoenix 先行、Langfuse 对照体验；ADR-0019 第 4 条随之修订） | [ADR-0020](adr/0020-llm-observability-otel-phoenix.md) |
+| LLM 可观测平台（Langfuse 类） | 🔵 Phoenix 先行落地（W25 #1a/#1b：OTel GenAI 埋点 + 单容器面板实机可查，证据 [RAG 链路](notes/images/w25-phoenix-rag-trace.png)/[Agent 工具链路](notes/images/w25-phoenix-agent-tool-trace.png)）；Langfuse 对照体验在途（#1c） | [ADR-0020](adr/0020-llm-observability-otel-phoenix.md) |
 | 成本账 | ✅ 一页制 | — |
 
 ## 八、交付与工程

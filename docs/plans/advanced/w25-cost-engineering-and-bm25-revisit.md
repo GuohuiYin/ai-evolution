@@ -29,7 +29,7 @@
 
 | # | 任务（验收口径） | 产出 | 状态 |
 |---|---|---|---|
-| 1 | **可观测性 web console（ADR-0020）**：a. OTel GenAI 语义埋点（Micrometer→OTLP，gen_ai.* 覆盖模型调用/检索段/工具调用/ReAct 步，traceId 与日志面同键）；b. Phoenix 单容器接入跑通（链路面板真实可查）；c. Langfuse 对照体验笔记（功能面对比，常驻与否数据裁决） | 埋点代码 + Phoenix 实机链路截图级证据 + 对照笔记 | ▶ |
+| 1 | **可观测性 web console（ADR-0020）**：a. OTel GenAI 语义埋点（Micrometer→OTLP，gen_ai.* 覆盖模型调用/检索段/工具调用/ReAct 步，traceId 与日志面同键）；b. Phoenix 单容器接入跑通（链路面板真实可查）；c. Langfuse 对照体验笔记（功能面对比，常驻与否数据裁决） | 埋点代码 + Phoenix 实机链路截图级证据 + 对照笔记 | 🔵 a/b 落地（`51b4f40`+`37c0225`+Phoenix 实机证据）；a 余 ReAct 步/Temporal 传播；c 待做 |
 | 2 | **成本工程两件**：a. 成本仪表盘——TokenUsageAdvisor 计量数据聚合导出（按模型/路由/日维度），`/actuator` 或独立端点可查，页面或 JSON 均可（最小可用；token 指标经 OTel 通道进 Phoenix 者可直接复用）；b. 预算熔断——日 token 预算阈值可配，超预算 fail-closed 拒答并留痕（同 HITL 缺席策略口径：宁可不答不可烧钱） | 仪表盘端点 + 熔断机制 + 熔断触发单测 | ▶ |
 | 3 | **模型路由分流**：按查询复杂度/任务类型分档（如闲聊/简单事实→便宜档，复合研究→主力档），规则先行、可关可切；借 FailoverChatModel 的装配位，不另起炉灶 | 路由机制 + 分档规则 + eval 回归无退化证据 | ▶ |
 | 4 | **bm25 路线重评**（W24 #1a 挂账清仓）：sparse 腿长问句零产出的根因坐实（分词器行为实测）+ 候选方案对照（AND→OR / 分词加固），黄金集数据裁决去留 | 重评报告 + 数据裁决记录（翻案或摘除都需 Recall@5 不回归） | ▶ |

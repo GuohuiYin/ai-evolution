@@ -1,7 +1,7 @@
 # C4 L2：容器图（Container）
 
 > C4 第二级：系统内部的「可部署/可运行单元」。视角问题：**系统由哪些进程/存储组成，
-> 各自的技术选型和职责是什么？** 截止 2026-10-28（W24 收官态，W25 在途项虚线标注）。
+> 各自的技术选型和职责是什么？** 截止 2026-10-29（W25 #1b Phoenix 落地）。
 
 ```mermaid
 C4Container
@@ -26,7 +26,7 @@ C4Container
     ContainerDb(mysql, "MySQL", "docker 容器 ai-evolution-mysql，3306", "会话记忆 L2：重启不失忆、多副本同源（旗标 jdbc 启用）")
     Container(temporal, "Temporal Server", "temporal server start-dev，gRPC 7233", "workflow 持久化与任务派发：崩溃重放恢复断点")
     Container(mcpfetch, "mcp-fetch", "uvx stdio 子进程（本地）/ K8s Deployment（部署态）", "官方 mcp-server-fetch：外部网页抓取")
-    Container(phoenix, "Phoenix", "docker 单容器，6006/4317（W25 在途）", "OTLP 接收 + trace 树 web console")
+    Container(phoenix, "Phoenix", "docker 单容器 ai-evolution-phoenix，UI 6006（W25 落地）", "OTLP 接收（HTTP 6006/v1/traces）+ trace 树 web console")
   }
 
   Rel(user, web, "使用", "HTTPS")
@@ -41,7 +41,7 @@ C4Container
   Rel(app, siliconflow, "embedding / rerank / failover", "HTTPS")
   Rel(app, tushare, "行情财务（旗标 tushare 时）", "HTTPS REST")
   Rel(app, feedback, "badcase 登记/读取", "文件 IO")
-  Rel(app, phoenix, "trace/metrics", "OTLP gRPC（W25 在途）")
+  Rel(app, phoenix, "trace（metrics #2 再开）", "OTLP HTTP 6006/v1/traces")
 
   Rel(evalpy, app, "驱动 eval 跑批（HTTP/内部 API）")
   Rel(evalpy, feedback, "badcase 复审裁定", "文件 IO")
