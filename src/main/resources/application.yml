@@ -259,6 +259,22 @@ management:
     health:
       probes:
         enabled: true
+  # W25 #1（ADR-0020）：OTLP 链路导出——默认直发本机 Phoenix（4318）；采样全量，
+  # 学习项目流量低，生产按流量下调
+  tracing:
+    sampling:
+      probability: 1.0
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          # 完整信号地址（Boot 直连导出器不再自动拼路径）；基地址可经 OTEL_EXPORTER_OTLP_ENDPOINT 覆盖
+          endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318}/v1/traces
+  otlp:
+    metrics:
+      export:
+        # 链路先行；指标通道留给 #2 成本仪表盘（Phoenix 只收 trace，空跑只会每分钟刷连接拒绝）
+        enabled: false
 
 # 可观测性基座：控制台日志统一带 traceId（TraceIdFilter 写入 MDC），调用链按号串联
 logging:

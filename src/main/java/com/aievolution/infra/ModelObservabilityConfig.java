@@ -1,5 +1,6 @@
 package com.aievolution.infra;
 
+import io.micrometer.tracing.otel.bridge.Slf4JEventListener;
 import org.springframework.ai.chat.client.ChatClientCustomizer;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -21,6 +22,16 @@ public class ModelObservabilityConfig {
   @Bean
   public ChatClientCustomizer tokenUsageCustomizer() {
     return builder -> builder.defaultAdvisors(new TokenUsageAdvisor());
+  }
+
+  /**
+   * W25 #1（ADR-0020 第 4 条）：OTel 关联写 MDC 时改用独立键（otelTraceId/otelSpanId）， 不占业务号键位——默认实现会以 32 位链路号覆盖
+   * MDC.traceId，每次 span 作用域开关都会 改一遍，「全请求日志按 8 位业务号串联」的既有约定就此断裂。改名后：日志面键位不变， 链路面经 {@link
+   * TraceIdSpanTagger} 的 app.trace_id 属性与业务号互查。
+   */
+  @Bean
+  public Slf4JEventListener otelSlf4JEventListener() {
+    return new Slf4JEventListener("otelTraceId", "otelSpanId");
   }
 
   @Bean

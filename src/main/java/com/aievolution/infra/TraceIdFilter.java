@@ -34,6 +34,9 @@ public class TraceIdFilter extends OncePerRequestFilter {
   public static final String TRACE_ID_HEADER = "X-Trace-Id";
   public static final String MDC_KEY = "traceId";
 
+  /** 请求属性键：业务号在此免疫 MDC 覆盖（OTel 关联会改写 MDC.traceId），供 span 打标等下游消费。 */
+  public static final String REQUEST_ATTR = "ai-evolution.traceId";
+
   /** 合法 traceId：字母数字/连字符，最长 64——够上游系统用，堵死换行/控制字符注入。 */
   private static final Pattern VALID = Pattern.compile("[A-Za-z0-9\\-]{1,64}");
 
@@ -46,6 +49,7 @@ public class TraceIdFilter extends OncePerRequestFilter {
       traceId = UUID.randomUUID().toString().substring(0, 8);
     }
     MDC.put(MDC_KEY, traceId);
+    request.setAttribute(REQUEST_ATTR, traceId);
     response.setHeader(TRACE_ID_HEADER, traceId);
     try {
       filterChain.doFilter(request, response);

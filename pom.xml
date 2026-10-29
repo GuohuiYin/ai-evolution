@@ -132,6 +132,19 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>
     </dependency>
+    <!-- W25 #1（ADR-0020）：OTel GenAI 语义埋点——Boot 4 官方 OpenTelemetry starter，内含
+         Micrometer→OTel 桥接 + OTLP 导出器 + 自动装配；Spring AI 自带观测点（gen_ai.*）
+         由此产出 span，链路数据经 management.opentelemetry.tracing.export.otlp.endpoint 发往 Phoenix（#1b） -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-opentelemetry</artifactId>
+    </dependency>
+    <!-- starter 里桥接包是 runtime 级（Boot 自动装配反射引用）；本项目要直接编程引用其
+         Slf4JEventListener（MDC 键改名），显式提升为编译依赖。版本由 Boot BOM 管理 -->
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-tracing-bridge-otel</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
