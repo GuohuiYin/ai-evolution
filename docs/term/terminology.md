@@ -100,7 +100,21 @@
 | pp (percentage point) | — | 百分点 | 百分比的差值(5%→7% 是 +2pp) |
 | bp (basis point) | — | 基点 | 100bp = 1pp,财经常用 |
 
-## 五、读音常见坑
+## 五、工程与运维
+
+| 术语 | 音标 | 中文 | 一句话 |
+|---|---|---|---|
+| OTel (OpenTelemetry) | /ˌoʊpən ˌteləˈmetri/ | 开放遥测 | 厂商中立的可观测性标准,CNCF 项目 |
+| observability | /əbˌzɜːrvəˈbɪləti/ | 可观测性 | 从外部信号推断系统内部状态 |
+| traces / metrics / logs | — | 调用链/指标/日志 | 可观测性三大信号 |
+| traceId | — | 链路标识 | 贯穿一次请求全程的 ID,串起日志与链路 |
+| span | /spæn/ | 跨度 | 调用链中的一个环节(一次调用/一步操作) |
+| OTLP | 读字母 | OTel 传输协议 | 遥测数据的统一传输格式 |
+| Collector | /kəˈlektər/ | 收集器 | OTel 的接收→处理→转发管道 |
+| GenAI semantic conventions | — | GenAI 语义约定 | OTel 记录 LLM 调用(token/模型/prompt)的标准字段 |
+| Micrometer | /maɪˈkrɑːmɪtər/ | (JVM 指标库) | Java 指标采集门面,只管 metrics |
+
+## 六、读音常见坑
 
 | 易错词 | 正确读法 | 常见错误 |
 |---|---|---|
