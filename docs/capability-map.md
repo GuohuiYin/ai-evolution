@@ -73,7 +73,7 @@
 | 维度 | 现状 | 处置 |
 |---|---|---|
 | 日志/traceId/token 账本 | ✅ 四级留痕 | — |
-| LLM 可观测平台（Langfuse 类） | 🔵 Phoenix 先行落地（W25 #1a/#1b：OTel GenAI 埋点 + 单容器面板实机可查，证据 [RAG 链路](notes/images/w25-phoenix-rag-trace.png)/[Agent 工具链路](notes/images/w25-phoenix-agent-tool-trace.png)）；Langfuse 对照完成（#1c）：功能面重叠 + 运维 6 倍，裁决不常驻——[对照笔记](notes/llm-observability-phoenix-vs-langfuse.md) | [ADR-0020](adr/0020-llm-observability-otel-phoenix.md) |
+| LLM 可观测平台（Langfuse 类） | ✅ Phoenix 落地（W25 #1 全项：OTel GenAI 埋点 + 检索/工具/ReAct 步段 + Temporal 传播 + 消息内容捕获，证据 [RAG 链路](notes/images/w25-phoenix-rag-trace.png)/[Agent 工具链路](notes/images/w25-phoenix-agent-tool-trace.png)/[内容可读](notes/images/w25-phoenix-content-trace.png)）；Langfuse 对照完成（#1c）：功能面重叠 + 运维 6 倍，裁决不常驻——[对照笔记](notes/llm-observability-phoenix-vs-langfuse.md)；遗留：advisor 自动段 kind=unknown 的翻译层，Owner 裁决暂不动 | [ADR-0020](adr/0020-llm-observability-otel-phoenix.md) |
 | 成本账 | ✅ 一页制 | — |
 
 ## 八、交付与工程

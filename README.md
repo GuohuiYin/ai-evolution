@@ -42,7 +42,9 @@ docker run -d --name qdrant -p 6333:6333 -p 6334:6334 qdrant/qdrant:v1.18.2
 # Temporal dev server（缺省 pipeline 引擎必需；AI_LOOP_ENGINE=inline 可免）：temporal server start-dev（CLI 见 docs/notes/temporal-minimal-loop.md）
 # MySQL 容器（可选，AI_CHAT_MEMORY_STORE=jdbc 时）：docker run -d --name ai-evolution-mysql -p 3306:3306 \
 #   -e MYSQL_ROOT_PASSWORD=<见.env> -e MYSQL_DATABASE=ai_evolution -v ai-evolution-mysql-data:/var/lib/mysql mysql:8.4
-# Phoenix 可观测面板（W25 #1b，ADR-0020：链路面板 http://localhost:6006，应用 OTLP 默认直发 6006）：
+# Phoenix 可观测面板（W25 #1，ADR-0020：链路面板 http://localhost:6006，应用 OTLP 默认直发；
+# span 覆盖 ReAct 步/检索/工具段且 prompt 全文可读——内容捕获默认开的前提是端点本地不出本机，
+# 接外部观测后端必须关 ai.chat.content-tracing.enabled）：
 docker run -d --name ai-evolution-phoenix -p 6006:6006 -p 4317:4317 arizephoenix/phoenix:version-20.26.1
 
 # 本地运行（对话页 http://localhost:18080/，Swagger UI /swagger-ui/index.html，MCP /mcp）
