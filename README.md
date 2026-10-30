@@ -66,7 +66,7 @@ minikube image load ai-evolution:0.3.0-m3
 kubectl apply -f k8s/
 ```
 
-## 架构图（截至 W24 · 2026-10-27）
+## 架构图（截至 W25 · 2026-10-30）
 
 ```mermaid
 flowchart TB
@@ -93,7 +93,7 @@ flowchart TB
 
     subgraph capability["能力层"]
         Rewrite["查询改写（W11）+ 零召回重述（W24）<br/>多轮指代消解，数据裁决启用"]
-        Retriever["KnowledgeRetriever 两阶段（W13，ADR-0017）<br/>混合召回 dense+sparse+RRF（默认开）<br/>主体多样性配额（W23，默认开）<br/>rerank 精排管线（+0pp 裁决，默认关）"]
+        Retriever["KnowledgeRetriever 两阶段（W13，ADR-0017）<br/>混合召回 dense+sparse+RRF（默认开）<br/>sparse 候选翻页取尽（W25 #4 修 500 截断）<br/>主体多样性配额（W23，默认开）<br/>rerank 精排管线（+0pp 裁决，默认关）"]
         Qdrant[("Qdrant 向量库<br/>md + PDF 增量摄入（分块参数签名自愈）<br/>元数据三件套过滤")]
         Tools["StockDataTools / AnnouncementTools<br/>行情 · 财务 · 公告检索（@Tool）"]
         Fetch["fetchWebPage（W12，ReAct 第 4 工具）<br/>MCP Client 出向 → 官方 mcp-server-fetch<br/>stdio 本地 / Streamable HTTP 集群（ADR-0016）"]
@@ -131,8 +131,8 @@ flowchart TB
     subgraph cross["横切关注点（全链路生效）"]
         RedLines["金融三红线代码化<br/>免责声明 · 拒买卖建议 · 数字溯源"]
         Obs["可观测：traceId 四级留痕 · SSE 轨迹<br/>prompt/response 日志 · token 账本 · failover 计数器"]
-        Eval["评估：检索黄金集 69 条 + 生成黄金集 57 条<br/>（LLM judge，A13 prompt 纪律门 + 检索信号口径，CI 定时回归）<br/>Agent 轨迹评估：步数/冗余/收敛率"]
-        FB["人工反馈回路（W24）：badcase 登记<br/>→ 人工裁定 → 黄金集候选区（不自动入集）"]
+        Eval["评估：检索黄金集 69 条 + 生成黄金集 58 条<br/>（LLM judge，A13 prompt 纪律门 + 检索信号口径，CI 定时回归）<br/>Agent 轨迹评估：步数/冗余/收敛率"]
+        FB["人工反馈回路（W24）：badcase 登记<br/>→ 人工裁定 → 黄金集候选区 → 转正入集（W25 #5 首例闭环）"]
         Sec["安全：CVE-2026-59318 fail-fast · API Key + 限流<br/>MCP 脱敏 · 入参上限 · 工具调用上限"]
     end
     services -.-> cross
@@ -140,7 +140,7 @@ flowchart TB
 
 > 本图与「通路全景图」（流程视角）同步刷新——每周收官 A8 核查时对照代码实态更新。
 
-## 通路全景图（W24 · 2026-10-27 实态）
+## 通路全景图（W25 · 2026-10-30 实态）
 
 > 流程视角：一个问题从进门到出答的完整路径，与上节结构分层图互补。
 > **本图随项目演进实时更新**——每周收官 A8 核查时对照代码实态刷新（与 README 其余快照同纪律）。
@@ -179,7 +179,8 @@ flowchart TB
         MEM["会话记忆 L1 窗口 20<br/>inmemory 缺省 / MySQL jdbc（W21）"]
         SK["Skill 注入默认 off<br/>（W22 实测 2.0%、W23 扩列复测 9.7%<br/>均 <20% 止步，重启条件在案）"]
         FO["FailoverChatModel<br/>DeepSeek 瞬态故障 → Qwen 自动降级"]
-        FB["人工反馈回路（W24 #3）<br/>👎 登记 badcase 库 → 人工裁定<br/>→ 黄金集候选区（不自动入集）"]
+        FB["人工反馈回路（W24 #3）<br/>👎 登记 badcase 库 → 人工裁定<br/>→ 黄金集候选区 → 转正入集（W25 #5 首例闭环）"]
+        COST["成本工程（W25 #2/#3）<br/>JSONL 台账 + /ai/cost/summary 日聚总<br/>日预算熔断 fail-closed（BudgetGuardAdvisor 链首）<br/>模型路由分档 ModelTierAdvisor（空档不切，备而不用）"]
     end
 ```
 
@@ -217,7 +218,7 @@ flowchart TB
 **人工反馈回路（W24）**
 
 - 对话页每条回答带 👍/👎：`POST /ai/feedback` 快照当轮问答登记 badcase 库（`data/feedback.jsonl`，本地不入 git）
-- 回流黄金集必须人工裁定（裁决②A，造数规范四纪律不变）：`scripts/badcase_review.py` list/approve/reject，approve 写入 `docs/eval/generation/golden-candidates.json` 候选区，按规范补齐后转正
+- 回流黄金集必须人工裁定（裁决②A，造数规范四纪律不变）：`scripts/badcase_review.py` list/approve/reject，approve 写入 `docs/eval/generation/golden-candidates.json` 候选区，按规范补齐后转正；**首例转正闭环（W25 #5）**：694fcbe6 总股本时点错位 → 黄金集 v3.2（57→58 + 参照修订 2），并抽象出「最新口径优先」缺陷族（[回归报告](docs/eval/generation/w25-gen-v32-baseline.md)）
 - judge 拒答口径对齐（W24 #2）：空召回硬拒答（设计行为）经检索信号注入与「无理由拒答」切开，rubric 冻结；涉案案 compliance 0→2、两满分案复评不动（[复评证据](docs/eval/generation/w24-judge-rescore-2.json)）
 
 **协议与部署**
@@ -227,6 +228,7 @@ flowchart TB
 - 双模型供应商配置：DeepSeek 主力 / Qwen 备选（实测定稿）；**模型自动降级**（W12 #4）：
   主力超时/5xx 自动切 Qwen（FailoverChatModel 装饰器，@Primary 全链路透明），
   4xx 不切防掩盖病灶；WARN 告警日志 + `model.failover.total` 计数器可见
+- **模型路由分档**（W25 #3，备而不用）：`ModelTierAdvisor` 按通路切模型档（`ai.model.tiers.{rag,agent,pipeline,analysis}`，空档=不切零行为变化）；10 案双臂实测 pro 成本 15-20x、质量零收益 → Owner 裁决不升档（[定档报告](docs/eval/selection/agent-tier-v1.md)）
 - 集群内全链路运行：Minikube + ConfigMap/Secret 分层 + 探针 + 优雅停机
 
 **安全与合规**
@@ -238,10 +240,11 @@ flowchart TB
 **可观测与评估**
 
 - 全链路 traceId 串链：路由 / 检索 / 工具 / 模型四级留痕
+- OTel GenAI 语义埋点 → Phoenix 链路面板（W25 #1，[ADR-0020](docs/adr/0020-llm-observability-otel-phoenix.md)）：模型调用/检索段/工具调用/ReAct 步 trace 可查，消息内容捕获默认开
 - prompt/response 日志：开关受控（本地开 / 生产关）
 - token 成本账本：JSONL 台账（重启不丢）+ `/ai/cost/summary` 日聚总端点 + 日预算熔断 fail-closed（W25 #2）；含 DeepSeek 缓存命中率
-- 检索黄金集 69 条（W17 扩容 39→60 + W19 v5 轮换 60→69；Recall@5 基线 72% → W13 混合检索裁决启用后 **93%**，+21pp；W19 轮换复测 94.3%）+ 生成黄金集 57 条（W17-W19 扩库轮换；LLM judge 三维评分；judge 校准 W18 95.5% → W19 36.7% 时效破产 → W20 复测 63.3% 立案（[揭盲登记](docs/eval/generation/w20-calibration-rerun.md)）→ W21 输入侧处置复测 83.3% 过线（[r2](docs/eval/generation/w21-calibration-rerun-r2.md)）→ W22 accuracy 维修尺（工具取数如实标注不视为编造）+ 对照案复评确认修尺不松尺 → W24 拒答口径对齐（空召回设计性拒答经检索信号与「无理由拒答」切开，[复评](docs/eval/generation/w24-judge-rescore-2.json)））+ Agent 轨迹评估（收敛率/冗余/步数，M3 验收 6/6 收敛）
-- 一页成本账：单次问答 ¥0.0054（W8 口径）；生成 eval 单轮成本随黄金集扩容漂移中（W24 补记登记，实数待 W25 成本仪表盘）
+- 检索黄金集 69 条（W17 扩容 39→60 + W19 v5 轮换 60→69；Recall@5 基线 72% → W13 混合检索裁决启用后 **93%**，+21pp；W19 轮换复测 94.3%）+ 生成黄金集 58 条（W17-W19 扩库轮换 + W25 反馈回路首例转正；LLM judge 三维评分；judge 校准 W18 95.5% → W19 36.7% 时效破产 → W20 复测 63.3% 立案（[揭盲登记](docs/eval/generation/w20-calibration-rerun.md)）→ W21 输入侧处置复测 83.3% 过线（[r2](docs/eval/generation/w21-calibration-rerun-r2.md)）→ W22 accuracy 维修尺（工具取数如实标注不视为编造）+ 对照案复评确认修尺不松尺 → W24 拒答口径对齐（空召回设计性拒答经检索信号与「无理由拒答」切开，[复评](docs/eval/generation/w24-judge-rescore-2.json)））+ Agent 轨迹评估（收敛率/冗余/步数，M3 验收 6/6 收敛）
+- 一页成本账：单次问答 ¥0.0054（W8 口径）；生成 eval 单轮成本可经 `/ai/cost/summary` 日聚总实查（W25 #2 上线）
 
 **路线图**：W5 工具调用（@Tool）+ M1 验收门 ✅ → M2 MCP/护栏/Eval（W6 MCP 协议贯通 ✅，W7 安全加固 ✅，W8 评估体系 ✅——检索/生成双黄金集 + LLM judge + 成本账；few-shot A/B 裁决不启用）→ M3 最小研究 Loop ✅（2026-09-18 验收收官：显式 ReAct + 会话记忆 + SSE 轨迹 / 查询改写 / MCP Client 出向凭证 / 检索两阶段化——hybrid +21pp 启用、rerank +0pp 不启用，数据裁决；[验收记录](docs/plans/m3/m3-acceptance.md)）→ W14+ 进阶。
 
