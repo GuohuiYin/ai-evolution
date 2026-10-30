@@ -58,7 +58,7 @@ class QdrantSparseRecallIT {
               new Document(
                   "神行超充电池与麒麟电池是宁德时代的主力产品", Map.of("source", "catl.md", "docType", "note"))));
 
-      QdrantSparseRecall recall = new QdrantSparseRecall(client, COLLECTION);
+      QdrantSparseRecall recall = new QdrantSparseRecall(client, COLLECTION, 10_000);
       recall.ensureIndex();
 
       // 12987 数字代号：dense 路三轮对照全部未召回（w13-chunk-size-comparison），字面路必须命中
@@ -88,7 +88,7 @@ class QdrantSparseRecallIT {
                   "动力电池年报摘要与风险提示",
                   Map.of("source", "catl-ar.pdf", "docType", "report", "asOf", "2024-12-31"))));
 
-      QdrantSparseRecall recall = new QdrantSparseRecall(client, COLLECTION + "_filter");
+      QdrantSparseRecall recall = new QdrantSparseRecall(client, COLLECTION + "_filter", 10_000);
       recall.ensureIndex();
 
       List<Document> all = recallWhenReady(recall, "动力电池", KnowledgeFilter.NONE, 5);
@@ -117,7 +117,7 @@ class QdrantSparseRecallIT {
                   Map.of("source", "maotai.md", "docType", "note")),
               new Document("动力电池装车量市占率第一", Map.of("source", "catl.md", "docType", "note"))));
 
-      QdrantSparseRecall recall = new QdrantSparseRecall(client, COLLECTION + "_fallback");
+      QdrantSparseRecall recall = new QdrantSparseRecall(client, COLLECTION + "_fallback", 10_000);
       recall.ensureIndex();
 
       // 中文部分（"到底什么梗"）在任何文档都不存在：候选网必空收，
@@ -133,7 +133,7 @@ class QdrantSparseRecallIT {
     try (QdrantClient client =
         new QdrantClient(
             QdrantGrpcClient.newBuilder(QDRANT.getHost(), QDRANT.getGrpcPort(), false).build())) {
-      QdrantSparseRecall recall = new QdrantSparseRecall(client, COLLECTION);
+      QdrantSparseRecall recall = new QdrantSparseRecall(client, COLLECTION, 10_000);
       assertThat(recall.recall("绝不存在的术语甲乙丙", KnowledgeFilter.NONE, 5)).isEmpty();
       assertThat(recall.recall("   ", KnowledgeFilter.NONE, 5)).isEmpty();
     }

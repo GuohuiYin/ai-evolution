@@ -7,6 +7,7 @@ import io.qdrant.client.grpc.Collections.PayloadIndexParams;
 import io.qdrant.client.grpc.Collections.TextIndexParams;
 import io.qdrant.client.grpc.Collections.TokenizerType;
 import io.qdrant.client.grpc.Common.Filter;
+import io.qdrant.client.grpc.Common.PointId;
 import io.qdrant.client.grpc.Points.CreateFieldIndexCollection;
 import io.qdrant.client.grpc.Points.FieldType;
 import io.qdrant.client.grpc.Points.RetrievedPoint;
@@ -50,12 +51,15 @@ public class QdrantSparseRecall implements SparseRecall, SmartInitializingSingle
 
   private final QdrantClient client;
   private final String collection;
+  private final int maxCandidates;
 
   public QdrantSparseRecall(
       QdrantClient client,
-      @Value("${spring.ai.vectorstore.qdrant.collection-name:knowledge_base}") String collection) {
+      @Value("${spring.ai.vectorstore.qdrant.collection-name:knowledge_base}") String collection,
+      @Value("${ai.rag.sparse.max-candidates:10000}") int maxCandidates) {
     this.client = client;
     this.collection = collection;
+    this.maxCandidates = maxCandidates;
   }
 
   @Override
@@ -64,8 +68,8 @@ public class QdrantSparseRecall implements SparseRecall, SmartInitializingSingle
   }
 
   /**
-   * 确保 {@code doc_content} 全文索引存在（幂等）。multilingual 分词器基于 charabia， 中文按字/词切分、数字串（12987 这类代号）整串成
-   * token——正对字面匹配病灶。
+   * 确保 {@code doc_content} 全文索引存在（幂等）。multilingual 分词器基于 charabia， 中文按字/词切分；纯数字单 token 查询被分词器丢弃（W25
+   * 探针实证：MatchText "12987" 全库零命中）， 代号类查询由应用侧标识符兜底全扫承担，不靠服务端分词。
    */
   void ensureIndex() {
     try {
@@ -94,9 +98,8 @@ public class QdrantSparseRecall implements SparseRecall, SmartInitializingSingle
     }
   }
 
-  // 候选网上限：小语料适配——全库 chunks 三位数，直接放宽到全库量级，应用侧覆盖率裁决负责精度；
-  // 语料上量后此值与标识符兜底全扫路必须一起重评（ADR-0017 候选 A 触发条件）
-  private static final int CANDIDATE_LIMIT = 500;
+  // scroll 单页大小：Qdrant 每页最多返回条数；fetch 按游标翻页取尽，总量上限见 maxCandidates
+  private static final int PAGE_SIZE = 500;
   // 候选网条件数上限：标识符 token + CJK 二元组，超长问句截断（黄金集最长问句 ~12 token）
   private static final int NET_CONDITION_LIMIT = 24;
 
@@ -143,18 +146,36 @@ public class QdrantSparseRecall implements SparseRecall, SmartInitializingSingle
     }
   }
 
+  /**
+   * 翻页取尽全部匹配（W25 #4 修复：单页 500 截断曾使语料超 500 后候选网与兜底都看不到窗口外文档， 12987 案静默回归——截断必须有声）。总量触顶 {@code
+   * maxCandidates} 时截断并打 WARN， 作为语料增长信号：上调 {@code ai.rag.sparse.max-candidates} 或触发 ADR-0017 候选 A
+   * 重评。
+   */
   private List<Document> fetch(Filter qdrantFilter) throws Exception {
-    ScrollResponse response =
-        client
-            .scrollAsync(
-                ScrollPoints.newBuilder()
-                    .setCollectionName(collection)
-                    .setFilter(qdrantFilter)
-                    .setLimit(CANDIDATE_LIMIT)
-                    .setWithPayload(WithPayloadSelectorFactory.enable(true))
-                    .build())
-            .get();
-    return response.getResultList().stream().map(this::toDocument).toList();
+    List<Document> out = new ArrayList<>();
+    PointId offset = null;
+    do {
+      ScrollPoints.Builder request =
+          ScrollPoints.newBuilder()
+              .setCollectionName(collection)
+              .setFilter(qdrantFilter)
+              .setLimit(PAGE_SIZE)
+              .setWithPayload(WithPayloadSelectorFactory.enable(true));
+      if (offset != null) {
+        request.setOffset(offset);
+      }
+      ScrollResponse response = client.scrollAsync(request.build()).get();
+      response.getResultList().forEach(p -> out.add(toDocument(p)));
+      offset = response.hasNextPageOffset() ? response.getNextPageOffset() : null;
+      if (offset != null && out.size() >= maxCandidates) {
+        log.warn(
+            "sparse 候选翻页触顶截断：已取 {} 条达上限 {}（语料增长信号——上调 ai.rag.sparse.max-candidates 或重评召回路）",
+            out.size(),
+            maxCandidates);
+        break;
+      }
+    } while (offset != null);
+    return out;
   }
 
   private static boolean hasIdentifier(String normalizedQuery) {
