@@ -255,6 +255,7 @@ flowchart TB
 | [docs/plans/](docs/plans/README.md) | 周作战计划与回顾（对 PPT 路线的执行校准版） |
 | [docs/adr/](docs/adr/) | 架构决策记录 |
 | [docs/arch/](docs/arch/) | 架构结构图（如 Advisor 链源码精读——链机制 / 挂载点 / 钩子自测） |
+| [docs/ops/](docs/ops/) | 运维 SOP（分层诊断——「故障定位在 L 几」排查清单，W26 #1） |
 | [docs/eval/](docs/eval/README.md) | 评估体系（选型评测 / 检索·生成·红线质量回归 / 成本） |
 | [docs/cost/](docs/cost/) | 成本账（一页制，随里程碑更新） |
 | [docs/notes/](docs/notes/) | 精读笔记（如 MCP 协议精读——先读懂协议再动手） |
