@@ -1,0 +1,94 @@
+{
+  "贵州茅台酿造工艺中的12987是什么含义": {
+    "normalized": "贵州茅台酿造工艺中的 12987 是什么含义",
+    "tokens": [
+      "贵州茅台酿造工艺中的",
+      "12987",
+      "是什么含义"
+    ],
+    "net_token_count": 14,
+    "net_candidates": 909,
+    "fallback_used": false,
+    "passed": 1,
+    "top": [
+      [
+        "maotai.md",
+        10.461538461538462
+      ]
+    ]
+  },
+  "贵州茅台 12987 酿造工艺中每个数字分别代表什么": {
+    "normalized": "贵州茅台 12987 酿造工艺中每个数字分别代表什么",
+    "tokens": [
+      "贵州茅台",
+      "12987",
+      "酿造工艺中每个数字分别代表什么"
+    ],
+    "net_token_count": 18,
+    "net_candidates": 710,
+    "fallback_used": false,
+    "passed": 1,
+    "top": [
+      [
+        "maotai.md",
+        12.352941176470589
+      ]
+    ]
+  },
+  "贵州茅台和宁德时代哪家的品牌壁垒更厚": {
+    "normalized": "贵州茅台和宁德时代哪家的品牌壁垒更厚",
+    "tokens": [
+      "贵州茅台和宁德时代哪家的品牌壁垒更厚"
+    ],
+    "net_token_count": 17,
+    "net_candidates": 1364,
+    "fallback_used": false,
+    "passed": 0,
+    "top": []
+  },
+  "宁德时代 2024 年营业总收入": {
+    "normalized": "宁德时代 2024 年营业总收入",
+    "tokens": [
+      "宁德时代",
+      "2024",
+      "年营业总收入"
+    ],
+    "net_token_count": 9,
+    "net_candidates": 974,
+    "fallback_used": false,
+    "passed": 371,
+    "top": [
+      [
+        "catl.md",
+        15.0
+      ],
+      [
+        "宁德时代：2024年年度报告.pdf",
+        12.875
+      ],
+      [
+        "宁德时代：2025年年度报告.pdf",
+        12.875
+      ],
+      [
+        "宁德时代：2024年年度报告.pdf",
+        12.625
+      ],
+      [
+        "宁德时代：2025年年度报告.pdf",
+        12.625
+      ]
+    ]
+  },
+  "比亚迪刀片电池的技术参数": {
+    "normalized": "比亚迪刀片电池的技术参数",
+    "tokens": [
+      "比亚迪刀片电池的技术参数"
+    ],
+    "net_token_count": 11,
+    "net_candidates": 409,
+    "fallback_used": false,
+    "passed": 0,
+    "top": []
+  }
+}
