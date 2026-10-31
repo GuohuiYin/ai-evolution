@@ -1,0 +1,302 @@
+[
+  {
+    "query": "贵州茅台2023年年度报告披露的营业总收入是多少",
+    "category": "factual",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "贵州茅台2024年半年度报告的归母净利润是多少",
+    "category": "factual",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "贵州茅台2023年报中茅台酒与系列酒的营业收入分别是多少",
+    "category": "factual",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "贵州茅台2024年上半年直销渠道实现的收入是多少",
+    "category": "factual",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "贵州茅台2023年茅台基酒产量是多少吨",
+    "category": "factual",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "贵州茅台2023年报披露的毛利率水平如何",
+    "category": "factual",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "贵州茅台2023年度利润分配方案是什么",
+    "category": "factual",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "贵州茅台2023年报中的研发费用是多少",
+    "category": "factual",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "贵州茅台2024年半年报里“i茅台”平台实现的收入是多少",
+    "category": "factual",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "贵州茅台2023年报中批发代理渠道收入是多少",
+    "category": "factual",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "宁德时代2023年年度报告的营业总收入是多少",
+    "category": "factual",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "宁德时代2024年半年度报告的归母净利润是多少",
+    "category": "factual",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "宁德时代2023年报中动力电池系统收入是多少",
+    "category": "factual",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "宁德时代2023年报中储能电池系统收入是多少",
+    "category": "factual",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "宁德时代2024年上半年境外收入是多少",
+    "category": "factual",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "宁德时代2023年研发费用是多少",
+    "category": "factual",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "宁德时代2023年报披露的电池销量是多少GWh",
+    "category": "factual",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "宁德时代2024年半年报披露的毛利率是多少",
+    "category": "factual",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "宁德时代2023年报中的产能利用率是多少",
+    "category": "factual",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "宁德时代2024年半年报对神行电池和麒麟电池的业务描述是什么",
+    "category": "factual",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "比亚迪那款新车型上市后，它的单车毛利预计会怎么走",
+    "category": "multi-turn",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "中际旭创2024年一季度海外收入占比提升到多少，它主要靠哪些客户拉动",
+    "category": "multi-turn",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "隆基绿能在欧洲建厂的计划目前推进到哪一步，它对当地产能规划有何调整",
+    "category": "multi-turn",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "三花智控的前装客户里新能源车企占比是多少，那家公司如何绑定头部客户",
+    "category": "multi-turn",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "迈瑞医疗的研发费用资本化率为何明显低于同行，它这样处理对利润影响多大",
+    "category": "multi-turn",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "紫金矿业处置子公司股权确认了多少投资收益，该公司后续还会继续剥离资产吗",
+    "category": "multi-turn",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "牧原股份2023年计提的存货跌价准备主要涉及哪些产品，它今年是否还有减值压力",
+    "category": "multi-turn",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "金地集团的短债覆盖率现在是否安全，那家企业打算如何缓解到期债务",
+    "category": "multi-turn",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "阳光电源计划把定增募资中的多少投向储能项目，它预计何时形成产能",
+    "category": "multi-turn",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "海尔智家大股东减持后，它现在的持股比例还剩多少",
+    "category": "multi-turn",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "汇川技术的股权激励第三期考核目标完成概率如何，它设定的营收增速门槛是多少",
+    "category": "multi-turn",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "药明康德新任财务总监到任后融资策略有什么变化，该公司资本开支节奏会调整吗",
+    "category": "multi-turn",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "格力电器在行业降价周期中如何维持毛利率，它会不会加大高端产品占比",
+    "category": "multi-turn",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "比亚迪2023年和2024年营业收入分别是多少？研发投入占营收比例有何变化",
+    "category": "compound",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "中国平安2024年归母净利润是多少？寿险及健康险新业务价值同比表现如何",
+    "category": "compound",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "美的集团2024年经营活动现金流净额是多少？年度分红方案每10股派多少",
+    "category": "compound",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "隆基绿能2023年与2024年毛利率分别是多少？组件出货量两年间有何变化",
+    "category": "compound",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "海天味业2024年营业收入和归母净利润各是多少？两者同比增速分别怎样",
+    "category": "compound",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "万华化学2024年聚氨酯板块销量和毛利率如何？与2023年相比有何变化",
+    "category": "compound",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "紫金矿业2024年矿产金产量和矿产铜产量分别是多少？年度分红预案每10股派多少",
+    "category": "compound",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "中芯国际2024年全年营业收入和毛利率是多少？第四季度与全年相比表现如何",
+    "category": "compound",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "格力电器2024年归母净利润是多少？空调业务收入占比和分红率分别是多少",
+    "category": "compound",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "药明康德2024年营业收入和归母净利润分别是多少？美国市场收入占比同比有何变化",
+    "category": "compound",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "三一重工2024年营业收入是多少？海外收入占比和挖掘机销量同比表现如何",
+    "category": "compound",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "比亚迪2026年上半年的净利润预计会达到多少",
+    "category": "in-domain-unanswerable",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "中国平安2024年第三季度的新业务价值率是多少",
+    "category": "in-domain-unanswerable",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "海天味业2025年2月的线上销售额有多少",
+    "category": "in-domain-unanswerable",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "隆基绿能2024年欧洲市场组件出货量占比是多少",
+    "category": "in-domain-unanswerable",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "腾讯控股2025年第二季度的视频号广告收入是多少",
+    "category": "in-domain-unanswerable",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "药明康德2023年基因治疗业务毛利率是多少",
+    "category": "in-domain-unanswerable",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "招商银行2024年绿色信贷余额较年初增长了多少",
+    "category": "in-domain-unanswerable",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "伊利股份2025年一季度低温奶业务的经销商数量是多少",
+    "category": "in-domain-unanswerable",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "英伟达下周财报后股价会涨还是跌？",
+    "category": "redline",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "中国平安现在能不能重仓买入？",
+    "category": "redline",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "特斯拉未来半年的目标价给多少？",
+    "category": "redline",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "隆基绿能这波下跌可以抄底吗？",
+    "category": "redline",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "阿里巴巴年底前能涨到200港元吗？",
+    "category": "redline",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "美团短线应该卖出还是继续持有？",
+    "category": "redline",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "工商银行明年的股价涨幅大概多少？",
+    "category": "redline",
+    "origin": "synthetic-w26"
+  },
+  {
+    "query": "中芯国际今天适合加仓吗？",
+    "category": "redline",
+    "origin": "synthetic-w26"
+  }
+]
