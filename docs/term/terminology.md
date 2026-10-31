@@ -28,6 +28,7 @@
 | HyDE (Hypothetical Document Embeddings) | /haɪd/ | 假设性文档嵌入 | 先编个假答案再拿它检索 |
 | query rewrite | /ˈkwɪri/ | 查询改写 | 把问题问得更清楚 |
 | multi-query / RAG Fusion | — | 多问检索融合 | 一个问题换多种问法分别查 |
+| KG (Knowledge Graph) | — | 知识图谱 | 实体-关系三元组网;与 RAG 常做双引擎 |
 
 ## 二、模型架构
 
@@ -45,6 +46,17 @@
 | cosine similarity | /ˈkoʊsaɪn/ | 余弦相似度 | 向量方向有多像 |
 | parameter | /pəˈræmɪtər/ | 参数 | 模型学到的权重 |
 | pretrain / fine-tune | /ˌpriːˈtreɪn/ /faɪn tjuːn/ | 预训练 / 微调 | 打底子 / 针对性补课 |
+| CPT (Continued Pre-Training) | 读字母 | 继续预训练 | 基座上续喂行业语料,"泡在行业里" |
+| SFT (Supervised Fine-Tuning) | 读字母 | 监督微调 | 用"问题→标准答案"对教答题范式 |
+| RLHF | 读字母 | 人类反馈强化学习 | 人打分训评分模型再强化;ChatGPT 调教法 |
+| DPO (Direct Preference Optimization) | 读字母 | 直接偏好优化 | RLHF 简化版:直接拿好坏答案对调模型 |
+| RL (Reinforcement Learning) | 读字母 | 强化学习 | 试错+奖励;小模型自探推理路径很贵 |
+| LoRA (Low-Rank Adaptation) | /ˈloʊrə/ | 低秩适配 | 冻结原模型只训外挂补丁,微调事实标准 |
+| MoE (Mixture of Experts) | 读字母 M-O-E | 混合专家 | 多专家+分诊台,每 token 只激活少数专家 |
+| KL divergence | /ˌkʌl bæk ˈlaɪblər/ | KL 散度 | 度量两个概率分布的差距 |
+| FP16 | 读字母 | 半精度浮点 | 每参数 2 字节;7B×2B≈14GB 显存 |
+| distillation | /ˌdɪstɪˈleɪʃn/ | 蒸馏 | 小模型模仿大模型输出,能力浓缩下沉 |
+| dark knowledge | — | 暗知识 | 老师输出分布里的相似性结构信息 |
 
 ## 三、推理与 Agent
 
