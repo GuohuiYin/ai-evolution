@@ -36,10 +36,10 @@
 
 ```bash
 # 前置：.env 配置 AI_API_KEY / SILICONFLOW_API_KEY；本地 Qdrant 容器
-docker run -d --name qdrant -p 6333:6333 -p 6334:6334 qdrant/qdrant:v1.18.2
+docker run -d --name ai-evolution-qdrant -p 6333:6333 -p 6334:6334 -v ai-evolution-qdrant-data:/qdrant/storage qdrant/qdrant:v1.18.2
 
 # 基础设施（W21-W22）：
-# Temporal dev server（缺省 pipeline 引擎必需；AI_LOOP_ENGINE=inline 可免）：temporal server start-dev（CLI 见 docs/notes/temporal-minimal-loop.md）
+# Temporal（缺省 pipeline 引擎必需；AI_LOOP_ENGINE=inline 可免）：docker start ai-evolution-temporal（W26 起容器化：admin-tools 镜像跑 dev server，SQLite 挂卷重启不丢事件历史；首次创建见 docs/notes/temporal-minimal-loop.md）
 # MySQL 容器（可选，AI_CHAT_MEMORY_STORE=jdbc 时）：docker run -d --name ai-evolution-mysql -p 3306:3306 \
 #   -e MYSQL_ROOT_PASSWORD=<见.env> -e MYSQL_DATABASE=ai_evolution -v ai-evolution-mysql-data:/var/lib/mysql mysql:8.4
 # Phoenix 可观测面板（W25 #1，ADR-0020：链路面板 http://localhost:6006，应用 OTLP 默认直发；

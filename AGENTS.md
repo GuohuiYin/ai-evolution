@@ -74,6 +74,7 @@ ai_evolution：Java 架构师向 AI 应用架构师转型的实战项目。
 - 从第一个端点具备 K8s 友好最小集：actuator 健康探针（liveness/readiness 分离）、优雅停机、日志到 stdout、配置外置
 - 部署清单存 `k8s/` 目录，基础设施即代码；镜像用语义化 tag，禁用 `latest`
 - **开发循环本地化，部署验证里程碑化**：日常开发走 `./mvnw` 本地反馈环；每个里程碑与每周五在 minikube 做部署冒烟，保持"随时可部署"
+- **本地依赖容器命名统一 `ai-evolution-xxx` 前缀**（2026-10-31 Owner 指令）：项目自建容器一律带前缀（qdrant/temporal/phoenix/mysql 已收口），数据卷对应 `ai-evolution-xxx-data`（qdrant_storage/temporal-dev-data 已迁移收口）——一眼可辨归属、不误删他项目容器；CI 内一次性容器不在此列
 
 ## 4. Definition of Done
 

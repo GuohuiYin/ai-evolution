@@ -194,7 +194,7 @@ ai:
     # 循环引擎（W22 #1 验收后切换）：pipeline=三角色管线（Planner→Builder→Reviewer，
     # Temporal activity 化，缺省——57 案对照 +0.33 且红线满维，见 docs/eval/generation/w22-pipeline-dual-arm.md）；
     # temporal=单循环事件历史版；inline=进程内直跑（对照臂留旗标）。
-    # pipeline/temporal 均需本地 dev server：temporal server start-dev（见 docs/notes/temporal-minimal-loop.md）
+    # pipeline/temporal 均需 Temporal dev server：docker start ai-evolution-temporal（W26 起容器化，见 docs/notes/temporal-minimal-loop.md）
     engine: ${AI_LOOP_ENGINE:pipeline}
     # HITL 人工审批断点（W23 #1 接通，W24 #4a 翻默认 true——Owner 裁决①A：形态已定，
     # 早翻早攒真实挂起样本；打回耗尽本是低频事件，风险面小）：

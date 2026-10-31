@@ -11,10 +11,10 @@
 
 ```bash
 # 注入（向量库停服，dense 检索腿全灭）
-docker stop qdrant
+docker stop ai-evolution-qdrant
 
 # 恢复
-docker start qdrant
+docker start ai-evolution-qdrant
 ```
 
 预期现象（供你核对，不需要告诉我）：知识问答开始硬拒答或报错；sparse 腿降级空路；

@@ -10,6 +10,13 @@
 
 ## 环境
 
+> **2026-10-31 更新（W26 #2 前置）**：dev server 已容器化，替代下方裸进程方式——
+> `temporalio/admin-tools` 镜像内跑同一 `temporal server start-dev`，SQLite 挂卷
+> `temporal-dev-data` 持久化（重启不丢事件历史，ADR-0019「in-memory 重启即丢」边界就此消除）。
+> 日常启动 `docker start ai-evolution-temporal`；首次创建：
+> `docker run -d --name ai-evolution-temporal -p 7233:7233 -p 8233:8233 -v ai-evolution-temporal-data:/data temporalio/admin-tools:latest temporal server start-dev --db-filename /data/temporal.db --ip 0.0.0.0`
+> （注意：卷目录需先 chown 1000:1000，镜像以 temporal 用户运行）。
+
 - Temporal CLI 1.9.1（brew），`temporal server start-dev`：gRPC `localhost:7233`、
   UI `http://localhost:8233`、persistence in-memory（dev 模式）
 - SDK：`io.temporal:temporal-sdk:1.29.0` + `temporal-testing:1.29.0`（test scope）
