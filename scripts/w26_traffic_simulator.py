@@ -19,7 +19,9 @@
 
 import argparse
 import json
+import os
 import random
+import sys
 import threading
 import time
 import urllib.error
@@ -64,10 +66,12 @@ def plan_sessions(queries: list[str], seed: int) -> list[list[str]]:
     return sessions
 
 
-def post_chat(base_url: str, message: str, conversation_id: str) -> tuple[int, float, str]:
+def post_chat(base_url: str, api_key: str, message: str, conversation_id: str) -> tuple[int, float, str]:
     payload = json.dumps({"message": message, "conversationId": conversation_id}).encode()
     req = urllib.request.Request(
-        f"{base_url}/ai/chat", data=payload, headers={"Content-Type": "application/json"}
+        f"{base_url}/ai/chat",
+        data=payload,
+        headers={"Content-Type": "application/json", "X-API-Key": api_key},
     )
     start = time.monotonic()
     try:
@@ -80,10 +84,10 @@ def post_chat(base_url: str, message: str, conversation_id: str) -> tuple[int, f
         return -1, time.monotonic() - start, f"{type(e).__name__}: {e}"
 
 
-def run_session(base_url, turns, out, run_id):
+def run_session(base_url, api_key, turns, out, run_id):
     conversation_id = f"w26-{run_id}-{int(time.time() * 1000)}-{random.randint(1000, 9999)}"
     for i, message in enumerate(turns, 1):
-        status, latency, head = post_chat(base_url, message, conversation_id)
+        status, latency, head = post_chat(base_url, api_key, message, conversation_id)
         record = {
             "ts": datetime.now(timezone.utc).isoformat(),
             "conversationId": conversation_id,
@@ -112,6 +116,10 @@ def main():
     ap.add_argument("--seed", type=int, default=20261030)
     args = ap.parse_args()
 
+    api_key = os.environ.get("AI_EVOLUTION_API_KEY", "")
+    if not api_key:
+        sys.exit("缺 AI_EVOLUTION_API_KEY（先 set -a; source .env; set +a）——服务端 W12 起默认拒绝")
+
     queries = load_queries(Path(args.golden), Path(args.synthetic))
     sessions = plan_sessions(queries, args.seed)
     run_id = datetime.now().strftime("%Y%m%d-%H%M")
@@ -130,7 +138,7 @@ def main():
             for turns in sessions:
                 if time.monotonic() >= deadline:
                     break
-                futures.append(pool.submit(run_session, args.base_url, turns, out, run_id))
+                futures.append(pool.submit(run_session, args.base_url, api_key, turns, out, run_id))
                 submitted += len(turns)
                 if args.max_requests and submitted >= args.max_requests:
                     break
