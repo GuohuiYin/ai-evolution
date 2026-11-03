@@ -58,7 +58,7 @@ set -a && source .env && set +a
 
 # 评估跑批（需本地 Qdrant + SILICONFLOW_API_KEY）
 AI_EVAL_ENABLED=true ./mvnw spring-boot:run             # 检索黄金集 69 条
-AI_EVAL_GENERATION_ENABLED=true ./mvnw spring-boot:run  # 生成黄金集 57 条 + LLM judge
+AI_EVAL_GENERATION_ENABLED=true ./mvnw spring-boot:run  # 生成黄金集 58 条 + LLM judge
 
 # Minikube 集群部署（详见 k8s/README.md）
 DOCKER_HOST=unix:///var/run/docker.sock ./mvnw compile jib:dockerBuild -DskipTests
@@ -66,7 +66,7 @@ minikube image load ai-evolution:0.3.0-m3
 kubectl apply -f k8s/
 ```
 
-## 架构图（截至 W25 · 2026-10-30）
+## 架构图（截至 W27 · 2026-11-03）
 
 ```mermaid
 flowchart TB
@@ -92,7 +92,7 @@ flowchart TB
     end
 
     subgraph capability["能力层"]
-        Rewrite["查询改写（W11）+ 零召回重述（W24）<br/>多轮指代消解，数据裁决启用"]
+        Rewrite["查询改写（W11）+ 零召回重述（W24）<br/>多轮指代消解，数据裁决启用<br/>pipeline 检索改写装饰器（W27 #2）"]
         Retriever["KnowledgeRetriever 两阶段（W13，ADR-0017）<br/>混合召回 dense+sparse+RRF（默认开）<br/>sparse 候选翻页取尽（W25 #4 修 500 截断）<br/>主体多样性配额（W23，默认开）<br/>rerank 精排管线（+0pp 裁决，默认关）"]
         Qdrant[("Qdrant 向量库<br/>md + PDF 增量摄入（分块参数签名自愈）<br/>元数据三件套过滤")]
         Tools["StockDataTools / AnnouncementTools<br/>行情 · 财务 · 公告检索（@Tool）"]
@@ -103,7 +103,7 @@ flowchart TB
     end
 
     subgraph models["模型层（OpenAI 兼容协议，配置切换）"]
-        LLM["DeepSeek 主力 / Qwen 备选<br/>FailoverChatModel 自动降级（W12）：<br/>瞬态故障切 Qwen，4xx 不切"]
+        LLM["DeepSeek 主力 / Qwen 备选<br/>FailoverChatModel 自动降级（W12）：<br/>瞬态故障切 Qwen，4xx 不切<br/>W26 实战首验（熔断+断流叠加下承接）"]
         Embed["SiliconFlow bge-m3<br/>Embedding"]
         Rerank["SiliconFlow bge-reranker-v2-m3<br/>（默认关，重评触发在案）"]
     end
@@ -119,6 +119,7 @@ flowchart TB
     Loop --> Fetch
     ApprCtrl -.Signal.-> Loop
     RAG --> Rewrite --> Retriever --> Qdrant
+    Loop -.检索改写.-> Rewrite
     RAG --> Prompts
     Agent --> Prompts
     Agent & Loop -.三档注入.-> Skill
@@ -130,7 +131,7 @@ flowchart TB
 
     subgraph cross["横切关注点（全链路生效）"]
         RedLines["金融三红线代码化<br/>免责声明 · 拒买卖建议 · 数字溯源"]
-        Obs["可观测：traceId 四级留痕 · SSE 轨迹<br/>prompt/response 日志 · token 账本 · failover 计数器"]
+        Obs["可观测：traceId 四级留痕 · SSE 轨迹<br/>prompt/response 日志 · token 账本 · failover 计数器<br/>预算闸运行时可调 /ai/cost/budget（W27 #4）"]
         Eval["评估：检索黄金集 69 条 + 生成黄金集 58 条<br/>（LLM judge，A13 prompt 纪律门 + 检索信号口径，CI 定时回归）<br/>Agent 轨迹评估：步数/冗余/收敛率"]
         FB["人工反馈回路（W24）：badcase 登记<br/>→ 人工裁定 → 黄金集候选区 → 转正入集（W25 #5 首例闭环）"]
         Sec["安全：CVE-2026-59318 fail-fast · API Key + 限流<br/>MCP 脱敏 · 入参上限 · 工具调用上限"]
@@ -140,7 +141,7 @@ flowchart TB
 
 > 本图与「通路全景图」（流程视角）同步刷新——每周收官 A8 核查时对照代码实态更新。
 
-## 通路全景图（W25 · 2026-10-30 实态）
+## 通路全景图（W27 · 2026-11-03 实态）
 
 > 流程视角：一个问题从进门到出答的完整路径，与上节结构分层图互补。
 > **本图随项目演进实时更新**——每周收官 A8 核查时对照代码实态刷新（与 README 其余快照同纪律）。
@@ -159,8 +160,8 @@ flowchart TB
 
     ROUTER -->|AGENT 通路| ENG{"ai.loop.engine<br/>三引擎切换"}
     ENG -->|"pipeline（缺省，W22 #1）"| PLAN["① Planner 拆计划<br/>子问题+通路标注，无工具"]
-    PLAN --> BUILD["② Builder 取证+起草<br/>白名单四工具（ChannelToolExecutor）"]
-    BUILD --> REV["③ Reviewer 三条清单复核<br/>溯源 / 红线 / 口径，fail-closed"]
+    PLAN --> BUILD["② Builder 取证+起草<br/>白名单四工具（ChannelToolExecutor）<br/>检索经多轮改写装饰器（W27 #2）"]
+    BUILD --> REV["③ Reviewer 三条清单复核（W27 #2 起 v2：<br/>证据包含多轮上下文）<br/>溯源 / 红线 / 口径，fail-closed"]
     REV -->|"打回 ≤2 次，批注回流"| BUILD
     REV -->|打回耗尽| HITLG{"HITL 人工审批（W23 接通，W24 翻默认 true）<br/>挂起等 Signal：approve 放行含背书 / reject 驳回<br/>超时 fail-closed 拒答（三处留痕）"}
     HITLG -->|人工放行| FINAL
@@ -178,9 +179,9 @@ flowchart TB
         OBS["traceId 四级留痕 · SSE 轨迹 · token 账本"]
         MEM["会话记忆 L1 窗口 20<br/>inmemory 缺省 / MySQL jdbc（W21）"]
         SK["Skill 注入默认 off<br/>（W22 实测 2.0%、W23 扩列复测 9.7%<br/>均 <20% 止步，重启条件在案）"]
-        FO["FailoverChatModel<br/>DeepSeek 瞬态故障 → Qwen 自动降级"]
+        FO["FailoverChatModel<br/>DeepSeek 瞬态故障 → Qwen 自动降级<br/>W26 无人值守实战首验（承接 105K token）"]
         FB["人工反馈回路（W24 #3）<br/>👎 登记 badcase 库 → 人工裁定<br/>→ 黄金集候选区 → 转正入集（W25 #5 首例闭环）"]
-        COST["成本工程（W25 #2/#3）<br/>JSONL 台账 + /ai/cost/summary 日聚总<br/>日预算熔断 fail-closed（BudgetGuardAdvisor 链首）<br/>模型路由分档 ModelTierAdvisor（空档不切，备而不用）"]
+        COST["成本工程（W25 #2/#3 + W27 #4）<br/>JSONL 台账 + /ai/cost/summary 日聚总<br/>日预算熔断 fail-closed（BudgetGuardAdvisor 链首）<br/>预算运行时可调 POST /ai/cost/budget（当日有效次日回落）<br/>模型路由分档 ModelTierAdvisor（空档不切，备而不用）"]
     end
 ```
 
@@ -211,7 +212,7 @@ flowchart TB
 
 **Sub-Agent 与 Skill（W22-W23）**
 
-- 三角色管线为缺省循环引擎：Planner/Builder/Reviewer 职责切分（设计：[w21-l4-subagent-and-skill-design](docs/plans/advanced/w21-l4-subagent-and-skill-design.md)），打回批注回流、打回耗尽拒答；真机冒烟红线案 Reviewer 首轮打回、重写后放行——打回循环真实生效
+- 三角色管线为缺省循环引擎：Planner/Builder/Reviewer 职责切分（设计：[w21-l4-subagent-and-skill-design](docs/plans/advanced/w21-l4-subagent-and-skill-design.md)），打回批注回流、打回耗尽拒答；真机冒烟红线案 Reviewer 首轮打回、重写后放行——打回循环真实生效；W27 #2 激活 reviewer-v2（证据包含多轮上下文）+ pipeline 检索接入改写装饰器，多轮类均分 5.0→5.7（[复跑](docs/eval/generation/w27-multiturn-context-fix.md)）
 - **HITL 人工审批断点**（W23 接通，W24 翻默认 true）：复核打回耗尽时挂起等人工 Signal——approve 放行（含背书标注）/ reject 驳回 / 超时 fail-closed 拒答；审批 API + SSE/日志/Temporal 三处留痕（[双路径演示](docs/eval/generation/w23-hitl-demo.md)）
 - Skill 渐进披露机制落地：SkillRegistry 启动扫描 `skill/*/SKILL.md` + 三档注入（`ai.skill.mode`=off/full/progressive，默认 off）；Token 实测降幅 2.0% <20% 守线 → 登记止步不硬上（[实测报告](docs/eval/generation/w22-skill-token-report.md)）；W23 扩列 4 技能复测 9.7% 仍 <20% 再止步（[复测](docs/eval/generation/w23-skill-token-report-r2.md)）
 
@@ -227,7 +228,8 @@ flowchart TB
 - 任意 MCP 客户端配 `url = "http://localhost:18080/mcp"` + 请求头 `X-API-Key`（W12 #2 起强制）即可发现 `getDailyQuotes` / `getFinancialSummary` / `searchAnnouncements`（Codex 见 `~/.codex/config.toml` 的 `[mcp_servers.ai-evolution]`）
 - 双模型供应商配置：DeepSeek 主力 / Qwen 备选（实测定稿）；**模型自动降级**（W12 #4）：
   主力超时/5xx 自动切 Qwen（FailoverChatModel 装饰器，@Primary 全链路透明），
-  4xx 不切防掩盖病灶；WARN 告警日志 + `model.failover.total` 计数器可见
+  4xx 不切防掩盖病灶；WARN 告警日志 + `model.failover.total` 计数器可见；
+  **W26 无人值守实战首验**：两次预算熔断 + DeepSeek 断流注入叠加下 Qwen 真实承接流量（[运行报告](docs/ops/w26-unattended-run-report.md)）
 - **模型路由分档**（W25 #3，备而不用）：`ModelTierAdvisor` 按通路切模型档（`ai.model.tiers.{rag,agent,pipeline,analysis}`，空档=不切零行为变化）；10 案双臂实测 pro 成本 15-20x、质量零收益 → Owner 裁决不升档（[定档报告](docs/eval/selection/agent-tier-v1.md)）
 - 集群内全链路运行：Minikube + ConfigMap/Secret 分层 + 探针 + 优雅停机
 
@@ -242,8 +244,8 @@ flowchart TB
 - 全链路 traceId 串链：路由 / 检索 / 工具 / 模型四级留痕
 - OTel GenAI 语义埋点 → Phoenix 链路面板（W25 #1，[ADR-0020](docs/adr/0020-llm-observability-otel-phoenix.md)）：模型调用/检索段/工具调用/ReAct 步 trace 可查，消息内容捕获默认开
 - prompt/response 日志：开关受控（本地开 / 生产关）
-- token 成本账本：JSONL 台账（重启不丢）+ `/ai/cost/summary` 日聚总端点 + 日预算熔断 fail-closed（W25 #2）；含 DeepSeek 缓存命中率
-- 检索黄金集 69 条（W17 扩容 39→60 + W19 v5 轮换 60→69；Recall@5 基线 72% → W13 混合检索裁决启用后 **93%**，+21pp；W19 轮换复测 94.3%）+ 生成黄金集 58 条（W17-W19 扩库轮换 + W25 反馈回路首例转正；LLM judge 三维评分；judge 校准 W18 95.5% → W19 36.7% 时效破产 → W20 复测 63.3% 立案（[揭盲登记](docs/eval/generation/w20-calibration-rerun.md)）→ W21 输入侧处置复测 83.3% 过线（[r2](docs/eval/generation/w21-calibration-rerun-r2.md)）→ W22 accuracy 维修尺（工具取数如实标注不视为编造）+ 对照案复评确认修尺不松尺 → W24 拒答口径对齐（空召回设计性拒答经检索信号与「无理由拒答」切开，[复评](docs/eval/generation/w24-judge-rescore-2.json)））+ Agent 轨迹评估（收敛率/冗余/步数，M3 验收 6/6 收敛）
+- token 成本账本：JSONL 台账（重启不丢）+ `/ai/cost/summary` 日聚总端点 + 日预算熔断 fail-closed（W25 #2）+ **预算运行时可调** `POST /ai/cost/budget`（W27 #4：当日调额即时生效零重启、次日自动回落配置默认，调整落盘留痕）；含 DeepSeek 缓存命中率
+- 检索黄金集 69 条（W17 扩容 39→60 + W19 v5 轮换 60→69；Recall@5 基线 72% → W13 混合检索裁决启用后 **93%**，+21pp；W19 轮换复测 94.3%）+ 生成黄金集 58 条（W17-W19 扩库轮换 + W25 反馈回路首例转正；LLM judge 三维评分；judge 校准 W18 95.5% → W19 36.7% 时效破产 → W20 复测 63.3% 立案（[揭盲登记](docs/eval/generation/w20-calibration-rerun.md)）→ W21 输入侧处置复测 83.3% 过线（[r2](docs/eval/generation/w21-calibration-rerun-r2.md)）→ W22 accuracy 维修尺（工具取数如实标注不视为编造）+ 对照案复评确认修尺不松尺 → W24 拒答口径对齐（空召回设计性拒答经检索信号与「无理由拒答」切开，[复评](docs/eval/generation/w24-judge-rescore-2.json)）→ W26 v3.3 语料 asOf 优先重排（[基线 5.6/6](docs/eval/generation/w26-gen-v33-asof-priority.md)）→ W27 校准复测 88.9% 首次无需修正过线（[收卷](docs/eval/generation/w27-judge-calibration.md)）+ v3.4 参照修正（数据源切换型腐烂首例））+ Agent 轨迹评估（收敛率/冗余/步数，M3 验收 6/6 收敛）；评估设施加固（W27 #3a：单案故障隔离 + 模型 HTTP 超时，长跑批不再整批报废/挂死）
 - 一页成本账：单次问答 ¥0.0054（W8 口径）；生成 eval 单轮成本可经 `/ai/cost/summary` 日聚总实查（W25 #2 上线）
 
 **路线图**：W5 工具调用（@Tool）+ M1 验收门 ✅ → M2 MCP/护栏/Eval（W6 MCP 协议贯通 ✅，W7 安全加固 ✅，W8 评估体系 ✅——检索/生成双黄金集 + LLM judge + 成本账；few-shot A/B 裁决不启用）→ M3 最小研究 Loop ✅（2026-09-18 验收收官：显式 ReAct + 会话记忆 + SSE 轨迹 / 查询改写 / MCP Client 出向凭证 / 检索两阶段化——hybrid +21pp 启用、rerank +0pp 不启用，数据裁决；[验收记录](docs/plans/m3/m3-acceptance.md)）→ W14+ 进阶。
