@@ -1,7 +1,8 @@
 # C4 L3：组件图 · loop 研究循环域
 
 > 本张聚焦 **loop 包**——三角色管线（sub agent）怎么编排、Temporal 在哪一层、
-> HITL 断点怎么挂。截止 2026-10-28（W24 收官态，engine 缺省=pipeline）。
+> HITL 断点怎么挂。截止 2026-11-03（W27 #2 收官态：reviewer-v2 激活 + 检索改写进 pipeline，
+> engine 缺省=pipeline）。
 
 ```mermaid
 C4Component
@@ -17,8 +18,8 @@ C4Component
     Component(acts, "ResearchPipelineActivitiesImpl", "Temporal activities", "plan/build/review/hitlEvent 四个活动；非确定性副作用全在这层")
 
     Component(planner, "Planner / DeepSeekPlanner", "角色端口", "纯规划：问题+历史 → Plan（子问题清单）；无工具不碰数据；不可解析降级单子问题")
-    Component(builder, "Builder（build activity 内）", "ReAct 循环执行体", "逐子问题跑 ReAct 取证（ChannelToolExecutor 按 Channel 派工具）+ 起草合成 DraftAnswer")
-    Component(reviewer, "Reviewer / DeepSeekReviewer", "角色端口", "独立复核：只审不做；溯源/合规检查，打回必带批注")
+    Component(builder, "Builder（build activity 内）", "ReAct 循环执行体", "逐子问题跑 ReAct 取证（ChannelToolExecutor 按 Channel 派工具）+ 起草合成 DraftAnswer；W27 #2 起检索经 QueryRewritingToolExecutor 多轮改写装饰器（loop→rag 白名单依赖）")
+    Component(reviewer, "Reviewer / DeepSeekReviewer", "角色端口", "独立复核：只审不做；溯源/合规检查，打回必带批注；W27 #2 起 v2 prompt——证据包含多轮上下文（L2 会话记忆入证据包）")
 
     Component(loop, "ResearchLoop", "单循环实现", "显式 ReAct（ADR-0015）：Thought/Action/Observation 逐轮，max-steps=6")
     Component(parser, "ReactProtocolParser", "协议解析+容错", "协议违背兜底（W20 容错修复：混排/截断/中文标记）")
@@ -65,6 +66,9 @@ C4Component
   进程崩溃后 Temporal 按事件历史重放恢复断点。
 - **打回回路**：review 打回 ≤2 次，批注回流 Builder 重写；耗尽后两条路——拒答文案
   （宁可不答不可错答）或 HITL 挂起等人工（默认开，超时 fail-closed）。
+- **W27 #2 多轮上下文修复**：此前多轮指代（「它 2024 年营收多少」类追问）在 pipeline 通路
+  丢上下文——build 检索不带改写、review 证据包不含历史；修复后多轮类 eval 均分 5.0→5.7，
+  依赖方向新增 loop→rag（ArchUnit 白名单显式登记）。
 - **重试策略分层**：plan/review 快活动（120s 超时、attempts=2）；build 含多轮模型+工具
   调用放宽到 600s。
 - **三引擎旗标**：pipeline 缺省（W22 双臂验收 +0.33 且红线满维后切默认）；temporal=

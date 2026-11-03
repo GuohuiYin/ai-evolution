@@ -1,7 +1,8 @@
 # C4 L3：组件图 · infra 横切域
 
 > 本张聚焦 **横切关注点**——不属于任何单一业务域、但每个请求都穿过的组件：
-> 安全、记忆、模型韧性、审计、技能、合规。截止 2026-10-28（W24 收官态）。
+> 安全、记忆、模型韧性、审计、技能、合规。截止 2026-11-03（W27 #2/#3/#4 收官态：
+> 成本治理组件与模型 HTTP 超时入图）。
 
 ```mermaid
 C4Component
@@ -17,6 +18,8 @@ C4Component
     Component(redline, "RedLineGuard / Disclaimers", "compliance 包", "红线校验+免责声明；服务端第一版只告警不拦截（ADR-0011）")
     Component(skillreg, "SkillRegistry", "skill 包", "启动扫描 SKILL.md（YAML 头 name/description/triggers）；注入模式 off/full/progressive 三态——实测未达 20% 守线，默认 off")
     Component(promptlog, "SimpleLoggerAdvisor 配置", "Spring AI", "prompt/response DEBUG 留痕；生产必须关（金融语料敏感）")
+    Component(costgov, "成本治理：TokenLedger / BudgetGuardAdvisor / DailyBudgetOverride / CostController", "cost 包", "JSONL 台账（重启不丢）+ 预算熔断 Advisor 链首 fail-closed；W27 #4 运行时可调——POST /ai/cost/budget 当日调额即时生效、次日回落配置默认（W26 P5 修复）")
+    Component(httptimeout, "ModelHttpTimeoutConfiguration", "infra 包", "模型共享 RestClient 超时 connect 10s / response 3min（W27 #3——长跑批防挂死，慢响应不再拖死整批）")
     Component(mcpcfg, "McpClientToolConfiguration + McpErrorSanitizingConfig", "mcp 包", "MCP 工具不自动注册全局——白名单派发（ExternalToolClient）；错误脱敏防内部细节外泄")
   }
 
@@ -27,6 +30,7 @@ C4Component
   System_Ext(mysql, "MySQL")
   System_Ext(mcpfetch, "MCP fetch 服务")
 
+  Rel(chatclients, costgov, "调用前熔断检查 / 调用后记账", "Advisor 链")
   Rel(chatclients, failover, "全部模型调用经此")
   Rel(failover, deepseek, "主", "HTTPS")
   Rel(failover, qwen, "备（故障时）", "HTTPS")
@@ -46,3 +50,6 @@ C4Component
   → 内容合规（redline 告警）。「看得见先于拦得住」（W7 原则）。
 - **Skill 机制是「止步」样板**：机制造好了、双臂实测 2.0%/9.7% 均未达 20% 守线，
   默认 off 登记挂账——能力具备但不启用，等重评触发条件（W25 #3 模型路由可能改变格局）。
+- **成本治理与熔断同源同账**：预算闸每次调用前实时读 JSONL 台账聚当日用量（重启不丢，
+  W26 报告 P4「重启清零」系误记）；撞线救场走 POST /ai/cost/budget 当日调额，
+  不再改环境变量重启（W26 两次撞线各 ~1 分钟流量损失的修复）。
