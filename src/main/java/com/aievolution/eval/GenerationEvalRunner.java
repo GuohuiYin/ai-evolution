@@ -80,7 +80,8 @@ public class GenerationEvalRunner implements ApplicationRunner {
     // judge 就地构建：组件条件装配，未启用时不占 bean 容器
     GenerationEvaluator evaluator =
         new GenerationEvaluator(chatService, new LlmEvalJudge(chatModel, promptLibrary));
-    List<GenerationEvaluator.GenEvalResult> results = evaluator.evaluate(goldenSet);
+    GenerationEvaluator.EvalOutcome outcome = evaluator.evaluate(goldenSet);
+    List<GenerationEvaluator.GenEvalResult> results = outcome.results();
 
     log.info("════════ 生成 eval 报告（{} 条，三维各 0-2 分） ════════", results.size());
     results.forEach(
@@ -111,13 +112,27 @@ public class GenerationEvalRunner implements ApplicationRunner {
     double overall = results.stream().mapToInt(r -> r.score().total()).average().orElse(0);
     log.info("════════ 总体平均：{}/6 ════════", String.format("%.1f", overall));
 
+    // 单案故障有声（W27 #3a）：失败案单列、不进均分、计入退出码
+    if (!outcome.failures().isEmpty()) {
+      log.error("════════ 失败案 {} 条（不进均分） ════════", outcome.failures().size());
+      outcome
+          .failures()
+          .forEach(
+              f ->
+                  log.error(
+                      "[{}][{}] 失败类型={}",
+                      f.goldenCase().category(),
+                      f.goldenCase().query(),
+                      f.errorType()));
+    }
+
     // 回归门（W11 #7）：违约必须可见——warn 日志 + 退出码，静默降级是故障放大器（W11 #3 教训）
     List<String> breaches = EvalGate.breaches(categoryAverages, gateMinCategoryAverage);
     if (!breaches.isEmpty()) {
       log.warn("回归门违约（阈值 {}）：{}", String.format("%.1f", gateMinCategoryAverage), breaches);
     }
     if (exitAfterRun) {
-      int exitCode = breaches.isEmpty() ? 0 : 1;
+      int exitCode = breaches.isEmpty() && outcome.failures().isEmpty() ? 0 : 1;
       System.exit(SpringApplication.exit(applicationContext, () -> exitCode));
     }
   }

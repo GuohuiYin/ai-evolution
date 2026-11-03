@@ -21,7 +21,8 @@ class GenerationEvaluatorTest {
     EvalJudge judge = (c, answer) -> new EvalJudge.JudgeScore(2, 2, 1, "理由");
     GenerationEvaluator evaluator = new GenerationEvaluator(chatService, judge);
 
-    List<GenerationEvaluator.GenEvalResult> results = evaluator.evaluate(List.of(sampleCase()));
+    List<GenerationEvaluator.GenEvalResult> results =
+        evaluator.evaluate(List.of(sampleCase())).results();
 
     assertThat(results).hasSize(1);
     GenerationEvaluator.GenEvalResult r = results.getFirst();
@@ -51,7 +52,8 @@ class GenerationEvaluatorTest {
             "参照",
             List.of("茅台的酿造工艺是什么", "其中的 12987 是什么含义"));
 
-    List<GenerationEvaluator.GenEvalResult> results = evaluator.evaluate(List.of(multiTurn));
+    List<GenerationEvaluator.GenEvalResult> results =
+        evaluator.evaluate(List.of(multiTurn)).results();
 
     assertThat(seenMessages).containsExactly("茅台的酿造工艺是什么", "其中的 12987 是什么含义");
     assertThat(seenConversationIds.get(0))
@@ -123,5 +125,27 @@ class GenerationEvaluatorTest {
     new GenerationEvaluator(chatService, judge).evaluate(List.of(sampleCase()));
 
     assertThat(judge.seenSignal).isFalse();
+  }
+
+  @Test
+  void singleCaseFailureIsolatedAndRecorded() {
+    // W27 #3a：一案断流不抹掉全批——失败案登记、后续案照常评（40/58 夭折教训）
+    ChatService chatService =
+        (message, conversationId) -> {
+          if (message.equals("断流案")) {
+            throw new IllegalStateException("模拟供应商断流");
+          }
+          return new ChatAnswer("正常回答", List.of());
+        };
+    EvalJudge judge = (c, answer) -> new EvalJudge.JudgeScore(2, 2, 2, "理由");
+    GenerationCase broken = new GenerationCase("断流案", "factual", "answer-with-source", "参照");
+
+    GenerationEvaluator.EvalOutcome outcome =
+        new GenerationEvaluator(chatService, judge).evaluate(List.of(broken, sampleCase()));
+
+    assertThat(outcome.results()).hasSize(1);
+    assertThat(outcome.failures()).hasSize(1);
+    assertThat(outcome.failures().getFirst().goldenCase().query()).isEqualTo("断流案");
+    assertThat(outcome.failures().getFirst().errorType()).isEqualTo("IllegalStateException");
   }
 }
