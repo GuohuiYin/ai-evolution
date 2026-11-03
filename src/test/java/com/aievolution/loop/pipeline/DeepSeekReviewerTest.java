@@ -38,7 +38,8 @@ class DeepSeekReviewerTest {
     promptLibrary = mock(PromptLibrary.class);
     when(promptLibrary.exists("reviewer-v1")).thenReturn(true);
     when(promptLibrary.get("reviewer-v1"))
-        .thenReturn("复核规则\n【用户问题】\n{query}\n【证据包】\n{evidence}\n【草稿终答】\n{draft}");
+        .thenReturn(
+            "复核规则\n【会话上下文】\n{context}\n【用户问题】\n{query}\n【证据包】\n{evidence}\n【草稿终答】\n{draft}");
   }
 
   private DeepSeekReviewer reviewer() {
@@ -48,7 +49,8 @@ class DeepSeekReviewerTest {
   private EvidencePack sampleEvidence() {
     return new EvidencePack(
         List.of(
-            new EvidencePack.EvidenceItem("rag-search", "{\"q\":\"分红\"}", "茅台 2024 年度分红比例 75%")));
+            new EvidencePack.EvidenceItem("rag-search", "{\"q\":\"分红\"}", "茅台 2024 年度分红比例 75%")),
+        List.of());
   }
 
   @Test
@@ -105,9 +107,30 @@ class DeepSeekReviewerTest {
         .contains("{\"q\":\"分红\"}")
         .contains("茅台 2024 年度分红比例 75%")
         .contains("分红比例 75%")
+        .contains("（无，用户首轮提问）")
         .doesNotContain("{query}")
+        .doesNotContain("{context}")
         .doesNotContain("{evidence}")
         .doesNotContain("{draft}");
+  }
+
+  @Test
+  void contextTurnsRenderedIntoUserMessage() {
+    // W27 #2a：会话上下文随证据包入复核——追问场景 Reviewer 能看到上文（多轮拒答 57% 根因修复）
+    when(callSpec.content()).thenReturn("{\"verdict\":\"PASS\",\"comment\":\"\"}");
+    EvidencePack withContext =
+        new EvidencePack(
+            List.of(new EvidencePack.EvidenceItem("getFinancialSummary", "{}", "营收 1700 亿")),
+            List.of("用户：茅台 2024 年营收多少", "助手：2024 年营收 1700 亿元"));
+
+    reviewer().review("那 600519 呢", withContext, new DraftAnswer("600519 营收 1700 亿"));
+
+    ArgumentCaptor<String> userCaptor = ArgumentCaptor.forClass(String.class);
+    verify(spec).user(userCaptor.capture());
+    assertThat(userCaptor.getValue())
+        .contains("用户：茅台 2024 年营收多少")
+        .contains("助手：2024 年营收 1700 亿元")
+        .contains("那 600519 呢");
   }
 
   @Test

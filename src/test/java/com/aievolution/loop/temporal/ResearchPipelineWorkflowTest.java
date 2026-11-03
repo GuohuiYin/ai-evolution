@@ -37,6 +37,7 @@ class ResearchPipelineWorkflowTest {
     int buildCalls = 0;
     int reviewCalls = 0;
     final List<String> hitlEvents = new ArrayList<>();
+    final List<List<HistoryTurn>> receivedReviewHistories = new ArrayList<>();
 
     @Override
     public Plan plan(String question, List<HistoryTurn> history, String traceId) {
@@ -59,8 +60,10 @@ class ResearchPipelineWorkflowTest {
     }
 
     @Override
-    public ReviewVerdict review(String question, BuildOutcome outcome, String traceId) {
+    public ReviewVerdict review(
+        String question, BuildOutcome outcome, List<HistoryTurn> history, String traceId) {
       this.reviewCalls++;
+      this.receivedReviewHistories.add(history);
       return this.verdicts.removeFirst();
     }
 
@@ -116,6 +119,29 @@ class ResearchPipelineWorkflowTest {
     assertThat(this.activities.reviewCalls).isEqualTo(1);
     assertThat(this.activities.receivedComments).containsExactly("");
     assertThat(workflow.status()).isEqualTo("completed");
+  }
+
+  @Test
+  void historyFlowsToReviewForFollowUpJudgement() {
+    // W27 #2a：追问场景的会话历史必须送达 Reviewer（多轮拒答根因修复的编排侧断言）
+    this.activities.verdicts.add(ReviewVerdict.pass());
+    ResearchRunInput followUp =
+        new ResearchRunInput(
+            "那 600519 呢",
+            6,
+            List.of(
+                new HistoryTurn("user", "茅台 2024 年营收多少"),
+                new HistoryTurn("assistant", "2024 年营收 1700 亿元")),
+            "trace-test");
+
+    LoopResult result = newWorkflow().runResearch(followUp);
+
+    assertThat(result.stopReason()).isEqualTo(StopReason.FINAL_ANSWER);
+    assertThat(this.activities.receivedReviewHistories).hasSize(1);
+    assertThat(this.activities.receivedReviewHistories.getFirst())
+        .containsExactly(
+            new HistoryTurn("user", "茅台 2024 年营收多少"),
+            new HistoryTurn("assistant", "2024 年营收 1700 亿元"));
   }
 
   @Test

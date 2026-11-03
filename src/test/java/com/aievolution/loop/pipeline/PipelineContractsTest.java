@@ -51,6 +51,19 @@ class PipelineContractsTest {
         .containsExactly(
             new EvidencePack.EvidenceItem("rag-search", "{\"q\":\"分红\"}", "茅台 2024 分红 75%"),
             new EvidencePack.EvidenceItem("getDailyQuotes", "{\"code\":\"600519\"}", "1700.00"));
+    // 无上下文便捷构造 = 空上下文（首轮语义）
+    assertThat(pack.contextTurns()).isEmpty();
+  }
+
+  @Test
+  void evidencePackCarriesContextTurns() {
+    // W27 #2a：会话上下文随包走——Reviewer 只读本包，上下文必须进包才可及
+    EvidencePack pack =
+        EvidencePack.fromSteps(
+            List.of(new LoopStep(0, "t", "rag-search", "in", "out")),
+            List.of("用户：茅台营收多少", "助手：2024 年营收 1700 亿元"));
+
+    assertThat(pack.contextTurns()).containsExactly("用户：茅台营收多少", "助手：2024 年营收 1700 亿元");
   }
 
   @Test

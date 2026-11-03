@@ -5,6 +5,7 @@ import com.aievolution.infra.LogSummaries;
 import com.aievolution.prompt.PromptLibrary;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.MeterRegistry;
+import java.util.List;
 import java.util.Locale;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +47,7 @@ public class DeepSeekReviewer implements Reviewer {
     String rendered =
         this.promptTemplate
             .replace("{query}", question)
+            .replace("{context}", renderContext(evidence.contextTurns()))
             .replace("{evidence}", renderEvidence(evidence))
             .replace("{draft}", draft.content());
     String raw = this.chatClient.prompt().user(rendered).call().content();
@@ -84,6 +86,11 @@ public class DeepSeekReviewer implements Reviewer {
     int start = raw.indexOf('{');
     int end = raw.lastIndexOf('}');
     return start >= 0 && end > start ? raw.substring(start, end + 1) : null;
+  }
+
+  /** 会话上下文段（W27 #2a）：无历史 = 首轮提问显式标注，Reviewer 不做"是否有上文"的猜测 */
+  private static String renderContext(List<String> contextTurns) {
+    return contextTurns.isEmpty() ? "（无，用户首轮提问）" : String.join("\n", contextTurns);
   }
 
   private static String renderEvidence(EvidencePack pack) {

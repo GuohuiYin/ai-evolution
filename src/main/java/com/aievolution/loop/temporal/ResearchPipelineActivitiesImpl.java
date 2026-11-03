@@ -49,6 +49,7 @@ public class ResearchPipelineActivitiesImpl implements ResearchPipelineActivitie
   private final com.aievolution.skill.SkillRegistry skillRegistry;
   private final String skillMode;
   private final TraceSpans traceSpans;
+  private final int reviewContextMaxTurns;
 
   public ResearchPipelineActivitiesImpl(
       ChatClient.Builder chatClientBuilder,
@@ -63,7 +64,8 @@ public class ResearchPipelineActivitiesImpl implements ResearchPipelineActivitie
       LoopListenerRegistry listenerRegistry,
       com.aievolution.skill.SkillRegistry skillRegistry,
       String skillMode,
-      TraceSpans traceSpans) {
+      TraceSpans traceSpans,
+      int reviewContextMaxTurns) {
     this.chatClientBuilder = chatClientBuilder;
     this.promptLibrary = promptLibrary;
     this.toolRegistry = toolRegistry;
@@ -77,6 +79,7 @@ public class ResearchPipelineActivitiesImpl implements ResearchPipelineActivitie
     this.skillRegistry = skillRegistry;
     this.skillMode = skillMode;
     this.traceSpans = traceSpans;
+    this.reviewContextMaxTurns = reviewContextMaxTurns;
   }
 
   @Override
@@ -165,7 +168,8 @@ public class ResearchPipelineActivitiesImpl implements ResearchPipelineActivitie
   }
 
   @Override
-  public ReviewVerdict review(String question, BuildOutcome outcome, String traceId) {
+  public ReviewVerdict review(
+      String question, BuildOutcome outcome, List<HistoryTurn> history, String traceId) {
     try {
       setTraceId(traceId);
       return new DeepSeekReviewer(
@@ -174,10 +178,23 @@ public class ResearchPipelineActivitiesImpl implements ResearchPipelineActivitie
               this.reviewerPromptName,
               this.meterRegistry)
           .review(
-              question, EvidencePack.fromSteps(outcome.steps()), new DraftAnswer(outcome.draft()));
+              question,
+              EvidencePack.fromSteps(outcome.steps(), contextTurns(history)),
+              new DraftAnswer(outcome.draft()));
     } finally {
       clearTraceId();
     }
+  }
+
+  /**
+   * 会话上下文渲染入证据包（W27 #2a）：最近 N 轮原文直挂（不用模型再加工摘要—— 确定性、零额外调用、复核员看原文最可靠）；上限外置
+   * ai.loop.pipeline.review-context-max-turns（A11 策略值入配置）。
+   */
+  private List<String> contextTurns(List<HistoryTurn> history) {
+    int from = Math.max(0, history.size() - this.reviewContextMaxTurns);
+    return history.subList(from, history.size()).stream()
+        .map(t -> ("assistant".equals(t.role()) ? "助手" : "用户") + "：" + t.content())
+        .toList();
   }
 
   /** 子循环只转发 onStep（SSE 轨迹不断流）；onComplete 由引擎层对整条管线统一收尾 */

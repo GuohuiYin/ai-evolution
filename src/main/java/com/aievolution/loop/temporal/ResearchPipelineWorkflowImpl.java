@@ -92,7 +92,7 @@ public class ResearchPipelineWorkflowImpl implements ResearchPipelineWorkflow {
       }
       this.status = "reviewing";
       ReviewVerdict verdict =
-          this.quickActivities.review(input.question(), outcome, input.traceId());
+          this.quickActivities.review(input.question(), outcome, input.history(), input.traceId());
       if (verdict.isPass()) {
         return finish(
             new LoopResult(outcome.draft(), List.copyOf(this.steps), StopReason.FINAL_ANSWER));
