@@ -1,4 +1,4 @@
-# 课程地图：W1-W25 全景串联（v3 学习资产版）
+# 课程地图：W1-W26 全景串联（v3 学习资产版）
 
 > 2026-10-28 改版（v3：在 v2 导航骨架上增加学习资产视角——逐周「学了什么 / 关键技术 /
 > 记忆点 / 产物链接」四要素，产物链接补全 ADR、课程笔记、eval 报告三类证据）。
@@ -27,13 +27,14 @@
 **从"能跑"到"可信"**：W1-5 把系统立起来（地基→模型→RAG→Prompt→工具），W6-9 让它
 安全可测（协议→安全→评估→验收），W10-13 让它自己转（记忆→Loop→双向凭证→检索攻坚），
 W14-19 把"可信"做成体系（复盘清账→检索收尾→评估造数→轮换首演），W20-24 把"可信"
-推进到生产形态（泄漏修复→Temporal 韧性→三角色管线→HITL→反馈回路）。
+推进到生产形态（泄漏修复→Temporal 韧性→三角色管线→HITL→反馈回路），W25-26 把它
+推入无人值守运营（可观测+成本工程→仿真运行+双故障注入验收）。
 
-**当前位置：W25 ✅ 已收官五件全交付**（#1 OTel GenAI 埋点+Phoenix 面板；#2 成本台账+
-预算熔断；#3 模型路由备而不用；#4 sparse 500 截断修复+bm25 裁决不切换；#5 反馈回路
-首例转正 57→58）**→ W26 已立案**（24h 无人值守运行包 + L4 运营验收收官：混合流量仿真 +
-熔断实触发 + 双故障注入按 SOP 计时——P5 最后窗口，裁决 ①C②C③任务5排进本周，
-见 [W26 计划](advanced/w26-unattended-loop-and-l4-ops-acceptance.md)）。
+**当前位置：W26 ✅ 已收官五项全交付**（#1 分层诊断 SOP `091502b`+`4ede2cf`；#2 无人值守
+运行包 `1c7da63`；#3 L4 运营验收 `5679ef3`；#4 流量驱动四项裁决 `2752c55`；#5 缺陷族
+「最新口径优先」修复 `89cbdfb`+`03bfb41`）**→ W27 已立案**（P5 收官验收 + 作品集打磨，
+按裁决③：蓝图主体完课、结课仪式待收尾后另行裁决，
+见 [W27 计划](advanced/w27-p5-closure-and-portfolio.md)）。
 
 ## 跨周因果边图（只画非线性边——线性时间链见下表）
 
@@ -62,6 +63,7 @@ flowchart LR
   W22 --"预埋Signal/病灶"--> W23["W23 HITL接通+多样性修复"]
   W23 --"backlog全输入"--> W24["W24 零召回防线+反馈回路"]
   W24 --"token账本需求"--> W25["W25 可观测性+成本工程"]
+  W25 --"三件套+熔断底座"--> W26["W26 无人值守运行+缺陷族修复"]
 ```
 
 ## 逐周串联（四要素：学了什么 / 关键技术 / 记忆点 / 产物）
@@ -115,6 +117,7 @@ flowchart LR
 | W23 | HITL 与检索多样性 | HITL 审批断点（挂起→Signal 放行/驳回→超时 fail-closed，三处留痕）、多样性配额重排（涉案案 buckets[0,20]→[2,20]）、Skill 扩列再止步、A2A 认知 | HITL 缺席策略必须显式化——人工不在时系统往哪倒，是设计决策不是默认值 | ←承 W22 预埋；→启：W24 backlog（零召回/口径摩擦/refusal-boundary） | [计划](advanced/w23-hitl-and-retrieval-diversity.md)、[HITL 演示](../eval/generation/w23-hitl-demo.md)、[多样性收官](../eval/retrieval/w23-diversity-quota.md)、[L4 验收](../eval/generation/w23-l4-acceptance.md)、[A2A 笔记](../notes/a2a-protocol.md) |
 | W24 | 零召回防线与反馈闭环 | 零召回重试（根因=dense 阈值悬崖 0.4817 惜败 0.5，A/B 探针 3/3 vs 0/3 翻默认）、judge 检索信号注入、人工反馈回路最小环（👍/👎→候选区）、HITL 翻默认 | 证据归因必须落到机制执行路径——批次翻分可能是措辞运气，先证机制跑了再谈有效（retro #13） | ←承 W23 backlog 全部输入；→启：W25 五件 | [计划](advanced/w24-recall-robustness-and-feedback-loop.md)、[零召回收官](../eval/retrieval/w24-zero-recall-retry.md)、[judge 复评](../eval/generation/w24-judge-rescore-2.json)、[hosted MCP 笔记](../notes/tushare-hosted-mcp.md) |
 | W25 | 可观测平台与成本工程 | OTel GenAI 埋点+Phoenix 面板（ADR-0020）、JSONL 成本台账+日预算熔断 fail-closed、模型路由分档（10 案双臂：pro 成本 15-20x 零质量收益→备而不用）、sparse 500 截断修复（静默回归→触顶 WARN 有声化）、反馈回路首例转正（缺陷族抽象） | 探针必须逐行对齐生产链——测「想象中的语义」会产出方向性错误的结论（AND 误判纠错）；熔断的账本不能依赖观测栈存活 | ←承 W24 挂账（bm25 重评/候选区转正）；→启：W26 24h 运行包（最后窗口） | [计划](advanced/w25-cost-engineering-and-bm25-revisit.md)、[sparse 重评](../eval/retrieval/w25-sparse-rereview.md)、[定档报告](../eval/selection/agent-tier-v1.md)、[v3.2 回归](../eval/generation/w25-gen-v32-baseline.md) |
+| W26 | 无人值守运行与缺陷族修复 | 混合流量仿真（356 请求/218 会话）+双故障注入按 SOP 计时（Qdrant 2 分钟/DeepSeek 3 分钟）+熔断两撞实战+asOf 重排+溯源头收口 | failover≠高可用（备模型撞破 120s 活动预算）、熔断遮蔽效应、预算闸重启可绕过、参照腐烂二次（judge 无错参照先腐）、证据包裸拼让排序与条款同时失效 | ←承 W25 三件套+熔断底座；→启：W27 P5 收官+五条实账 backlog | [计划](advanced/w26-unattended-loop-and-l4-ops-acceptance.md)、[运行报告](../ops/w26-unattended-run-report.md)、[L4 验收](advanced/w26-l4-ops-acceptance.md)、[v3.3 回归](../eval/generation/w26-gen-v33-asof-priority.md) |
 
 ## 决策触发点清单（导航核心：预先写死的 if-then 及其状态）
 
@@ -155,9 +158,8 @@ flowchart LR
 
 ## 下一站
 
-W26（已立案 2026-10-30，裁决 ①C 混合流量②C 双注入③任务5排进本周④W27 留白按原计划）：
-#1 分层诊断 SOP 补章（L0-L4 故障→仪器→处置对照表 + 2 个历史真实故障回套验证）、
-#2 24h 无人值守运行包（≥2h 仿真 + 熔断实触发 + 双注入计时 ≤30min + 成本曲线）、
-#3 L4 运营验收四条收官（挂证据链接）、#4 流量驱动裁决项清仓（语义缓存/上下文压缩/
-记忆 L3-L5/影子评估）、#5 缺陷族「最新口径优先」修复（总股本/员工总数两案转绿）。
-W27 留白作 P5 缓冲/作品集打磨。
+W27（已立案 2026-11-03，Owner 裁决 ①B4 failover 超时联动/B5 HITL 无人模式挂 W28+
+②任务 2=证据包接入 L2 记忆+检索侧多轮改写增强一起做 ③P5 收官后不立即结课）：
+#1 P5 收官验收（四项硬件逐项挂证据）、#2 多轮上下文进证据包、#3 judge 校准复测
+（30 案双盲守线 ≥80%）、#4 预算闸持久化+运行时可调、#5 作品集打磨
+（README 快照/C4 图集/retro 增补）。详见 [W27 计划](advanced/w27-p5-closure-and-portfolio.md)。
