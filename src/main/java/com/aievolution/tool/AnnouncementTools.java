@@ -1,8 +1,8 @@
 package com.aievolution.tool;
 
+import com.aievolution.rag.ChunkEvidenceFormatter;
 import com.aievolution.rag.KnowledgeRetriever;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
@@ -41,13 +41,7 @@ public class AnnouncementTools {
     if (docs.isEmpty()) {
       return "知识库中未找到与问题相关的资料";
     }
-    return docs.stream()
-        .map(
-            doc ->
-                "【来源: %s】\n%s"
-                    .formatted(
-                        String.valueOf(doc.getMetadata().getOrDefault("source", "unknown")),
-                        doc.getText()))
-        .collect(Collectors.joining("\n---\n"));
+    // W26 #5：溯源头格式收口到 ChunkEvidenceFormatter（原内联格式缺 asOf 时点）
+    return ChunkEvidenceFormatter.joinForContext(docs);
   }
 }

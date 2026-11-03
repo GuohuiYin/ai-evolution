@@ -3,11 +3,11 @@ package com.aievolution.chat;
 import com.aievolution.compliance.Disclaimers;
 import com.aievolution.cost.CostChannel;
 import com.aievolution.prompt.PromptLibrary;
+import com.aievolution.rag.ChunkEvidenceFormatter;
 import com.aievolution.rag.KnowledgeRetriever;
 import com.aievolution.rag.QueryRewriter;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -119,7 +119,9 @@ public class RagChatService implements ChatService {
   }
 
   private String joinContents(List<Document> docs) {
-    return docs.stream().map(Document::getText).collect(Collectors.joining("\n---\n"));
+    // W26 #5：溯源头（来源+数据时点）统一由 ChunkEvidenceFormatter 收口（A12）——
+    // 模型看得到「哪份资料、什么时点」，最新口径优先才可执行
+    return ChunkEvidenceFormatter.joinForContext(docs);
   }
 
   /** 检索前改写（W11 #5）：追问先经指代消解成自足查询再向量化——证据 #4 的修复点 */

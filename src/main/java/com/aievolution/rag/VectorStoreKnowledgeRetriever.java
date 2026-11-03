@@ -37,6 +37,7 @@ public class VectorStoreKnowledgeRetriever implements KnowledgeRetriever {
   private final RerankerClient reranker; // null = 无精排段
   private final int rerankTopN;
   private final RetrievalDiversityGuard diversityGuard; // null = 无配额段（单阶段/测试构造）
+  private final LatestAsOfPrioritizer asOfPrioritizer; // null = 最新口径重排关（测试构造）
 
   /** 单阶段构造（hybrid/rerank 全关语义）：测试与回退路径共用。 */
   public VectorStoreKnowledgeRetriever(
@@ -52,6 +53,7 @@ public class VectorStoreKnowledgeRetriever implements KnowledgeRetriever {
         Optional.empty(),
         false,
         5,
+        Optional.empty(),
         Optional.empty());
   }
 
@@ -75,6 +77,7 @@ public class VectorStoreKnowledgeRetriever implements KnowledgeRetriever {
         Optional.empty(),
         false,
         5,
+        Optional.empty(),
         Optional.empty());
   }
 
@@ -90,7 +93,8 @@ public class VectorStoreKnowledgeRetriever implements KnowledgeRetriever {
       Optional<RerankerClient> reranker,
       @Value("${ai.rag.rerank.enabled:false}") boolean rerankEnabled,
       @Value("${ai.rag.rerank.top-n:5}") int rerankTopN,
-      Optional<RetrievalDiversityGuard> diversityGuard) {
+      Optional<RetrievalDiversityGuard> diversityGuard,
+      Optional<LatestAsOfPrioritizer> asOfPrioritizer) {
     this.vectorStore = vectorStore;
     this.similarityThreshold = similarityThreshold;
     this.topK = topK;
@@ -100,6 +104,7 @@ public class VectorStoreKnowledgeRetriever implements KnowledgeRetriever {
     this.reranker = rerankEnabled ? reranker.orElse(null) : null;
     this.rerankTopN = rerankTopN;
     this.diversityGuard = diversityGuard.orElse(null);
+    this.asOfPrioritizer = asOfPrioritizer.orElse(null);
   }
 
   @Override
@@ -120,6 +125,25 @@ public class VectorStoreKnowledgeRetriever implements KnowledgeRetriever {
 
   @Override
   public RetrievalEvidence retrieveWithEvidence(String query, KnowledgeFilter filter) {
+    RetrievalEvidence evidence = doRetrieveWithEvidence(query, filter);
+    // W26 #5「最新口径优先」：单点收口在最终命中出闸前——单阶段/hybrid/rerank 三模式共用
+    if (asOfPrioritizer == null) {
+      return evidence;
+    }
+    List<Document> reordered = asOfPrioritizer.prioritize(query, evidence.hits());
+    if (reordered != evidence.hits()) {
+      log.info(
+          "stage=ASOF_PRIORITY reordered=true top1AsOf={} query={}",
+          reordered.isEmpty()
+              ? "--"
+              : reordered.getFirst().getMetadata().getOrDefault("asOf", "--"),
+          abbreviate(query));
+      return new RetrievalEvidence(reordered, evidence.denseTopScore());
+    }
+    return evidence;
+  }
+
+  private RetrievalEvidence doRetrieveWithEvidence(String query, KnowledgeFilter filter) {
     if (sparseRecall == null && reranker == null) {
       List<Document> hits = denseSearch(query, filter, topK);
       // 检索判罚依据单点留痕：hits=0 即拒答现场；topScore 即"差多少命中"的标尺

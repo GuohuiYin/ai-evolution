@@ -124,7 +124,8 @@ class VectorStoreKnowledgeRetrieverTest {
             Optional.empty(),
             false,
             5,
-            Optional.of(guard));
+            Optional.of(guard),
+            Optional.empty());
 
     List<Document> hits = retriever.retrieve("宁德时代和贵州茅台哪个更值得长期持有");
 
@@ -168,6 +169,70 @@ class VectorStoreKnowledgeRetrieverTest {
 
     assertThat(evidence.hits()).extracting(Document::getId).containsExactly("d1", "d2");
     assertThat(evidence.denseTopScore()).isEqualTo(0.83);
+  }
+
+  private static Document datedDoc(String id, String asOf, double score) {
+    return Document.builder()
+        .id(id)
+        .text("text-" + id)
+        .metadata(Map.of("source", id + ".pdf", "asOf", asOf))
+        .build()
+        .mutate()
+        .score(score)
+        .build();
+  }
+
+  @Test
+  void noYearQueryReordersHitsByLatestAsOf() {
+    // W26 #5：无年份查询在最终命中出闸前按 asOf 降序重排；判罚标尺（denseTopScore）不受重排影响
+    when(vectorStore.similaritySearch(any(SearchRequest.class)))
+        .thenReturn(
+            List.of(datedDoc("old", "2024-12-31", 0.83), datedDoc("new", "2026-06-30", 0.61)));
+    VectorStoreKnowledgeRetriever retriever =
+        new VectorStoreKnowledgeRetriever(
+            vectorStore,
+            0.5,
+            5,
+            Optional.empty(),
+            false,
+            20,
+            60,
+            Optional.empty(),
+            false,
+            5,
+            Optional.empty(),
+            Optional.of(new LatestAsOfPrioritizer(true)));
+
+    RetrievalEvidence evidence = retriever.retrieveWithEvidence("茅台的总股本是多少股");
+
+    assertThat(evidence.hits()).extracting(Document::getId).containsExactly("new", "old");
+    assertThat(evidence.denseTopScore()).isEqualTo(0.83);
+  }
+
+  @Test
+  void yearPinnedQueryKeepsSemanticOrder() {
+    // W26 #5：时点限定题不动排序——「2025 年报口径」金题依赖语义排序原样生效
+    when(vectorStore.similaritySearch(any(SearchRequest.class)))
+        .thenReturn(
+            List.of(datedDoc("old", "2024-12-31", 0.83), datedDoc("new", "2026-06-30", 0.61)));
+    VectorStoreKnowledgeRetriever retriever =
+        new VectorStoreKnowledgeRetriever(
+            vectorStore,
+            0.5,
+            5,
+            Optional.empty(),
+            false,
+            20,
+            60,
+            Optional.empty(),
+            false,
+            5,
+            Optional.empty(),
+            Optional.of(new LatestAsOfPrioritizer(true)));
+
+    RetrievalEvidence evidence = retriever.retrieveWithEvidence("茅台 2025 年年报披露的总股本是多少股");
+
+    assertThat(evidence.hits()).extracting(Document::getId).containsExactly("old", "new");
   }
 
   @Test
@@ -221,6 +286,7 @@ class VectorStoreKnowledgeRetrieverTest {
             Optional.of(reranker),
             true,
             3,
+            Optional.empty(),
             Optional.empty());
 
     List<Document> hits = retriever.retrieve("茅台工艺");
@@ -252,6 +318,7 @@ class VectorStoreKnowledgeRetrieverTest {
             Optional.of(reranker),
             true,
             3,
+            Optional.empty(),
             Optional.empty());
 
     List<Document> hits = retriever.retrieve("茅台工艺");
@@ -276,6 +343,7 @@ class VectorStoreKnowledgeRetrieverTest {
             Optional.of(reranker),
             true,
             5,
+            Optional.empty(),
             Optional.empty());
 
     assertThat(retriever.retrieve("茅台工艺")).isEmpty();

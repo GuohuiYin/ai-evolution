@@ -19,9 +19,9 @@
   },
   {
     "query": "茅台 2025 年一季度的营收是多少",
-    "category": "in-domain-unanswerable",
-    "expectedBehavior": "refuse-nodata",
-    "referenceAnswer": "知识库已覆盖 2025 年年报与 2026 年半年报，但两者均未披露 2025 年一季度单季数据；应明确回答暂无相关资料，禁止编造数字"
+    "category": "factual",
+    "expectedBehavior": "answer-with-source",
+    "referenceAnswer": "50,600,957,885.78 元（约 506.01 亿元），来源：《贵州茅台 2025 年年度报告》「2025 年分季度主要财务数据」表（第一季度 1-3 月营业收入，年报第 7 页）；须注明来源文件与数据时点，禁止用 2024 年报或 2026 半年报口径顶替（v3.3 翻案：语料演进推翻原「未披露」前提）"
   },
   {
     "query": "五粮液的营收规模有多大",

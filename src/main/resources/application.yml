@@ -127,6 +127,11 @@ ai:
         - name: 宁德时代
           code: "300750"
           aliases: [宁德, catl]
+    # W26 #5「最新口径优先」缺陷族修复（路线 A 检索侧）：无年份查询的最终命中按
+    # asOf 数据时点降序重排（时点限定题不动）。病灶：badcase 694fcbe6 时点错位，
+    # 涉案金题「总股本」「员工总数」在集守线。默认开；回归异常可翻 false 回退
+    latest-asof-priority:
+      enabled: ${AI_RAG_LATEST_ASOF_PRIORITY_ENABLED:true}
     sparse:
       # W16 #2 sparse 路实现切换面：matchtext（Qdrant 全文索引，现状基线）/
       # bm25（A3-lite 应用侧分词 + TF 饱和，IDF 由 Qdrant 服务端 modifier 补）。
@@ -143,7 +148,7 @@ ai:
     # RAG 通路 prompt 模板名（resources/prompts/ 下，不含后缀）。A/B 实验经配置切换：
     # AI_RAG_CHAT_PROMPT=rag-chat-v2-fewshot 跑 few-shot 对照（W8-4）
     # v3（W23 #2c）：措辞边界段——「本次未覆盖」≠「知识库无」（W22 #3a 病灶纠正）；回滚切 v1
-    chat-prompt: rag-chat-v3
+    chat-prompt: rag-chat-v4
     # W11 #5 查询改写 prompt 模板名
     rewrite-prompt: query-rewrite-v1
     # W24 #1b 零召回防线：召回为空时换措辞重述再试一次（dense 阈值悬崖病灶——
