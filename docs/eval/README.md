@@ -54,12 +54,17 @@ CI 侧 `GoldenRetrievalEvalIT` 用哈希向量替身只覆盖 normal 正例。
 
 ### [generation/](generation/) — 生成质量回归
 
-黄金集 57 条 v3（factual 18 + multi-turn 13 + compound 11 + in-domain-unanswerable 8 + redline 7；
-W17-W19 三轮扩库轮换，明细见 [changelog](golden-set-changelog.md)），
+黄金集 58 条 v3.4（factual 20 + multi-turn 13 + compound 11 + in-domain-unanswerable 7 + redline 7；
+W17-W19 三轮扩库轮换 + W25 反馈回路首例转正 + W26 一季度案翻案 + W27 数据源切换型参照修正，
+明细见 [changelog](golden-set-changelog.md)），
 LLM-as-a-Judge 三维评分（准确性 / 拒答正确性 / 溯源），judge 锚定 5/5；
 judge 校准轨迹：W18 95.5% → W19 36.7%（语料轮换致校准证据时效破产，规范第五条由此而立）
-→ W20 复测 63.3% 不达标立案（病灶=时效先验误判/rubric 误用/人工漏判对照，处置排 W21）；
-`AI_EVAL_GENERATION_ENABLED=true ./mvnw spring-boot:run` 手动触发；
+→ W20 复测 63.3% 不达标立案（病灶=时效先验误判/rubric 误用/人工漏判对照，处置排 W21）
+→ W21 输入侧处置复测 83.3% 过线 → **W27 复测 88.9%（80/90）首次无需人为修正直接过线**（[收卷](generation/w27-judge-calibration.md)）；
+`AI_EVAL_GENERATION_ENABLED=true ./mvnw spring-boot:run` 手动触发——长跑批值守口径（W26 #5 起操作惯例）：
+`AI_LOOP_HITL_AWAIT_TIMEOUT=PT3M`（无人窗口 HITL 3 分钟超时 fail-closed，不空等 10 分钟）
++ `AI_EVAL_GENERATION_EXIT_AFTER_RUN=true` + 日志一律带时间戳文件名或 `>>` 追加（W26 P9/S9 覆盖丢日志教训）；
+单案故障隔离 + 模型 HTTP 超时（W27 #3a）后挂死不再毁整批；
 CI 定时回归门见 `.github/workflows/eval-generation.yml`（每天 UTC 21:23，
 类别均分 < 4.5/6 即失败并开 issue，secrets 由 Owner 配置）。
 
@@ -77,6 +82,9 @@ CI 定时回归门见 `.github/workflows/eval-generation.yml`（每天 UTC 21:23
 | W22 | [w22-pipeline-dual-arm.md](generation/w22-pipeline-dual-arm.md) · [w22-skill-token-report.md](generation/w22-skill-token-report.md) | 三角色管线 57 案双臂对照 +0.33、红线 14/14 满维 → 切默认引擎；accuracy 维补「工具取数如实标注不视为编造」+ 对照案复评（涉案翻分、满分案不动）；Skill token 实测 2.0%<20% 止步 |
 | W23 | [w23-hitl-demo.md](generation/w23-hitl-demo.md) · [w23-skill-token-report-r2.md](generation/w23-skill-token-report-r2.md) | HITL 双路径真机演示（放行含背书/驳回/超时 fail-closed）；ragv3 批 5.3/6 基线；Skill 扩列 4 技能复测 9.7%<20% 再止步；涉案案零召回 0/0/2 登记（W24 #1 立案输入） |
 | W24 | [w24-zero-recall-retry.md](retrieval/w24-zero-recall-retry.md) · [w24-judge-rescore-2.json](generation/w24-judge-rescore-2.json) | 重试批 5.55/6（涉案案翻 2→6 系改写运气，重试零触发——归因只认 A/B 探针）；judge 检索信号注入复评：涉案案 compliance 0→2、accuracy 照判、两满分案不动 |
+| W25 | [w25-gen-v32-baseline.md](generation/w25-gen-v32-baseline.md) | v3.2 反馈回路首例转正（候选区清零）+ 参照修订 2：总体 5.5/6 持平 W24，新案双轮满分；「最新口径优先」缺陷族登记；法定代表人案双轮稳定失败立案挂账 |
+| W26 | [w26-gen-v33-asof-priority.md](generation/w26-gen-v33-asof-priority.md) | v3.3 语料 asOf 优先重排 + 一季度案翻案：总体 5.6/6，翻案案 6/6 满分；W26 无人值守窗口 eval 复跑（PT3M 值守口径首演） |
+| W27 | [w27-multiturn-context-fix.md](generation/w27-multiturn-context-fix.md) · [w27-judge-calibration.md](generation/w27-judge-calibration.md) | 多轮上下文修复（证据包入 L2 + 检索改写进 pipeline + reviewer-v2）：multi-turn 5.0→5.7、r3 全量 5.7/6 零 HITL；校准复测 88.9% 首次无需修正过线；v3.4 案 14 参照修正（数据源切换型腐烂首例） |
 
 ### 红线安全 — 单列的评估域
 
