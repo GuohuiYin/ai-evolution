@@ -32,7 +32,9 @@ class ArchitectureTest {
           Map.entry("eval", List.of("rag", "chat", "prompt")),
           // W11 ReAct 研究循环：loop → infra（LogSummaries）+ tool（#3a ToolRegistry）
           // + prompt（#3b DeepSeekResearchModel 加载 ReAct 协议模板）
-          Map.entry("loop", List.of("infra", "tool", "prompt")),
+          // W27 #2b：loop → rag（QueryRewritingToolExecutor 复用 QueryRewriter 指代消解契约，
+          // pipeline 检索通路对齐 chat 通路的改写纪律——依赖接口而非实现）
+          Map.entry("loop", List.of("infra", "tool", "prompt", "rag")),
           // 以下为零出度域：基础域不依赖任何兄弟域
           Map.entry("infra", List.of()),
           // W11 #5：rag → prompt（DeepSeekQueryRewriter 加载改写模板）

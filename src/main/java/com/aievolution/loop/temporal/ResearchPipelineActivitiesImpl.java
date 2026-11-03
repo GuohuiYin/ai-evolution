@@ -16,8 +16,10 @@ import com.aievolution.loop.pipeline.DeepSeekReviewer;
 import com.aievolution.loop.pipeline.DraftAnswer;
 import com.aievolution.loop.pipeline.EvidencePack;
 import com.aievolution.loop.pipeline.Plan;
+import com.aievolution.loop.pipeline.QueryRewritingToolExecutor;
 import com.aievolution.loop.pipeline.ReviewVerdict;
 import com.aievolution.prompt.PromptLibrary;
+import com.aievolution.rag.QueryRewriter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.temporal.activity.Activity;
 import java.util.ArrayList;
@@ -50,6 +52,7 @@ public class ResearchPipelineActivitiesImpl implements ResearchPipelineActivitie
   private final String skillMode;
   private final TraceSpans traceSpans;
   private final int reviewContextMaxTurns;
+  private final QueryRewriter queryRewriter;
 
   public ResearchPipelineActivitiesImpl(
       ChatClient.Builder chatClientBuilder,
@@ -65,7 +68,8 @@ public class ResearchPipelineActivitiesImpl implements ResearchPipelineActivitie
       com.aievolution.skill.SkillRegistry skillRegistry,
       String skillMode,
       TraceSpans traceSpans,
-      int reviewContextMaxTurns) {
+      int reviewContextMaxTurns,
+      QueryRewriter queryRewriter) {
     this.chatClientBuilder = chatClientBuilder;
     this.promptLibrary = promptLibrary;
     this.toolRegistry = toolRegistry;
@@ -80,6 +84,7 @@ public class ResearchPipelineActivitiesImpl implements ResearchPipelineActivitie
     this.skillMode = skillMode;
     this.traceSpans = traceSpans;
     this.reviewContextMaxTurns = reviewContextMaxTurns;
+    this.queryRewriter = queryRewriter;
   }
 
   @Override
@@ -131,7 +136,12 @@ public class ResearchPipelineActivitiesImpl implements ResearchPipelineActivitie
         ResearchLoop loop =
             new ResearchLoop(
                 model,
-                new ChannelToolExecutor(this.toolRegistry, sq.channel()),
+                // W27 #2b：检索通路查询先过指代消解（会话历史入改写）再执行——
+                // 对齐 chat 通路改写纪律；白名单收窄仍由 ChannelToolExecutor 在内层把关
+                new QueryRewritingToolExecutor(
+                    new ChannelToolExecutor(this.toolRegistry, sq.channel()),
+                    this.queryRewriter,
+                    messages),
                 maxSteps,
                 listener,
                 this.traceSpans);

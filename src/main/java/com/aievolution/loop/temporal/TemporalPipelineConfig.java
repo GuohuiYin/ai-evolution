@@ -67,7 +67,8 @@ public class TemporalPipelineConfig {
       com.aievolution.skill.SkillRegistry skillRegistry,
       @Value("${ai.skill.mode:off}") String skillMode,
       TraceSpans traceSpans,
-      @Value("${ai.loop.pipeline.review-context-max-turns:10}") int reviewContextMaxTurns) {
+      @Value("${ai.loop.pipeline.review-context-max-turns:10}") int reviewContextMaxTurns,
+      com.aievolution.rag.QueryRewriter queryRewriter) {
     return new ResearchPipelineActivitiesImpl(
         chatClientBuilder,
         promptLibrary,
@@ -82,7 +83,8 @@ public class TemporalPipelineConfig {
         skillRegistry,
         skillMode,
         traceSpans,
-        reviewContextMaxTurns);
+        reviewContextMaxTurns,
+        queryRewriter);
   }
 
   @Bean(destroyMethod = "shutdown")
