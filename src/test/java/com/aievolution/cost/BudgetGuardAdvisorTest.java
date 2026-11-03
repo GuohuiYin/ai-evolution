@@ -40,10 +40,16 @@ class BudgetGuardAdvisorTest {
     chain = mock(CallAdvisorChain.class);
   }
 
+  /** 以固定默认预算构造 override 组件（路径与时钟随测试注入） */
+  private DailyBudgetOverride budgetOf(long defaultBudget) {
+    return new DailyBudgetOverride(
+        defaultBudget, tempDir.resolve("budget-override.json"), Clock.fixed(NOW, ZoneId.of("UTC")));
+  }
+
   @Test
   void underBudgetProceeds() throws Exception {
     ledger.record("m", "rag", 100, 50, null);
-    BudgetGuardAdvisor advisor = new BudgetGuardAdvisor(ledger, 200_000);
+    BudgetGuardAdvisor advisor = new BudgetGuardAdvisor(ledger, budgetOf(200_000));
     ChatClientResponse expected = new ChatClientResponse(new ChatResponse(List.of()), Map.of());
     when(chain.nextCall(any())).thenReturn(expected);
 
@@ -57,7 +63,7 @@ class BudgetGuardAdvisorTest {
   void atBudgetRejectsWithoutModelCall() {
     // 达线即拒（used >= budget）：150/150 不放行；关键是 chain.nextCall 从未发生——零真实模型调用
     ledger.record("m", "rag", 100, 50, null);
-    BudgetGuardAdvisor advisor = new BudgetGuardAdvisor(ledger, 150);
+    BudgetGuardAdvisor advisor = new BudgetGuardAdvisor(ledger, budgetOf(150));
 
     assertThatThrownBy(() -> advisor.adviseCall(request, chain))
         .isInstanceOf(BudgetExceededException.class)
@@ -66,12 +72,28 @@ class BudgetGuardAdvisorTest {
   }
 
   @Test
+  void runtimeAdjustRaisesBudgetWithoutRestart() throws Exception {
+    // W27 #4：已撞线（150/150）时运行时提额即放行——不重启进程
+    ledger.record("m", "rag", 100, 50, null);
+    DailyBudgetOverride budget = budgetOf(150);
+    BudgetGuardAdvisor advisor = new BudgetGuardAdvisor(ledger, budget);
+    budget.adjust(200_000, "撞线救场");
+    ChatClientResponse expected = new ChatClientResponse(new ChatResponse(List.of()), Map.of());
+    when(chain.nextCall(any())).thenReturn(expected);
+
+    ChatClientResponse actual = advisor.adviseCall(request, chain);
+
+    assertThat(actual).isSameAs(expected);
+    verify(chain).nextCall(any());
+  }
+
+  @Test
   void ledgerReadFailureRejectsFailClosed() throws Exception {
     // 账本读故障（目录冒充文件触发 IO 异常）→ 同样拒答：读不出账就无法证明未超支
     Path fakeLedger = tempDir.resolve("fake");
     Files.createDirectory(fakeLedger);
     TokenLedger brokenLedger = new TokenLedger(fakeLedger, Clock.fixed(NOW, ZoneId.of("UTC")));
-    BudgetGuardAdvisor advisor = new BudgetGuardAdvisor(brokenLedger, 200_000);
+    BudgetGuardAdvisor advisor = new BudgetGuardAdvisor(brokenLedger, budgetOf(200_000));
 
     assertThatThrownBy(() -> advisor.adviseCall(request, chain))
         .isInstanceOf(BudgetExceededException.class)

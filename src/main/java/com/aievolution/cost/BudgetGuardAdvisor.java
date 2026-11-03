@@ -17,6 +17,9 @@ import org.springframework.core.Ordered;
  *
  * <p>挂链首（order 先于内容埋点 -2 与记账 -1）：被拒的请求不产生 span 内容、 不落台账（没调用就没有用量）、不占记忆 advisor 的写入。
  *
+ * <p>预算值每次调用实时取 {@link DailyBudgetOverride#effectiveBudget()}（W27 #4）：运行时经 {@code POST
+ * /ai/cost/budget} 调额即时生效，无需重启；一次 volatile 读，不给调用链加 IO。
+ *
  * <p>口径：只按 prompt+completion 总量计，调用前检查——故最多超出单次调用的用量 （事后口径，单日几十次量级可接受）。缓存命中价约 1/10 暂不分账折减：v1
  * 从严，多拒不溢。
  */
@@ -26,11 +29,11 @@ public class BudgetGuardAdvisor implements CallAdvisor {
   private static final Logger budgetLog = LoggerFactory.getLogger("ai.cost.budget");
 
   private final TokenLedger ledger;
-  private final long dailyTokenBudget;
+  private final DailyBudgetOverride budget;
 
-  public BudgetGuardAdvisor(TokenLedger ledger, long dailyTokenBudget) {
+  public BudgetGuardAdvisor(TokenLedger ledger, DailyBudgetOverride budget) {
     this.ledger = ledger;
-    this.dailyTokenBudget = dailyTokenBudget;
+    this.budget = budget;
   }
 
   @Override
@@ -43,11 +46,10 @@ public class BudgetGuardAdvisor implements CallAdvisor {
       throw new BudgetExceededException("token 账本不可读，按 fail-closed 拒答", e);
     }
     long used = today.promptTokens() + today.completionTokens();
-    if (used >= dailyTokenBudget) {
-      budgetLog.warn(
-          "熔断触发（预算用尽）: used={} budget={} calls={}", used, dailyTokenBudget, today.calls());
-      throw new BudgetExceededException(
-          "今日 token 预算已用尽（已用 " + used + " / 预算 " + dailyTokenBudget + "）");
+    long budget = this.budget.effectiveBudget();
+    if (used >= budget) {
+      budgetLog.warn("熔断触发（预算用尽）: used={} budget={} calls={}", used, budget, today.calls());
+      throw new BudgetExceededException("今日 token 预算已用尽（已用 " + used + " / 预算 " + budget + "）");
     }
     return chain.nextCall(request);
   }

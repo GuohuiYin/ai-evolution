@@ -2,6 +2,7 @@ package com.aievolution.infra;
 
 import com.aievolution.cost.BudgetGuardAdvisor;
 import com.aievolution.cost.CostChannel;
+import com.aievolution.cost.DailyBudgetOverride;
 import com.aievolution.cost.TokenLedger;
 import io.micrometer.tracing.Tracer;
 import io.micrometer.tracing.otel.bridge.Slf4JEventListener;
@@ -29,12 +30,13 @@ public class ModelObservabilityConfig {
 
   /**
    * W25 #2b 预算熔断（fail-closed）：{@link BudgetGuardAdvisor} 挂链首， 每次模型调用前查台账，达日预算（默认 200k token，{@code
-   * ai.cost.daily-token-budget} 可配）即拒答——超额后零真实模型调用。账本读故障同样拒答。
+   * ai.cost.daily-token-budget} 可配）即拒答——超额后零真实模型调用。账本读故障同样拒答。 W27 #4：预算值改由 {@link
+   * DailyBudgetOverride} 供给，支持运行时调额（当日有效）。
    */
   @Bean
   public ChatClientCustomizer budgetGuardCustomizer(
-      TokenLedger ledger, @Value("${ai.cost.daily-token-budget:200000}") long dailyTokenBudget) {
-    return builder -> builder.defaultAdvisors(new BudgetGuardAdvisor(ledger, dailyTokenBudget));
+      TokenLedger ledger, DailyBudgetOverride budget) {
+    return builder -> builder.defaultAdvisors(new BudgetGuardAdvisor(ledger, budget));
   }
 
   /**
