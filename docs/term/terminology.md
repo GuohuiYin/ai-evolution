@@ -131,6 +131,10 @@
 | OIDC (OpenID Connect) | 读字母 | 身份认证协议 | OAuth 之上加"身份证"(id token),管"你是谁" |
 | JWT (JSON Web Token) | 读字母 J-W-T | (令牌格式) | 带签名的 JSON 凭证,id token 的载体 |
 | SSO (Single Sign-On) | 读字母 | 单点登录 | 登一次处处免登,企业场景多走 OIDC |
+| IdP (Identity Provider) | 读字母 | 身份提供方 | 认证用户并签发 token 的"发证机关"(如 Keycloak) |
+| JWKS (JSON Web Key Set) | 读字母 | 验签公钥集 | IdP 公布公钥的固定端点,按 kid 选钥、支持轮换 |
+| PKCE (Proof Key for Code Exchange) | 读作 "pixy" | 授权码防截胡 | 换 token 须出示 code_verifier,截码者取不走 |
+| RBAC (Role-Based Access Control) | 读字母 | 基于角色的访问控制 | 权限绑角色、人担任角色;对比 ABAC(按属性判定) |
 
 ## 六、读音常见坑
 
