@@ -127,6 +127,10 @@
 | Micrometer | /maɪˈkrɑːmɪtər/ | (JVM 指标库) | Java 指标采集门面,只管 metrics |
 | Phoenix (Arize Phoenix) | /ˈfiːnɪks/ | (LLM 观测平台) | LLM 应用专用观测+评估,吃 OTel 数据 |
 | Jaeger | /ˈjeɪɡər/ "耶格尔" | (链路追踪后端) | 通用分布式 tracing,CNCF 毕业项目 |
+| OAuth 2.0 | /ˈoʊɔːθ/ | 授权框架 | 发"通行证"(access token),管"能做什么" |
+| OIDC (OpenID Connect) | 读字母 | 身份认证协议 | OAuth 之上加"身份证"(id token),管"你是谁" |
+| JWT (JSON Web Token) | 读字母 J-W-T | (令牌格式) | 带签名的 JSON 凭证,id token 的载体 |
+| SSO (Single Sign-On) | 读字母 | 单点登录 | 登一次处处免登,企业场景多走 OIDC |
 
 ## 六、读音常见坑
 
