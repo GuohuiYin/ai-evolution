@@ -28,13 +28,15 @@
 安全可测（协议→安全→评估→验收），W10-13 让它自己转（记忆→Loop→双向凭证→检索攻坚），
 W14-19 把"可信"做成体系（复盘清账→检索收尾→评估造数→轮换首演），W20-24 把"可信"
 推进到生产形态（泄漏修复→Temporal 韧性→三角色管线→HITL→反馈回路），W25-26 把它
-推入无人值守运营（可观测+成本工程→仿真运行+双故障注入验收）。
+推入无人值守运营（可观测+成本工程→仿真运行+双故障注入验收），W27 收官 P5——
+**原 27 周蓝图主体完课，W28 起进入二期（生产硬化期）**。
 
-**当前位置：W26 ✅ 已收官五项全交付**（#1 分层诊断 SOP `091502b`+`4ede2cf`；#2 无人值守
-运行包 `1c7da63`；#3 L4 运营验收 `5679ef3`；#4 流量驱动四项裁决 `2752c55`；#5 缺陷族
-「最新口径优先」修复 `89cbdfb`+`03bfb41`）**→ W27 已立案**（P5 收官验收 + 作品集打磨，
-按裁决③：蓝图主体完课、结课仪式待收尾后另行裁决，
-见 [W27 计划](advanced/w27-p5-closure-and-portfolio.md)）。
+**当前位置：W27 ✅ 已收官五项全交付**（#1 P5 收官验收 `c00a54f`；#2 多轮上下文修复
+`f14744d`+`011d40b`+`efb65bb`；#3 校准 88.9% 过线 `5303591`…`1280145`；#4 预算运行时
+可调 `aeaa39d`+`8fe1368`；#5 作品集打磨 `fc31d07`…`9554bda`；案 19/30 开口项闭环
+`5e2a8c8`）——**原 27 周蓝图主体完课**（结课仪式按 W27 裁决③另行裁决）**→ W28 已立案**
+（二期·生产硬化期第一周：召回增强主线 + rubric 澄清 + 消息长度上限 + 二期一页纸，
+见 [W28 计划](advanced/w28-recall-enhancement.md)）。
 
 ## 跨周因果边图（只画非线性边——线性时间链见下表）
 
@@ -118,6 +120,7 @@ flowchart LR
 | W24 | 零召回防线与反馈闭环 | 零召回重试（根因=dense 阈值悬崖 0.4817 惜败 0.5，A/B 探针 3/3 vs 0/3 翻默认）、judge 检索信号注入、人工反馈回路最小环（👍/👎→候选区）、HITL 翻默认 | 证据归因必须落到机制执行路径——批次翻分可能是措辞运气，先证机制跑了再谈有效（retro #13） | ←承 W23 backlog 全部输入；→启：W25 五件 | [计划](advanced/w24-recall-robustness-and-feedback-loop.md)、[零召回收官](../eval/retrieval/w24-zero-recall-retry.md)、[judge 复评](../eval/generation/w24-judge-rescore-2.json)、[hosted MCP 笔记](../notes/tushare-hosted-mcp.md) |
 | W25 | 可观测平台与成本工程 | OTel GenAI 埋点+Phoenix 面板（ADR-0020）、JSONL 成本台账+日预算熔断 fail-closed、模型路由分档（10 案双臂：pro 成本 15-20x 零质量收益→备而不用）、sparse 500 截断修复（静默回归→触顶 WARN 有声化）、反馈回路首例转正（缺陷族抽象） | 探针必须逐行对齐生产链——测「想象中的语义」会产出方向性错误的结论（AND 误判纠错）；熔断的账本不能依赖观测栈存活 | ←承 W24 挂账（bm25 重评/候选区转正）；→启：W26 24h 运行包（最后窗口） | [计划](advanced/w25-cost-engineering-and-bm25-revisit.md)、[sparse 重评](../eval/retrieval/w25-sparse-rereview.md)、[定档报告](../eval/selection/agent-tier-v1.md)、[v3.2 回归](../eval/generation/w25-gen-v32-baseline.md) |
 | W26 | 无人值守运行与缺陷族修复 | 混合流量仿真（356 请求/218 会话）+双故障注入按 SOP 计时（Qdrant 2 分钟/DeepSeek 3 分钟）+熔断两撞实战+asOf 重排+溯源头收口 | failover≠高可用（备模型撞破 120s 活动预算）、熔断遮蔽效应、预算闸重启可绕过、参照腐烂二次（judge 无错参照先腐）、证据包裸拼让排序与条款同时失效 | ←承 W25 三件套+熔断底座；→启：W27 P5 收官+五条实账 backlog | [计划](advanced/w26-unattended-loop-and-l4-ops-acceptance.md)、[运行报告](../ops/w26-unattended-run-report.md)、[L4 验收](advanced/w26-l4-ops-acceptance.md)、[v3.3 回归](../eval/generation/w26-gen-v33-asof-priority.md) |
+| W27 | P5 收官与作品集打磨 | P5 四项硬件收官验收、证据包接入 L2 记忆+检索改写装饰器（multi-turn 5.0→5.7）、judge 校准 88.9% 首次无修正过 80% 守线（案14 参照腐烂 v3.4 修正，有效 90.0%）、预算运行时可调（W26 报告 P4 误记勘误）、README/C4/retro 三处对齐至 P5 终态——**原 27 周蓝图主体完课** | 新机制只是嫌疑名单第一名——单变量对照先行（案 30 asOf 重排嫌疑双跑排除，真因=召回漏检进不了 top-5）；观测文档也会腐烂，故障窗口的机制性断言须与代码核验再归档 | ←承 W26 五条实账 backlog；→启：W28 二期开篇（召回增强主线，安全捆/韧性捆排队 W29/W30） | [计划](advanced/w27-p5-closure-and-portfolio.md)、[校准报告](../eval/generation/w27-judge-calibration.md)、[多轮修复](../eval/generation/w27-multiturn-context-fix.md)、[retro W25-27](../retro/w25-w27-misconceptions.md) |
 
 ## 决策触发点清单（导航核心：预先写死的 if-then 及其状态）
 
@@ -158,8 +161,8 @@ flowchart LR
 
 ## 下一站
 
-W27（已立案 2026-11-03，Owner 裁决 ①B4 failover 超时联动/B5 HITL 无人模式挂 W28+
-②任务 2=证据包接入 L2 记忆+检索侧多轮改写增强一起做 ③P5 收官后不立即结课）：
-#1 P5 收官验收（四项硬件逐项挂证据）、#2 多轮上下文进证据包、#3 judge 校准复测
-（30 案双盲守线 ≥80%）、#4 预算闸持久化+运行时可调、#5 作品集打磨
-（README 快照/C4 图集/retro 增补）。详见 [W27 计划](advanced/w27-p5-closure-and-portfolio.md)。
+W28（已立案 2026-11-04，**二期·生产硬化期开篇**——原 27 周蓝图 W27 完课后第一周）：
+#1 检索召回增强（案 30 归因驱动：正确块排 15/16 名进不了 top-5，四手段取证裁决 +
+Recall@5/生成 eval 双门）、#2 rubric 维度归属澄清、#3 消息长度上限、#4 二期一页纸
+（W29 安全捆 → W30 韧性捆配值守窗口）。详见 [W28 计划](advanced/w28-recall-enhancement.md)。
+候选池总表：[w28-plus-todo-candidates](../w28-plus-todo-candidates.md)。
