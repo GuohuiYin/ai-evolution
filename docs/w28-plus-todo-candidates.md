@@ -7,9 +7,13 @@
 >
 > **核销记录**：2026-11-04 W28 立案圈定 #1（召回增强，转周计划任务 1）/ #4（rubric 澄清，
 > 转任务 2）/ #10（消息长度上限，转任务 3）；安全捆 #5+#11+#12+#13 同日预立案
-> [W29 计划](plans/advanced/w29-web-security-hardening.md)（依赖 W28 收官）；韧性捆 #2+#3
-> 同日预立案 [W30 计划](plans/advanced/w30-resilience-hardening.md)（配值守窗口验收）——
-> 二期三周主线排序就此成文。
+> [W29 计划](plans/advanced/w29-web-security-hardening.md)（依赖 W28 收官）；同日晚些时候
+> Owner 裁决插入 [W30 统一认证授权中心](plans/advanced/w30-unified-auth-center.md)
+> （Spring Authorization Server 自建 IdP，学习目标优先；同日二次裁决扩容为「系统安全
+> 架构设计 + 认证中心」，TLS 威胁模型声明入周，安全事件审计流 + 密钥轮转规程顺延并入
+> W31），韧性捆 #2+#3 顺延预立案
+> [W31 计划](plans/advanced/w31-resilience-hardening.md)（配值守窗口验收）——
+> 二期主线排序就此成文：W28 召回质量 → W29 安全捆 → W30 安全架构+认证中心 → W31 韧性捆。
 
 ## 一、候选任务（等 Owner 圈选）
 

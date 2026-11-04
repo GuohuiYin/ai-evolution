@@ -16,15 +16,16 @@
 | CORS | 零配置（同源现状安全，前后端分离即风险） | deny-by-default + origin 白名单显式声明 |
 | SSRF | MCP fetch 可抓任意 URL 含内网（守 robots 未守内网段） | egress 白名单 / RFC1918+loopback 黑名单 |
 
-**适配判断（二期一页纸已定调）**：现阶段单人本地/演示项目，不背 IdP 重型依赖；接口形态
-向 OAuth2 对齐（Bearer 头、标准 401/403、scope 语义），多用户真实需求出现时再接 OIDC
-资源服务器（Keycloak / Authing）——触发条件登记，不提前实施。
+**适配判断**：现阶段单人本地/演示项目，本周只把接口形态向 OAuth2 对齐（Bearer 头、
+标准 401/403、scope 语义），不接 IdP——**IdP 已由 Owner 2026-11-04 裁决立项 W30 自建，
+走 Spring Authorization Server（框架级自建，业界认可；不从零手写协议）**，本周的
+Bearer/RBAC/scope 对齐正是为 W30 资源服务器改造预留的最小迁移面。
 
 ## 任务表（提案）
 
 | # | 任务（验收口径） | 产出 | 状态 |
 |---|---|---|---|
-| 1 | **认证授权对齐**（候选 #5）：自研过滤器收口进 Spring Security 过滤器链；最小 RBAC——角色表配置化（reader=只读查询 / writer=反馈与对话 / admin=成本与审批管理），端点级角色映射显式声明；Bearer Token 形态（`Authorization: Bearer`）与 X-API-Key 兼容期裁决（双收或切换，取证后定）；401/403 语义分清（认证失败 vs 授权不足）；ADR 留痕（A4，含为什么不接 IdP 的 why-not） | 重构 + ADR + 全量安全测试绿 | ☐ |
+| 1 | **认证授权对齐**（候选 #5）：自研过滤器收口进 Spring Security 过滤器链；最小 RBAC——角色表配置化（reader=只读查询 / writer=反馈与对话 / admin=成本与审批管理），端点级角色映射显式声明；Bearer Token 形态（`Authorization: Bearer`）与 X-API-Key 兼容期裁决（双收或切换，取证后定）；401/403 语义分清（认证失败 vs 授权不足）；ADR 留痕（A4，why-not 含：本周不接 IdP——中心 W30 才建，本周对齐形态是为其预留迁移面） | 重构 + ADR + 全量安全测试绿 | ☐ |
 | 2 | **安全响应头套件**（候选 #11）：CSP（对话页自托管资源白名单）+ X-Content-Type-Options + X-Frame-Options + Referrer-Policy，走 Spring Security 头套件而非手写 | 配置 + 头断言测试 | ☐ |
 | 3 | **CORS 显式策略**（候选 #12）：deny-by-default + origin 白名单配置化（本地开发 origin 入 `.env.example`），预检请求行为测试锁定 | 配置 + 测试 | ☐ |
 | 4 | **SSRF egress 控制**（候选 #13）：MCP fetch 目标 URL 校验——RFC1918/loopback/link-local 黑名单拒连（配置化例外清单），或反向白名单（取证裁决）；工具层单测 + 红队基线复测（W7 防线不回归） | 修复 + 测试 + 红队复测记录 | ☐ |
