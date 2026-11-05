@@ -269,6 +269,7 @@ flowchart TB
 | [docs/portfolio.md](docs/portfolio.md) | 项目亮点清单（作品集，每条挂 commit/报告证据链） |
 | [docs/capability-map.md](docs/capability-map.md) | 生产级 Agent 能力地图（A15 差距台账活文档，里程碑刷新） |
 | [docs/w28-plus-todo-candidates.md](docs/w28-plus-todo-candidates.md) | 二期候选 TODO 总表（挂账/深扫 gap/已裁决不做项，Owner 圈选唯一入口） |
+| [docs/revision-guide.md](docs/revision-guide.md) | 主题复习索引（按知识主题组织：业界标准/设计/实现验证/教训 四栏） |
 | [k8s/](k8s/README.md) | 部署清单与配置分层原则 |
 | [AGENTS.md](AGENTS.md) | 开发工作约定（TDD / Clean Code / 金融红线 / review 颗粒度） |
 
