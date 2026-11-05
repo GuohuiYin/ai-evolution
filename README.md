@@ -75,7 +75,7 @@ flowchart TB
         MCPClient["MCP 客户端<br/>（Codex / Inspector）"]
     end
 
-    subgraph entry["入口层（W12 起：API Key 鉴权默认拒绝 + 限流 60/min）"]
+    subgraph entry["入口层（W12 起：API Key 鉴权默认拒绝 + 限流 60/min；W28 #3 起：请求体 >32KB→413 / 消息 >2000 字→400）"]
         Ctrl["ChatController<br/>POST /ai/chat · /ai/chat/stream（SSE）· /ai/analyze<br/>/ai/agent（调试旁路，不接会话记忆）"]
         FbCtrl["FeedbackController（W24 #3）<br/>POST /ai/feedback（👍/👎 → badcase 库）"]
         ApprCtrl["ApprovalController（W23 #1）<br/>/api/approvals/*（HITL 放行/驳回）"]
@@ -92,7 +92,7 @@ flowchart TB
     end
 
     subgraph capability["能力层"]
-        Rewrite["查询改写（W11）+ 零召回重述（W24）<br/>多轮指代消解，数据裁决启用<br/>pipeline 检索改写装饰器（W27 #2）"]
+        Rewrite["查询改写（W11）+ 零召回重述（W24）<br/>多轮指代消解，数据裁决启用<br/>pipeline 检索改写装饰器（W27 #2）<br/>改写护栏：剥离注入标识符（W28 #1，默认开）"]
         Retriever["KnowledgeRetriever 两阶段（W13，ADR-0017）<br/>混合召回 dense+sparse+RRF（默认开）<br/>sparse 候选翻页取尽（W25 #4 修 500 截断）<br/>主体多样性配额（W23，默认开）<br/>rerank 精排管线（+0pp 裁决，默认关）"]
         Qdrant[("Qdrant 向量库<br/>md + PDF 增量摄入（分块参数签名自愈）<br/>元数据三件套过滤")]
         Tools["StockDataTools / AnnouncementTools<br/>行情 · 财务 · 公告检索（@Tool）"]
@@ -236,7 +236,7 @@ flowchart TB
 **安全与合规**
 
 - 金融三红线代码化：强制免责声明 / 禁买卖建议 / 数字必溯源（服务端告警 ADR-0011）
-- 红队基线 10 用例；MCP 错误脱敏；入参上限 2000 字符
+- 红队基线 10 用例；MCP 错误脱敏；入参上限 2000 字符 + 请求体 32KB（W28 #3，413/400 双层）
 - CVE-2026-59318 工具解析 fail-fast（显式配置 + 测试锁定）；工具调用次数上限
 
 **可观测与评估**
@@ -245,10 +245,10 @@ flowchart TB
 - OTel GenAI 语义埋点 → Phoenix 链路面板（W25 #1，[ADR-0020](docs/adr/0020-llm-observability-otel-phoenix.md)）：模型调用/检索段/工具调用/ReAct 步 trace 可查，消息内容捕获默认开
 - prompt/response 日志：开关受控（本地开 / 生产关）
 - token 成本账本：JSONL 台账（重启不丢）+ `/ai/cost/summary` 日聚总端点 + 日预算熔断 fail-closed（W25 #2）+ **预算运行时可调** `POST /ai/cost/budget`（W27 #4：当日调额即时生效零重启、次日自动回落配置默认，调整落盘留痕）；含 DeepSeek 缓存命中率
-- 检索黄金集 69 条（W17 扩容 39→60 + W19 v5 轮换 60→69；Recall@5 基线 72% → W13 混合检索裁决启用后 **93%**，+21pp；W19 轮换复测 94.3%）+ 生成黄金集 58 条（W17-W19 扩库轮换 + W25 反馈回路首例转正；LLM judge 三维评分；judge 校准 W18 95.5% → W19 36.7% 时效破产 → W20 复测 63.3% 立案（[揭盲登记](docs/eval/generation/w20-calibration-rerun.md)）→ W21 输入侧处置复测 83.3% 过线（[r2](docs/eval/generation/w21-calibration-rerun-r2.md)）→ W22 accuracy 维修尺（工具取数如实标注不视为编造）+ 对照案复评确认修尺不松尺 → W24 拒答口径对齐（空召回设计性拒答经检索信号与「无理由拒答」切开，[复评](docs/eval/generation/w24-judge-rescore-2.json)）→ W26 v3.3 语料 asOf 优先重排（[基线 5.6/6](docs/eval/generation/w26-gen-v33-asof-priority.md)）→ W27 校准复测 88.9% 首次无需修正过线（[收卷](docs/eval/generation/w27-judge-calibration.md)）+ v3.4 参照修正（数据源切换型腐烂首例））+ Agent 轨迹评估（收敛率/冗余/步数，M3 验收 6/6 收敛）；评估设施加固（W27 #3a：单案故障隔离 + 模型 HTTP 超时，长跑批不再整批报废/挂死）
+- 检索黄金集 69 条（W17 扩容 39→60 + W19 v5 轮换 60→69；Recall@5 基线 72% → W13 混合检索裁决启用后 **93%**，+21pp；W19 轮换复测 94.3%）+ 生成黄金集 58 条（W17-W19 扩库轮换 + W25 反馈回路首例转正；LLM judge 三维评分；judge 校准 W18 95.5% → W19 36.7% 时效破产 → W20 复测 63.3% 立案（[揭盲登记](docs/eval/generation/w20-calibration-rerun.md)）→ W21 输入侧处置复测 83.3% 过线（[r2](docs/eval/generation/w21-calibration-rerun-r2.md)）→ W22 accuracy 维修尺（工具取数如实标注不视为编造）+ 对照案复评确认修尺不松尺 → W24 拒答口径对齐（空召回设计性拒答经检索信号与「无理由拒答」切开，[复评](docs/eval/generation/w24-judge-rescore-2.json)）→ W26 v3.3 语料 asOf 优先重排（[基线 5.6/6](docs/eval/generation/w26-gen-v33-asof-priority.md)）→ W27 校准复测 88.9% 首次无需修正过线（[收卷](docs/eval/generation/w27-judge-calibration.md)）+ v3.4 参照修正（数据源切换型腐烂首例））→ W28 改写注入标识符护栏（[双臂 Recall@5 52/53 零回归、案 30 满分转绿](docs/eval/generation/w28-rewrite-guard-eval.md)）+ Agent 轨迹评估（收敛率/冗余/步数，M3 验收 6/6 收敛）；评估设施加固（W27 #3a：单案故障隔离 + 模型 HTTP 超时，长跑批不再整批报废/挂死）
 - 一页成本账：单次问答 ¥0.0054（W8 口径）；生成 eval 单轮成本可经 `/ai/cost/summary` 日聚总实查（W25 #2 上线）
 
-**路线图**：W5 工具调用（@Tool）+ M1 验收门 ✅ → M2 MCP/护栏/Eval（W6 MCP 协议贯通 ✅，W7 安全加固 ✅，W8 评估体系 ✅——检索/生成双黄金集 + LLM judge + 成本账；few-shot A/B 裁决不启用）→ M3 最小研究 Loop ✅（2026-09-18 验收收官：显式 ReAct + 会话记忆 + SSE 轨迹 / 查询改写 / MCP Client 出向凭证 / 检索两阶段化——hybrid +21pp 启用、rerank +0pp 不启用，数据裁决；[验收记录](docs/plans/m3/m3-acceptance.md)）→ W14+ 进阶。
+**路线图**：W5 工具调用（@Tool）+ M1 验收门 ✅ → M2 MCP/护栏/Eval（W6 MCP 协议贯通 ✅，W7 安全加固 ✅，W8 评估体系 ✅——检索/生成双黄金集 + LLM judge + 成本账；few-shot A/B 裁决不启用）→ M3 最小研究 Loop ✅（2026-09-18 验收收官：显式 ReAct + 会话记忆 + SSE 轨迹 / 查询改写 / MCP Client 出向凭证 / 检索两阶段化——hybrid +21pp 启用、rerank +0pp 不启用，数据裁决；[验收记录](docs/plans/m3/m3-acceptance.md)）→ W14-W27 进阶 ✅（P5 无人值守收官）→ **W28+ 二期·生产硬化期**（召回质量 → Web 安全捆 → 安全架构+统一认证授权中心 → 韧性捆，[二期一页纸](docs/plans/advanced/phase2-production-hardening.md)）。
 
 ## 文档导航
 
@@ -268,10 +268,11 @@ flowchart TB
 | [docs/term/](docs/term/) | AI 工程术语词汇卡（A17 汇报语言纪律配套） |
 | [docs/portfolio.md](docs/portfolio.md) | 项目亮点清单（作品集，每条挂 commit/报告证据链） |
 | [docs/capability-map.md](docs/capability-map.md) | 生产级 Agent 能力地图（A15 差距台账活文档，里程碑刷新） |
+| [docs/w28-plus-todo-candidates.md](docs/w28-plus-todo-candidates.md) | 二期候选 TODO 总表（挂账/深扫 gap/已裁决不做项，Owner 圈选唯一入口） |
 | [k8s/](k8s/README.md) | 部署清单与配置分层原则 |
 | [AGENTS.md](AGENTS.md) | 开发工作约定（TDD / Clean Code / 金融红线 / review 颗粒度） |
 
 ## 项目节奏
 
-13 周实战（W1-W13，M1/M2/M3 验收门）+ 14 周进阶（W14-W27）。
+13 周实战（W1-W13，M1/M2/M3 验收门）+ 14 周进阶（W14-W27，P5 无人值守收官 ✅）+ 二期生产硬化期（W28-31，进行中）。
 每周产出可演示交付物；验收门不过不往下走——详细路线见 [docs/plans/](docs/plans/README.md)。
