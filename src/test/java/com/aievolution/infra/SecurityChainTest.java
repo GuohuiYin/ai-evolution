@@ -89,4 +89,17 @@ class SecurityChainTest {
 
     assertThat(response.statusCode()).isEqualTo(200);
   }
+
+  @Test
+  void securityHeadersSuitePresentOnResponses() throws Exception {
+    // W29 #2：头套件断言——公开面与持证端点同样带头（健康探针零成本取样）
+    HttpResponse<String> response = send("GET", "/actuator/health", null);
+
+    var headers = response.headers();
+    assertThat(headers.firstValue("X-Content-Type-Options")).hasValue("nosniff");
+    assertThat(headers.firstValue("X-Frame-Options")).hasValue("DENY");
+    assertThat(headers.firstValue("Referrer-Policy")).hasValue("no-referrer");
+    assertThat(headers.firstValue("Content-Security-Policy"))
+        .hasValueSatisfying(csp -> assertThat(csp).contains("default-src 'self'"));
+  }
 }

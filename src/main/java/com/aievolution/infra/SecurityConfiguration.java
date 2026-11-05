@@ -64,8 +64,8 @@ public class SecurityConfiguration {
    *   <li>授权：公开面（{@link SecurityAllowlist}）permitAll → 端点角色表（配置化）→ 其余已认证即可
    *   <li>401/403：{@link SecurityProblemDetailHandler} 统一 ProblemDetail，401 附 WWW-Authenticate:
    *       Bearer
-   *   <li>CSRF 关闭：纯无状态 API、无 Cookie 会话，CSRF 无从附着（对话页与调用方皆凭证头直连）； 头套件保持关闭——W29 #2
-   *       逐头启用并配测试，不与收口混在一个变更里
+   *   <li>CSRF 关闭：纯无状态 API、无 Cookie 会话，CSRF 无从附着（对话页与调用方皆凭证头直连）； 安全头套件见 W29 #2（X-Frame-Options=DENY
+   *       / Referrer-Policy=no-referrer / CSP 自托管白名单）
    * </ul>
    */
   @Bean
@@ -92,7 +92,24 @@ public class SecurityConfiguration {
               auth.anyRequest().authenticated();
             })
         .csrf(csrf -> csrf.disable())
-        .headers(headers -> headers.disable())
+        // W29 #2 安全响应头套件（走 Spring Security 头组件，不手写）：
+        // X-Content-Type-Options=nosniff / Cache-Control / HSTS(仅HTTPS) 为框架默认值；
+        // X-Frame-Options=DENY 防点击劫持；Referrer-Policy=no-referrer 防 URL 参数外泄；
+        // CSP 自托管白名单——对话页与 Swagger UI 均为同源资源+内联脚本/样式（unsafe-inline
+        // 是内联结构的过渡态，抽外置文件后收紧，见头注释）
+        .headers(
+            headers ->
+                headers
+                    .frameOptions(frame -> frame.deny())
+                    .referrerPolicy(
+                        referrer ->
+                            referrer.policy(
+                                org.springframework.security.web.header.writers
+                                    .ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER))
+                    .contentSecurityPolicy(
+                        csp ->
+                            csp.policyDirectives(
+                                "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'")))
         .addFilterBefore(
             new ApiCredentialAuthenticationFilter(apiKey, authProperties.keyRoles()),
             AuthorizationFilter.class)
