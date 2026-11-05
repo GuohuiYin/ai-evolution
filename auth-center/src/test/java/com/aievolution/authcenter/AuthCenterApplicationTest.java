@@ -7,15 +7,9 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
 
 /** 空壳冒烟（W30 #1 步骤 1）：上下文可装配 + actuator 健康探针可通（K8s 友好最小集，C1）。 */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class AuthCenterApplicationTest {
-
-  @Value("${local.server.port}")
-  private int port;
+class AuthCenterApplicationTest extends AbstractAuthCenterTest {
 
   @Test
   void healthProbeIsUp() throws Exception {

@@ -1,0 +1,10 @@
+-- W30 #1 identity 域：用户表（auth schema，纯 JDBC 初始化，CREATE IF NOT EXISTS 幂等）。
+-- status 预留 #6 注册审批语义：PENDING（默认）=待审批不可登录，ACTIVE=可登录。
+CREATE TABLE IF NOT EXISTS users (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(64) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  role VARCHAR(16) NOT NULL,
+  status VARCHAR(16) NOT NULL DEFAULT 'PENDING',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

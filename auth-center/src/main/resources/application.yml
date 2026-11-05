@@ -23,6 +23,23 @@ spring:
               scopes:
                 - writer
 
+  datasource:
+    # identity 域用户表：auth 独立 schema（与主应用同 MySQL 实例、库级隔离；
+    # 连接串兜底建库，纯 JDBC 无 JPA/Flyway——同主工程姿势）
+    url: ${AUTH_DB_URL:jdbc:mysql://localhost:3306/auth?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai}
+    username: ${AUTH_DB_USERNAME:root}
+    password: ${AUTH_DB_PASSWORD:}
+  sql:
+    init:
+      mode: always
+
+# identity 域：admin 种子（哈希由 PasswordHashTool 离线生成，{argon2} 前缀格式，明文不过夜）；
+# 用户表无 admin 且此值为空时启动 fail-closed（无 admin 的系统无人能审批，宁可起不来）
+auth:
+  identity:
+    admin-username: ${AUTH_ADMIN_USERNAME:admin}
+    admin-password-hash: ${AUTH_ADMIN_PASSWORD_HASH:}
+
 # K8s 友好最小集（C1）：探针分离；文档面不外露（A7 同纪律，本工程无业务端点文档需求）
 management:
   endpoints:

@@ -19,7 +19,21 @@
 
   <properties>
     <java.version>25</java.version>
+    <testcontainers.version>2.0.5</testcontainers.version>
   </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <!-- Boot 4 BOM 不再托管 Testcontainers，显式导入（与主工程同版本对齐） -->
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers-bom</artifactId>
+        <version>${testcontainers.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <dependencies>
     <dependency>
@@ -36,9 +50,37 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>
     </dependency>
+    <!-- W30 #1 步骤 3：identity 域持久化——纯 JDBC（与主工程同姿势，不引入 JPA/Flyway） -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-jdbc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.mysql</groupId>
+      <artifactId>mysql-connector-j</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <!-- argon2 密码哈希的底层实现（Argon2PasswordEncoder 依赖 BouncyCastle）。
+         Boot 4.1.1 BOM 不托管，显式钉 1.85（2026-11-05 Central 最新稳定版，O5） -->
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcprov-jdk18on</artifactId>
+      <version>1.85</version>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- identity 域测试：真实 MySQL 容器（mysql:8.4，与本地容器同版本） -->
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers-mysql</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers-junit-jupiter</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
