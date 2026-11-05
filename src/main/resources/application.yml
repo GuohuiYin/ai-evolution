@@ -293,6 +293,11 @@ ai:
     # 不进入限流/鉴权/业务链；业务字段级上限（message ≤2000 字符）由 ChatRequest
     # @Size 承担——两层职责切分见 RequestBodySizeLimitFilter 注释
     max-request-body: ${AI_SECURITY_MAX_REQUEST_BODY:32768}
+    cors:
+      # W29 #3：CORS 显式策略——deny-by-default，跨域来源白名单逗号分隔。
+      # 默认空 = 拒绝一切跨域请求（对话页同源访问不经过 CORS，不受影响）；
+      # 前后端分离部署时在此显式声明 origin，例：http://localhost:5173
+      allowed-origins: ${AI_SECURITY_CORS_ORIGINS:}
   mcp:
     fetch:
       # 抓取正文喂回模型前的长度上限：网页原文无界，防单页烧爆上下文与 token 账本（A11 策略外置）

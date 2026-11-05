@@ -23,7 +23,9 @@ import org.springframework.boot.test.context.SpringBootTest;
       "spring.ai.vectorstore.qdrant.initialize-schema=false",
       "ai.knowledge.ingest.enabled=false",
       "spring.ai.mcp.client.enabled=false",
-      "ai.security.api-key=test-key"
+      "ai.security.api-key=test-key",
+      // W29 #3：测试上下文显式声明一个白名单 origin（生产默认空 = deny-by-default）
+      "ai.security.cors.allowed-origins=http://localhost:5173"
     })
 class SecurityChainTest {
 
@@ -101,5 +103,39 @@ class SecurityChainTest {
     assertThat(headers.firstValue("Referrer-Policy")).hasValue("no-referrer");
     assertThat(headers.firstValue("Content-Security-Policy"))
         .hasValueSatisfying(csp -> assertThat(csp).contains("default-src 'self'"));
+  }
+
+  @Test
+  void corsPreflightFromWhitelistedOriginIsPermitted() throws Exception {
+    // W29 #3：白名单 origin 的预检放行（CorsFilter 在鉴权前处理，不吃 401）
+    HttpRequest request =
+        HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/ai/chat"))
+            .header("Origin", "http://localhost:5173")
+            .header("Access-Control-Request-Method", "POST")
+            .method("OPTIONS", HttpRequest.BodyPublishers.noBody())
+            .build();
+
+    HttpResponse<String> response =
+        HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+
+    assertThat(response.statusCode()).isEqualTo(200);
+    assertThat(response.headers().firstValue("Access-Control-Allow-Origin"))
+        .hasValue("http://localhost:5173");
+  }
+
+  @Test
+  void corsPreflightFromUnknownOriginIsDenied() throws Exception {
+    // deny-by-default：未登记 origin 的预检不得拿到 Allow-Origin 头
+    HttpRequest request =
+        HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/ai/chat"))
+            .header("Origin", "http://evil.example")
+            .header("Access-Control-Request-Method", "POST")
+            .method("OPTIONS", HttpRequest.BodyPublishers.noBody())
+            .build();
+
+    HttpResponse<String> response =
+        HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+
+    assertThat(response.headers().firstValue("Access-Control-Allow-Origin")).isEmpty();
   }
 }

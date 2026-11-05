@@ -72,6 +72,7 @@ public class SecurityConfiguration {
   public SecurityFilterChain securityFilterChain(
       HttpSecurity http,
       @Value("${ai.security.api-key:}") String apiKey,
+      @Value("${ai.security.cors.allowed-origins:}") String corsAllowedOrigins,
       SecurityAuthProperties authProperties)
       throws Exception {
     if (authProperties.endpointRoles() == null || authProperties.endpointRoles().isEmpty()) {
@@ -92,6 +93,25 @@ public class SecurityConfiguration {
               auth.anyRequest().authenticated();
             })
         .csrf(csrf -> csrf.disable())
+        // W29 #3 CORS 显式策略：deny-by-default，白名单来自配置（空 = 拒绝一切跨域；
+        // 预检 OPTIONS 由链内 CorsFilter 在鉴权前处理，合法跨域不被 401 误伤）
+        .cors(
+            cors ->
+                cors.configurationSource(
+                    request -> {
+                      var config = new org.springframework.web.cors.CorsConfiguration();
+                      config.setAllowedOrigins(
+                          java.util.Arrays.stream(corsAllowedOrigins.split(","))
+                              .map(String::trim)
+                              .filter(origin -> !origin.isEmpty())
+                              .toList());
+                      config.setAllowedMethods(
+                          java.util.List.of("GET", "POST", "DELETE", "OPTIONS"));
+                      config.setAllowedHeaders(
+                          java.util.List.of("Authorization", "Content-Type", "X-API-Key"));
+                      config.setMaxAge(3600L);
+                      return config;
+                    }))
         // W29 #2 安全响应头套件（走 Spring Security 头组件，不手写）：
         // X-Content-Type-Options=nosniff / Cache-Control / HSTS(仅HTTPS) 为框架默认值；
         // X-Frame-Options=DENY 防点击劫持；Referrer-Policy=no-referrer 防 URL 参数外泄；
