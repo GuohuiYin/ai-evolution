@@ -263,6 +263,10 @@ ai:
       # W12 #3：固定窗口限流，每身份（API Key，无凭证按 IP）每分钟次数上限。
       # 单实例内存实现；多副本场景待 L2 持久化一起谈（周计划"明确不做"）
       per-minute: 60
+    # W28 #3 请求体传输层上限（字节，默认 32KB）：Content-Length 超限即 413，
+    # 不进入限流/鉴权/业务链；业务字段级上限（message ≤2000 字符）由 ChatRequest
+    # @Size 承担——两层职责切分见 RequestBodySizeLimitFilter 注释
+    max-request-body: ${AI_SECURITY_MAX_REQUEST_BODY:32768}
   mcp:
     fetch:
       # 抓取正文喂回模型前的长度上限：网页原文无界，防单页烧爆上下文与 token 账本（A11 策略外置）

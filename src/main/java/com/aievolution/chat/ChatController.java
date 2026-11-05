@@ -38,7 +38,26 @@ public class ChatController {
       description = "统一对话入口：含股票代码/取数关键词自动路由 Agent 工具通路，其余走 RAG 检索管道（ADR-0010）")
   @ApiResponses({
     @ApiResponse(responseCode = "200", description = "成功返回模型回复"),
-    @ApiResponse(responseCode = "400", description = "请求参数非法（如 message 为空或缺失）"),
+    @ApiResponse(
+        responseCode = "400",
+        description = "请求参数非法（message 为空/缺失或超过 2000 字符上限）",
+        content =
+            @Content(
+                mediaType = "application/json",
+                examples =
+                    @ExampleObject(
+                        value =
+                            "{\"title\":\"请求参数非法\",\"status\":400,\"error\":\"invalid_request\"}"))),
+    @ApiResponse(
+        responseCode = "413",
+        description = "请求体超过传输层大小上限（默认 32KB，ai.security.max-request-body 可调）",
+        content =
+            @Content(
+                mediaType = "application/json",
+                examples =
+                    @ExampleObject(
+                        value =
+                            "{\"title\":\"请求体超过大小上限\",\"status\":413,\"error\":\"request_too_large\"}"))),
     @ApiResponse(
         responseCode = "502",
         description = "上游模型错误，不可重试（如余额不足、鉴权失败、模型参数非法）",
@@ -78,7 +97,10 @@ public class ChatController {
               + "免责声明作为最后一个 delta 并入流尾")
   @ApiResponses({
     @ApiResponse(responseCode = "200", description = "SSE 事件流（text/event-stream）"),
-    @ApiResponse(responseCode = "400", description = "请求参数非法（如 message 为空或缺失）")
+    @ApiResponse(responseCode = "400", description = "请求参数非法（message 为空/缺失或超过 2000 字符上限）"),
+    @ApiResponse(
+        responseCode = "413",
+        description = "请求体超过传输层大小上限（默认 32KB，ai.security.max-request-body 可调）")
   })
   @PostMapping(path = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
   public Flux<ServerSentEvent<String>> chatStream(@Valid @RequestBody ChatRequest request) {
@@ -111,7 +133,26 @@ public class ChatController {
   @Operation(summary = "Agent 对话（工具增强）", description = "模型可自主调用行情/财务工具取数后作答；涉及数字时必先调工具，禁止凭记忆报数")
   @ApiResponses({
     @ApiResponse(responseCode = "200", description = "成功返回模型回复"),
-    @ApiResponse(responseCode = "400", description = "请求参数非法（如 message 为空或缺失）"),
+    @ApiResponse(
+        responseCode = "400",
+        description = "请求参数非法（message 为空/缺失或超过 2000 字符上限）",
+        content =
+            @Content(
+                mediaType = "application/json",
+                examples =
+                    @ExampleObject(
+                        value =
+                            "{\"title\":\"请求参数非法\",\"status\":400,\"error\":\"invalid_request\"}"))),
+    @ApiResponse(
+        responseCode = "413",
+        description = "请求体超过传输层大小上限（默认 32KB，ai.security.max-request-body 可调）",
+        content =
+            @Content(
+                mediaType = "application/json",
+                examples =
+                    @ExampleObject(
+                        value =
+                            "{\"title\":\"请求体超过大小上限\",\"status\":413,\"error\":\"request_too_large\"}"))),
     @ApiResponse(responseCode = "502", description = "上游模型错误或输出解析失败"),
     @ApiResponse(responseCode = "503", description = "上游模型暂不可用，可稍后重试")
   })

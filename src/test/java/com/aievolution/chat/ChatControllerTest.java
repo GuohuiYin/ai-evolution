@@ -93,4 +93,35 @@ class ChatControllerTest {
         .andExpect(status().isBadGateway())
         .andExpect(jsonPath("$.error").value("upstream_model_error"));
   }
+
+  // ── W28 #3 消息长度上限 ──
+
+  @Test
+  void messageAtMaxLengthIsAccepted() throws Exception {
+    String atMax = "问" + "股".repeat(1999); // 恰好 2000 字符
+    when(routingChatService.chat(
+            org.mockito.ArgumentMatchers.eq(atMax), org.mockito.ArgumentMatchers.anyString()))
+        .thenReturn(new ChatAnswer("回答", java.util.List.of()));
+
+    mockMvc
+        .perform(
+            post("/ai/chat")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"message\":\"" + atMax + "\"}"))
+        .andExpect(status().isOk());
+  }
+
+  @Test
+  void messageOverMaxLengthIsRejectedWithProblemDetail() throws Exception {
+    String overMax = "问" + "股".repeat(2000); // 2001 字符
+
+    mockMvc
+        .perform(
+            post("/ai/chat")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"message\":\"" + overMax + "\"}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error").value("invalid_request"))
+        .andExpect(jsonPath("$.title").value("请求参数非法"));
+  }
 }

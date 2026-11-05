@@ -64,6 +64,23 @@ class ChatExceptionHandler {
     return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(detail);
   }
 
+  /** 请求体字段校验失败（@NotBlank/@Size 等，W28 #3）→ 400。 字段违规明细聚合进 detail（不回显违规内容原文，防日志/响应回声放大）。 */
+  @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
+  ResponseEntity<ProblemDetail> handleValidation(
+      org.springframework.web.bind.MethodArgumentNotValidException ex) {
+    String violations =
+        ex.getBindingResult().getFieldErrors().stream()
+            .map(f -> f.getField() + ": " + f.getDefaultMessage())
+            .distinct()
+            .reduce((a, b) -> a + "; " + b)
+            .orElse("参数校验失败");
+    log.warn("请求参数校验失败: {}", violations);
+    ProblemDetail detail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, violations);
+    detail.setTitle("请求参数非法");
+    detail.setProperty("error", "invalid_request");
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(detail);
+  }
+
   /** RFC 7807：title 给人看，扩展属性 error 给程序判断。 */
   private ResponseEntity<ProblemDetail> problem(HttpStatus status, String errorCode, String title) {
     ProblemDetail detail = ProblemDetail.forStatusAndDetail(status, title);
