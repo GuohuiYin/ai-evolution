@@ -25,10 +25,10 @@ Bearer/RBAC/scope 对齐正是为 W30 资源服务器改造预留的最小迁移
 
 | # | 任务（验收口径） | 产出 | 状态 |
 |---|---|---|---|
-| 1 | **认证授权对齐**（候选 #5）：自研过滤器收口进 Spring Security 过滤器链；最小 RBAC——角色表配置化（reader=只读查询 / writer=反馈与对话 / admin=成本与审批管理），端点级角色映射显式声明；Bearer Token 形态（`Authorization: Bearer`）与 X-API-Key 兼容期裁决（双收或切换，取证后定）；401/403 语义分清（认证失败 vs 授权不足）；ADR 留痕（A4，why-not 含：本周不接 IdP——中心 W30 才建，本周对齐形态是为其预留迁移面） | 重构 + ADR + 全量安全测试绿 | ☐ |
-| 2 | **安全响应头套件**（候选 #11）：CSP（对话页自托管资源白名单）+ X-Content-Type-Options + X-Frame-Options + Referrer-Policy，走 Spring Security 头套件而非手写 | 配置 + 头断言测试 | ☐ |
-| 3 | **CORS 显式策略**（候选 #12）：deny-by-default + origin 白名单配置化（本地开发 origin 入 `.env.example`），预检请求行为测试锁定 | 配置 + 测试 | ☐ |
-| 4 | **SSRF egress 控制**（候选 #13）：MCP fetch 目标 URL 校验——RFC1918/loopback/link-local 黑名单拒连（配置化例外清单），或反向白名单（取证裁决）；工具层单测 + 红队基线复测（W7 防线不回归） | 修复 + 测试 + 红队复测记录 | ☐ |
+| 1 | **认证授权对齐**（候选 #5）：自研过滤器收口进 Spring Security 过滤器链；最小 RBAC——角色表配置化（reader=只读查询 / writer=反馈与对话 / admin=成本与审批管理），端点级角色映射显式声明；Bearer Token 形态（`Authorization: Bearer`）与 X-API-Key 兼容期裁决（双收或切换，取证后定）；401/403 语义分清（认证失败 vs 授权不足）；ADR 留痕（A4，why-not 含：本周不接 IdP——中心 W30 才建，本周对齐形态是为其预留迁移面） | 重构 + ADR + 全量安全测试绿 | ✅ `05e989d`（依赖+设计草案）+ `547554f`（收口实现+RBAC+Bearer 双收裁决 A+ADR-0022；实踩两坑：角色层级缺失、ASYNC 二次入链 403 炸流） |
+| 2 | **安全响应头套件**（候选 #11）：CSP（对话页自托管资源白名单）+ X-Content-Type-Options + X-Frame-Options + Referrer-Policy，走 Spring Security 头套件而非手写 | 配置 + 头断言测试 | ✅ `b8de40e`（DENY/no-referrer/CSP self 白名单，内联 unsafe-inline 过渡态在案；头断言测试锁定） |
+| 3 | **CORS 显式策略**（候选 #12）：deny-by-default + origin 白名单配置化（本地开发 origin 入 `.env.example`），预检请求行为测试锁定 | 配置 + 测试 | ✅ `d9fe89f`（默认空=拒一切跨域；预检由 CorsFilter 鉴权前处理；白名单/未登记双案测试） |
+| 4 | **SSRF egress 控制**（候选 #13）：MCP fetch 目标 URL 校验——RFC1918/loopback/link-local 黑名单拒连（配置化例外清单），或反向白名单（取证裁决）；工具层单测 + 红队基线复测（W7 防线不回归） | 修复 + 测试 + 红队复测记录 | ✅ `9d08fcd`（黑名单制——取证：工具用途是开放公网，白名单会杀死价值；拦截先于协议往返；红队复测 9 项全守住，当场抓修 JSESSIONID 会话缺陷：[复测记录](../security/w29-redteam-recheck.md)） |
 
 ## 退出条件（O8）
 
@@ -38,4 +38,6 @@ Bearer/RBAC/scope 对齐正是为 W30 资源服务器改造预留的最小迁移
 
 ## Owner 裁决
 
-（待 W28 收官时复核确认本周开工；排序已于 2026-11-04 二期一页纸拍板）
+~~（待 W28 收官时复核确认本周开工；排序已于 2026-11-04 二期一页纸拍板）~~
+**2026-11-05 复核确认开工**（W28 当日收官）；同日裁决：Bearer 改造走候选 A 双收+兼容期
+（X-API-Key 标 deprecated，W30 接 JWT 时退役）；当日四任务全交付收官。

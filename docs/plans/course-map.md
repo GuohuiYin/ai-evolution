@@ -1,6 +1,7 @@
 # 课程地图：W1-W27 全景串联 + 二期生产硬化期（v3 学习资产版）
 
 > 2026-11-05 增补（W28 #4）：W27 行收官补记（A16④——W27 收官时漏更，本次补记并如实标注）+ 二期段落地。
+> 2026-11-05 增补（W29 收官）：二期表 W29 行 + 当前位置刷新 + 下一站转 W30。
 > 2026-10-28 改版（v3：在 v2 导航骨架上增加学习资产视角——逐周「学了什么 / 关键技术 /
 > 记忆点 / 产物链接」四要素，产物链接补全 ADR、课程笔记、eval 报告三类证据）。
 > 数据源头：各周计划与回顾文档原文 + 蓝图 [blueprint/README.md](blueprint/README.md)，
@@ -33,10 +34,10 @@ W14-19 把"可信"做成体系（复盘清账→检索收尾→评估造数→�
 推入无人值守运营（可观测+成本工程→仿真运行+双故障注入验收），W27 收官 P5——
 **原 27 周蓝图主体完课，W28 起进入二期（生产硬化期）**。
 
-**当前位置：W28 ✅ 四任务全交付**（#1 召回增强 `87331da`——改写护栏剥离注入标识符，
-案 30 满分转绿、检索/生成双门零回归；#2 rubric 维度澄清 `3404429`；#3 消息长度上限
-`5719c56`；#4 二期一页纸+本表更新）——**二期·生产硬化期第一周收官 → W29 安全捆
-已预立案**（二期排序见 [二期一页纸](advanced/phase2-production-hardening.md)）。
+**当前位置：W29 ✅ 四任务全交付**（#1 认证授权收口 Spring Security 链 + RBAC 三角色 +
+Bearer 双收 `05e989d`/`547554f`；#2 安全响应头套件 `b8de40e`；#3 CORS 显式策略 `d9fe89f`；
+#4 SSRF egress 门禁 + 红队复测 `9d08fcd`）——**二期·生产硬化期第二周收官 → W30 认证中心
+待开工**（二期排序见 [二期一页纸](advanced/phase2-production-hardening.md)）。
 
 ## 跨周因果边图（只画非线性边——线性时间链见下表）
 
@@ -127,6 +128,7 @@ flowchart LR
 | 周 | 学了什么 | 关键技术 | 记忆点 | 关系 | 产物 |
 |---|---|---|---|---|---|
 | W28 | 召回漏检修复与二期开篇 | 改写标识符护栏（剥离改写器注入的陌生标识符，解 SparseCoverage「标识符全中才放行」硬规则对正解块的误杀）+ prompt 软约束叠加、rubric 维度归属澄清（遗漏型归 accuracy）、请求体/消息长度双层上限（过滤器 413 + `@Size` 400） | 防线也会误杀——W8 立的防线在改写器注入股票代码后斩掉全部正解块；修防线不如断注入源，护栏（硬）+软约束（软）叠加才稳 | ←承 W27 案 30 归因（正确块 15/16 名进不了 top-5）；→启：W29 安全捆 → W30 安全架构+认证中心 → W31 韧性捆 | [计划](advanced/w28-recall-enhancement.md)、[eval 报告](../eval/generation/w28-rewrite-guard-eval.md)、[设计草案](../eval/retrieval/w28-recall-enhancement-design.md)、[二期一页纸](advanced/phase2-production-hardening.md) |
+| W29 | Web 安全捆一次到位 | 认证授权收口 Spring Security 过滤器链（自研过滤器退役；RBAC 三角色 + RoleHierarchy 层级继承；Bearer 正史 + X-API-Key 兼容期双收标 deprecated，为 W30 接 JWT 预留迁移面）、安全响应头套件（CSP/X-Frame-Options/Referrer-Policy）、CORS deny-by-default + origin 白名单、MCP fetch SSRF egress 门禁（黑名单制——loopback/RFC1918/link-local/组播拒连，fail-closed） | 实弹复测抓到静态审查漏掉的缺陷——红队复测当场发现默认会话策略发 JSESSIONID（无状态 API 不该有会话），改 STATELESS 才闭环；SSE 异步二次入链 SecurityContext 为空误抛 403 炸流——过滤器链须对异步分发类型显式收口 | ←承 W28 收官依赖达成 + Owner 裁决 Bearer 走双收兼容期；→启：W30 安全架构+统一认证授权中心（资源服务器迁移面已备） | [计划](advanced/w29-web-security-hardening.md)、[ADR-0022](../adr/0022-spring-security-rbac-bearer.md)、[红队复测记录](../security/w29-redteam-recheck.md)、[设计草案](../security/w29-auth-alignment-design.md) |
 
 ## 决策触发点清单（导航核心：预先写死的 if-then 及其状态）
 
@@ -167,9 +169,8 @@ flowchart LR
 
 ## 下一站
 
-W29（已预立案 2026-11-04，二期第二周，**Web 安全捆**——过滤器链一次到位，O3）：
-#1 认证授权对齐（收口进 Spring Security 过滤器链 + 最小 RBAC + Bearer 形态，为 W30
-资源服务器改造预留迁移面）、#2 安全响应头套件、#3 CORS 显式策略、#4 SSRF egress 控制。
-依赖条件（W28 收官）已随本页更新达成。详见 [W29 计划](advanced/w29-web-security-hardening.md)；
-二期全景与排序依据见 [二期一页纸](advanced/phase2-production-hardening.md)。
+W30（二期第三周，**安全架构 + 统一认证授权中心**——认证中心独立建服务，本系统改造为
+资源服务器接 JWT；W29 的 Bearer/RBAC/scope 对齐即为其预留的最小迁移面，依赖条件已达成）。
+二期全景与排序依据见 [二期一页纸](advanced/phase2-production-hardening.md)；
+W29 交付明细见 [W29 计划](advanced/w29-web-security-hardening.md)（四任务全 ✅）。
 候选池总表：[w28-plus-todo-candidates](../w28-plus-todo-candidates.md)。
