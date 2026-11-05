@@ -16,3 +16,6 @@ jobs:
           java-version: "25"
       - name: Verify
         run: ./mvnw -B verify
+      # W30 #1：认证中心独立工程（auth-center/，独立 pom 不进根 reactor）——第二路 verify
+      - name: Verify auth-center
+        run: ./mvnw -B -f auth-center/pom.xml verify

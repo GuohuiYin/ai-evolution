@@ -1,0 +1,18 @@
+# auth-center：统一认证授权中心（W30 #1），独立于主应用（18080）部署
+server:
+  port: ${AUTH_CENTER_PORT:19000}
+
+spring:
+  application:
+    name: auth-center
+
+# K8s 友好最小集（C1）：探针分离；文档面不外露（A7 同纪律，本工程无业务端点文档需求）
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
