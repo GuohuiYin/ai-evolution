@@ -26,7 +26,13 @@ class McpExternalToolClientTest {
   private final McpFetchConnectionFactory connectionFactory = mock(McpFetchConnectionFactory.class);
   private final McpConnectionManager connectionManager =
       new McpConnectionManager(mcpClient, connectionFactory);
-  private final McpExternalToolClient client = new McpExternalToolClient(connectionManager, 100);
+  // 放行门禁桩（解析恒为公网地址；SSRF 拦截行为由 EgressUrlGuardTest 专项锁定，本类只管 MCP 协议契约）
+  private final EgressUrlGuard permissiveGuard =
+      new EgressUrlGuard(
+          java.util.Set.of(),
+          host -> new java.net.InetAddress[] {java.net.InetAddress.getByName("93.184.216.34")});
+  private final McpExternalToolClient client =
+      new McpExternalToolClient(connectionManager, 100, permissiveGuard);
 
   @Test
   void fetchWebPageCallsFetchToolWithUrlArgument() {
@@ -150,12 +156,29 @@ class McpExternalToolClientTest {
   void noLiveConnectionSelfHealsBeforeCall() {
     // 上一次重建失败后 current=null，下一次调用必须先重建而不是拿空连接撞墙
     McpConnectionManager emptyManager = new McpConnectionManager(null, connectionFactory);
-    McpExternalToolClient healingClient = new McpExternalToolClient(emptyManager, 100);
+    McpExternalToolClient healingClient =
+        new McpExternalToolClient(emptyManager, 100, permissiveGuard);
     McpSyncClient freshClient = mock(McpSyncClient.class);
     when(freshClient.callTool(any()))
         .thenReturn(new CallToolResult(List.of(new TextContent("自愈正文")), false, null, null));
     when(connectionFactory.connect()).thenReturn(freshClient);
 
     assertThat(healingClient.fetchWebPage("https://example.com")).isEqualTo("自愈正文");
+  }
+
+  @Test
+  void privateTargetIsBlockedBeforeAnyRemoteCall() {
+    // W29 #4：门禁拦截在协议往返之前——被拒 URL 不触 MCP 调用，观察文本喂回模型
+    EgressUrlGuard blockingGuard =
+        new EgressUrlGuard(
+            java.util.Set.of(),
+            host -> new java.net.InetAddress[] {java.net.InetAddress.getByName("192.168.1.1")});
+    McpExternalToolClient guardedClient =
+        new McpExternalToolClient(connectionManager, 100, blockingGuard);
+
+    String result = guardedClient.fetchWebPage("http://internal.example.com/secret");
+
+    assertThat(result).startsWith("抓取失败：").contains("内网/保留网段");
+    org.mockito.Mockito.verifyNoInteractions(mcpClient);
   }
 }

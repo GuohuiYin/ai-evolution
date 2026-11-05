@@ -55,6 +55,8 @@ class SecurityChainTest {
     assertThat(response.headers().firstValue("Content-Type"))
         .hasValueSatisfying(type -> assertThat(type).startsWith("application/problem+json"));
     assertThat(response.headers().firstValue("WWW-Authenticate")).hasValue("Bearer");
+    // 无状态姿态：401 不得顺手发 JSESSIONID（否则 CSRF 关闭的论证自相矛盾）
+    assertThat(response.headers().allValues("Set-Cookie")).noneMatch(v -> v.contains("JSESSIONID"));
   }
 
   @Test

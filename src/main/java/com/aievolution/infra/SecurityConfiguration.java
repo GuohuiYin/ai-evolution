@@ -93,6 +93,12 @@ public class SecurityConfiguration {
               auth.anyRequest().authenticated();
             })
         .csrf(csrf -> csrf.disable())
+        // 无状态会话（W29 #1）：凭证头直连的纯 API 不该发 JSESSIONID——
+        // 默认 IF_REQUIRED 会在 401 时建会话发 Cookie，与「无 Cookie 会话」的 CSRF 论证自相矛盾
+        .sessionManagement(
+            session ->
+                session.sessionCreationPolicy(
+                    org.springframework.security.config.http.SessionCreationPolicy.STATELESS))
         // W29 #3 CORS 显式策略：deny-by-default，白名单来自配置（空 = 拒绝一切跨域；
         // 预检 OPTIONS 由链内 CorsFilter 在鉴权前处理，合法跨域不被 401 误伤）
         .cors(

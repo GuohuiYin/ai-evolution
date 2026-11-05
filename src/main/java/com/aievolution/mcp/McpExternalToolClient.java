@@ -33,10 +33,13 @@ public class McpExternalToolClient implements ExternalToolClient {
 
   private final McpConnectionManager connectionManager;
   private final int maxContentLength;
+  private final EgressUrlGuard egressUrlGuard;
 
-  public McpExternalToolClient(McpConnectionManager connectionManager, int maxContentLength) {
+  public McpExternalToolClient(
+      McpConnectionManager connectionManager, int maxContentLength, EgressUrlGuard egressUrlGuard) {
     this.connectionManager = connectionManager;
     this.maxContentLength = maxContentLength;
+    this.egressUrlGuard = egressUrlGuard;
   }
 
   @Override
@@ -44,6 +47,12 @@ public class McpExternalToolClient implements ExternalToolClient {
     if (url == null || url.isBlank()) {
       // 空白 URL 不值得一次协议往返（成本闸门），直接给模型可纠正的观察
       return "抓取失败：url 为空或全空白";
+    }
+    // W29 #4 SSRF 防线：目标 URL 由模型生成，出向前过内网/保留网段门禁，拦截留痕有声化
+    var rejection = egressUrlGuard.check(url);
+    if (rejection.isPresent()) {
+      auditLog.warn("tool=fetchWebPage args=[{}] outcome=blocked reason={}", url, rejection.get());
+      return "抓取失败：" + rejection.get();
     }
     long startNanos = System.nanoTime();
     McpSyncClient client = connectionManager.current();

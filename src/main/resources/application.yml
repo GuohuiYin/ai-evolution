@@ -302,6 +302,9 @@ ai:
     fetch:
       # 抓取正文喂回模型前的长度上限：网页原文无界，防单页烧爆上下文与 token 账本（A11 策略外置）
       max-content-length: 8000
+      # W29 #4 SSRF 防线例外清单（逗号分隔主机名，默认空）：内网/保留网段一律拒连，
+      # 确有合法内网抓取需求时在此显式登记（配置即审计）
+      egress-allowed-hosts: ${AI_MCP_FETCH_EGRESS_ALLOWED_HOSTS:}
   knowledge:
     ingest:
       # 启动时摄入知识库；测试环境关闭避免打真实 Embedding API

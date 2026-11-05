@@ -40,7 +40,8 @@ public class McpClientToolConfiguration {
       McpClientCommonProperties commonProperties,
       JsonMapper jsonMapper,
       @Value("${spring.ai.mcp.server.version}") String appVersion,
-      @Value("${ai.mcp.fetch.max-content-length:8000}") int maxContentLength) {
+      @Value("${ai.mcp.fetch.max-content-length:8000}") int maxContentLength,
+      @Value("${ai.mcp.fetch.egress-allowed-hosts:}") String egressAllowedHosts) {
     McpSyncClient fetchClient =
         mcpSyncClients.stream()
             // Spring AI 连接命名约定：<client-name> - <connection-key>（见 application.yml
@@ -55,6 +56,14 @@ public class McpClientToolConfiguration {
         new PropertiesMcpFetchConnectionFactory(
             stdioProperties, streamableHttpProperties, commonProperties, jsonMapper, appVersion);
     return new McpExternalToolClient(
-        new McpConnectionManager(fetchClient, connectionFactory), maxContentLength);
+        new McpConnectionManager(fetchClient, connectionFactory),
+        maxContentLength,
+        // W29 #4：SSRF 门禁——例外清单配置化（默认空），生产解析走系统 DNS
+        new EgressUrlGuard(
+            java.util.Arrays.stream(egressAllowedHosts.split(","))
+                .map(String::trim)
+                .filter(host -> !host.isEmpty())
+                .collect(java.util.stream.Collectors.toSet()),
+            java.net.InetAddress::getAllByName));
   }
 }
