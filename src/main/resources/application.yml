@@ -92,6 +92,12 @@ ai:
     # 查询改写温度（W15 #2）：改写是确定性任务（指代消解/格式变换，非创作），
     # 默认 0 消除同查询多轮措辞漂移（R3/R4 实测默认温度下检索排序翻转 ±2 条）
     rewrite-temperature: 0.0
+    rewrite:
+      # W28 #1 改写注入标识符护栏（案 30）：改写增补的标识符（原查询与对话历史未出现的
+      # 代号/编号）触发 sparse 路「标识符全中才放行」硬规则全斩正确块——输出侧剥除增补
+      # 标识符，用户/历史自带的保留。默认开；A/B 对照与回退经
+      # AI_RAG_REWRITE_STRIP_INJECTED_IDENTIFIERS=false 关断
+      strip-injected-identifiers: ${AI_RAG_REWRITE_STRIP_INJECTED_IDENTIFIERS:true}
     # 分块大小（token）：与检索质量直接相关，调整需以黄金集全量回归为前提
     # W13 #1 三轮对照（400/800/1200）数据裁决维持 800
     chunk-size: 800

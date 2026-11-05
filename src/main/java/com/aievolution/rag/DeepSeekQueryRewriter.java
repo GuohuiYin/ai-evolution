@@ -29,13 +29,16 @@ public class DeepSeekQueryRewriter implements QueryRewriter {
   private final ChatClient chatClient;
   private final String systemPrompt;
   private final String rephrasePrompt;
+  private final boolean stripInjectedIdentifiers;
 
   public DeepSeekQueryRewriter(
       ChatClient.Builder chatClientBuilder,
       PromptLibrary promptLibrary,
       @Value("${ai.rag.rewrite-prompt:query-rewrite-v1}") String promptName,
       @Value("${ai.rag.rephrase-prompt:query-rephrase-v1}") String rephrasePromptName,
-      @Value("${ai.rag.rewrite-temperature:0.0}") double rewriteTemperature) {
+      @Value("${ai.rag.rewrite-temperature:0.0}") double rewriteTemperature,
+      @Value("${ai.rag.rewrite.strip-injected-identifiers:true}")
+          boolean stripInjectedIdentifiers) {
     if (!promptLibrary.exists(promptName)) {
       // prompt 缺失是部署事故，启动即 fail-fast
       throw new IllegalStateException("查询改写 prompt 模板不存在: " + promptName);
@@ -54,6 +57,7 @@ public class DeepSeekQueryRewriter implements QueryRewriter {
             .build();
     this.systemPrompt = promptLibrary.get(promptName);
     this.rephrasePrompt = promptLibrary.get(rephrasePromptName);
+    this.stripInjectedIdentifiers = stripInjectedIdentifiers;
   }
 
   @Override
@@ -67,7 +71,11 @@ public class DeepSeekQueryRewriter implements QueryRewriter {
       log.warn("零召回重述降级为原查询 errorType={}", e.getClass().getSimpleName());
       return failedQuery;
     }
-    return variant == null || variant.isBlank() ? failedQuery : variant.strip();
+    if (variant == null || variant.isBlank()) {
+      return failedQuery;
+    }
+    // 重述同属改写家族（同一份注入风险）：白名单即待重述查询自身
+    return applyGuard(variant.strip(), List.of(failedQuery), failedQuery);
   }
 
   @Override
@@ -95,6 +103,41 @@ public class DeepSeekQueryRewriter implements QueryRewriter {
       log.warn("查询改写降级为原查询 errorType={}", e.getClass().getSimpleName());
       return query;
     }
-    return rewritten == null || rewritten.isBlank() ? query : rewritten.strip();
+    if (rewritten == null || rewritten.isBlank()) {
+      return query;
+    }
+    // W28 #1 护栏：白名单 = 原查询 + 对话历史（历史自带的年份/代号是合法承接，不算增补）
+    List<String> allowedSources = new java.util.ArrayList<>();
+    allowedSources.add(query);
+    history.forEach(m -> allowedSources.add(m.getText()));
+    return applyGuard(rewritten.strip(), allowedSources, query);
+  }
+
+  /**
+   * W28 #1 改写注入标识符护栏接线（案 30：改写增补 600519 触发 sparse 硬规则全斩正解块）： 增补标识符剥除；剥离致空白时回退
+   * fallback（同「宁可指代未消解」哲学）；有剥离必留痕。
+   */
+  private String applyGuard(String rewritten, List<String> allowedSources, String fallback) {
+    if (!stripInjectedIdentifiers) {
+      return rewritten;
+    }
+    String stripped = RewriteIdentifierGuard.stripInjected(rewritten, allowedSources);
+    if (stripped == null || stripped.isBlank()) {
+      // 剥到空白说明改写几乎全是增补标识符——异常形态，回退并留痕
+      log.warn("改写护栏剥离后空白，回退原查询 rewritten={}", abbreviate(rewritten));
+      return fallback;
+    }
+    if (!stripped.equals(rewritten)) {
+      log.info(
+          "stage=REWRITE_GUARD stripped=true before={} after={}",
+          abbreviate(rewritten),
+          abbreviate(stripped));
+    }
+    return stripped;
+  }
+
+  private static String abbreviate(String text) {
+    String oneLine = text.replaceAll("\\s+", " ").trim();
+    return oneLine.length() <= 30 ? oneLine : oneLine.substring(0, 30) + "…";
   }
 }

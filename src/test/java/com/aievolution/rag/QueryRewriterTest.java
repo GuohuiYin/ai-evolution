@@ -52,8 +52,17 @@ class QueryRewriterTest {
   private ChatClient.Builder builder;
 
   private DeepSeekQueryRewriter rewriter() {
+    return rewriter(true);
+  }
+
+  private DeepSeekQueryRewriter rewriter(boolean stripInjectedIdentifiers) {
     return new DeepSeekQueryRewriter(
-        builder, promptLibrary, "query-rewrite-v1", "query-rephrase-v1", 0.0);
+        builder,
+        promptLibrary,
+        "query-rewrite-v1",
+        "query-rephrase-v1",
+        0.0,
+        stripInjectedIdentifiers);
   }
 
   @Test
@@ -117,7 +126,8 @@ class QueryRewriterTest {
     // 改写是确定性任务（指代消解/格式变换，非创作）：温度策略外置 ai.rag.rewrite-temperature
     // （默认 0）——R3/R4 实测默认温度下同查询两轮措辞不同，检索排序漂移 ±2 条；
     // 本测试锁定"配置值被真实采信"而非硬编码（故意用非默认 0.7 注入）
-    new DeepSeekQueryRewriter(builder, promptLibrary, "query-rewrite-v1", "query-rephrase-v1", 0.7);
+    new DeepSeekQueryRewriter(
+        builder, promptLibrary, "query-rewrite-v1", "query-rephrase-v1", 0.7, true);
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     org.mockito.ArgumentCaptor<ChatOptions.Builder> captor =
@@ -131,7 +141,8 @@ class QueryRewriterTest {
     when(promptLibrary.exists("nope")).thenReturn(false);
     assertThatThrownBy(
             () ->
-                new DeepSeekQueryRewriter(builder, promptLibrary, "nope", "query-rephrase-v1", 0.0))
+                new DeepSeekQueryRewriter(
+                    builder, promptLibrary, "nope", "query-rephrase-v1", 0.0, true))
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("nope");
   }
@@ -179,8 +190,62 @@ class QueryRewriterTest {
     assertThatThrownBy(
             () ->
                 new DeepSeekQueryRewriter(
-                    builder, promptLibrary, "query-rewrite-v1", "query-rephrase-v1", 0.0))
+                    builder, promptLibrary, "query-rewrite-v1", "query-rephrase-v1", 0.0, true))
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("query-rephrase-v1");
+  }
+
+  // ── W28 #1 改写注入标识符护栏（案 30）──
+
+  @Test
+  void injectedStockCodeIsStrippedFromRewrite() {
+    // 案 30 靶案：改写增补的 600519 触发 sparse 路「标识符全中才放行」硬规则，正解块全斩
+    when(callSpec.content()).thenReturn("贵州茅台（600519）的法定代表人是谁");
+
+    String rewritten = rewriter().rewrite("茅台的法定代表人是谁", List.of());
+
+    assertThat(rewritten).isEqualTo("贵州茅台的法定代表人是谁");
+  }
+
+  @Test
+  void identifierFromHistoryIsNotStripped() {
+    // 多轮承接：2024 来自对话历史（用户上下文自带），不算改写增补——剥离不能误伤承接
+    when(callSpec.content()).thenReturn("贵州茅台 2024 年营业总收入");
+
+    String rewritten =
+        rewriter()
+            .rewrite(
+                "那茅台呢",
+                List.of(new UserMessage("宁德时代 2024 年营收多少"), new AssistantMessage("1741 亿元")));
+
+    assertThat(rewritten).isEqualTo("贵州茅台 2024 年营业总收入");
+  }
+
+  @Test
+  void guardDisabledKeepsRewriteAsIs() {
+    // 关断对照臂（A/B 裁决与回退开关）：护栏关闭时改写输出原样放行
+    when(callSpec.content()).thenReturn("贵州茅台（600519）的法定代表人是谁");
+
+    String rewritten = rewriter(false).rewrite("茅台的法定代表人是谁", List.of());
+
+    assertThat(rewritten).isEqualTo("贵州茅台（600519）的法定代表人是谁");
+  }
+
+  @Test
+  void guardBlankResultFallsBackToOriginal() {
+    // 剥到空白 = 改写几乎全是增补标识符（异常形态）：回退原查询并留痕
+    when(callSpec.content()).thenReturn("600519");
+
+    assertThat(rewriter().rewrite("茅台怎么样", List.of())).isEqualTo("茅台怎么样");
+  }
+
+  @Test
+  void rephraseAlsoStripsInjectedIdentifiers() {
+    // 重述同属改写家族，同一份注入风险：白名单即待重述查询自身
+    when(callSpec.content()).thenReturn("贵州茅台 600519 法定代表人");
+
+    String variant = rewriter().rephrase("茅台的法定代表人");
+
+    assertThat(variant).isEqualTo("贵州茅台 法定代表人");
   }
 }
