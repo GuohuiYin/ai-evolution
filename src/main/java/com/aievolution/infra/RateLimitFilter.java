@@ -88,9 +88,15 @@ public class RateLimitFilter extends OncePerRequestFilter {
     return window;
   }
 
-  /** 限流身份：持证按 key（不落日志，防泄漏）；无凭证按来源 IP */
+  /** 限流身份：持证按凭证（Bearer 正史优先，X-API-Key 兼容期兜底；不落日志防泄漏）；无凭证按来源 IP */
   private static String identityOf(HttpServletRequest request) {
-    String key = request.getHeader(ApiKeyAuthFilter.API_KEY_HEADER);
+    String authorization = request.getHeader("Authorization");
+    if (authorization != null
+        && authorization.startsWith(ApiCredentialAuthenticationFilter.BEARER_PREFIX)) {
+      return "key:"
+          + authorization.substring(ApiCredentialAuthenticationFilter.BEARER_PREFIX.length());
+    }
+    String key = request.getHeader(ApiCredentialAuthenticationFilter.API_KEY_HEADER);
     return (key != null && !key.isBlank()) ? "key:" + key : "ip:" + request.getRemoteAddr();
   }
 

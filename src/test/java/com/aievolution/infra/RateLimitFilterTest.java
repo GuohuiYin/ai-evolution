@@ -26,7 +26,7 @@ class RateLimitFilterTest {
 
   private MockHttpServletRequest requestWithKey(String key) {
     MockHttpServletRequest request = new MockHttpServletRequest("POST", "/ai/chat");
-    request.addHeader(ApiKeyAuthFilter.API_KEY_HEADER, key);
+    request.addHeader(ApiCredentialAuthenticationFilter.API_KEY_HEADER, key);
     return request;
   }
 

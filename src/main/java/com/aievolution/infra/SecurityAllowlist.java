@@ -31,6 +31,11 @@ public final class SecurityAllowlist {
 
   private SecurityAllowlist() {}
 
+  /** 公开面路径模式清单（Spring Security 链注册 permitAll 用，W29 #1 起由链承担放行） */
+  public static List<String> publicPaths() {
+    return PUBLIC_PATHS;
+  }
+
   /** 该路径是否属公开面（免鉴权、免限流） */
   public static boolean isPublic(String path) {
     return PUBLIC_PATHS.stream().anyMatch(pattern -> PATH_MATCHER.match(pattern, path));

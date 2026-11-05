@@ -270,13 +270,13 @@
     /* ── 会话状态：conversationId 是续聊凭据（W10 一等公民） ── */
     let conversationId = null;
 
-    /* ── API Key（W12 #2）：页面放行但 API 持证。首次发送时提示输入，
+    /* ── 访问凭证（W12 #2 → W29 #1 切 Bearer 正史）：页面放行但 API 持证。首次发送时提示输入，
        存 sessionStorage（仅当前标签页，关页即清）；401 时清除并重新询问 ── */
     let apiKey = sessionStorage.getItem('ai-evolution-api-key') || '';
 
     function ensureApiKey() {
       while (!apiKey) {
-        apiKey = (prompt('本服务已启用 API Key 鉴权（W12 #2），请输入 X-API-Key：') || '').trim();
+        apiKey = (prompt('本服务已启用认证（W29 #1），请输入访问凭证（将随 Authorization: Bearer 头发送）：') || '').trim();
         if (!apiKey) return false; // 用户取消
       }
       sessionStorage.setItem('ai-evolution-api-key', apiKey);
@@ -378,12 +378,12 @@
     async function streamChat(message, handlers) {
       const resp = await fetch('/ai/chat/stream', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
         body: JSON.stringify(conversationId ? { message, conversationId } : { message })
       });
       if (!resp.ok) {
-        if (resp.status === 401) handleUnauthorized(); // key 失效：清除，下次发送重新询问
-        const hint = { 400: '请求参数不合法', 401: 'API Key 缺失或无效', 502: '模型服务异常（不可重试）', 503: '模型繁忙，请稍后重试' };
+        if (resp.status === 401) handleUnauthorized(); // 凭证失效：清除，下次发送重新询问
+        const hint = { 400: '请求参数不合法', 401: '访问凭证缺失或无效', 403: '凭证角色不足', 502: '模型服务异常（不可重试）', 503: '模型繁忙，请稍后重试' };
         throw new Error(`⚠️ ${hint[resp.status] || '服务异常'}（HTTP ${resp.status}）`);
       }
       const reader = resp.body.getReader();
@@ -486,7 +486,7 @@
         try {
           const resp = await fetch('/ai/feedback', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
             body: JSON.stringify({ conversationId, rating, comment, query })
           });
           if (!resp.ok) throw new Error('HTTP ' + resp.status);

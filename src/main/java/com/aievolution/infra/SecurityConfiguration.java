@@ -1,21 +1,38 @@
 package com.aievolution.infra;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 
 /**
- * 安全接线（W12 #2/#3，W28 #3 增补请求体上限）：过滤器顺序 = TraceId（HIGHEST_PRECEDENCE） → 请求体上限（+1）→ 限流（+2）→ 鉴权（+3）。
+ * 安全接线（W12 #2/#3 → W28 #3 增补请求体上限 → W29 #1 认证授权收口进 Spring Security 链）。
+ *
+ * <p>过滤器顺序 = TraceId（HIGHEST_PRECEDENCE）→ 请求体上限（+1）→ 限流（+2）→ Spring Security 链 （认证：Bearer/X-API-Key
+ * → 身份+角色；授权：端点→角色映射；401/403 统一 ProblemDetail）。
  *
  * <p>请求体上限排在限流前：超限大包连限流额度都不该吃，413 是最便宜的拒绝； 排在 TraceId 后：413 拒绝日志带 traceId 可查。限流排在鉴权前：撞库与无凭证试探同样吃额度，
- * 401 不是免费通道；401/413/429 拒绝日志均带 traceId，排查"谁的请求被拒"有据可查。
+ * 401 不是免费通道；401/403/413/429 拒绝日志均带 traceId，排查"谁的请求被拒"有据可查。
  */
 @Configuration
+@EnableConfigurationProperties(SecurityAuthProperties.class)
 public class SecurityConfiguration {
+
+  /**
+   * 角色层级（W29 #1）：admin ⊇ writer ⊇ reader——admin 不再逐端点重复列举下层角色。 授权规则只需声明该端点的最低角色，层级自动向下兼容（业界标准做法，W30
+   * scope 映射沿用）
+   */
+  @Bean
+  public org.springframework.security.access.hierarchicalroles.RoleHierarchy roleHierarchy() {
+    return org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl.fromHierarchy(
+        "ROLE_ADMIN > ROLE_WRITER > ROLE_READER");
+  }
 
   @Bean
   public FilterRegistrationBean<RequestBodySizeLimitFilter> requestBodySizeLimitFilter(
@@ -39,32 +56,51 @@ public class SecurityConfiguration {
     return registration;
   }
 
-  @Bean
-  public FilterRegistrationBean<ApiKeyAuthFilter> apiKeyAuthFilter(
-      @Value("${ai.security.api-key:}") String apiKey) {
-    FilterRegistrationBean<ApiKeyAuthFilter> registration = new FilterRegistrationBean<>();
-    registration.setFilter(new ApiKeyAuthFilter(apiKey));
-    registration.addUrlPatterns("/*");
-    registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 3);
-    return registration;
-  }
-
   /**
-   * Spring Security 过渡链（W29 #1 第一步）：全放行 + 关 CSRF + 关头套件，行为与裸 Filter 链逐字节一致。
+   * 认证授权主链（W29 #1）：自研 ApiKeyAuthFilter 的职责自此收口进 Spring Security 标准链。
    *
-   * <p>存在的唯一理由是压制自动装配——spring-boot-starter-security 上类路径后，默认链会开表单登录/CSRF/安全头， 直接打挂现有端点与测试。本 bean
-   * 显式接管后，鉴权仍由 {@link ApiKeyAuthFilter} 承担，行为零变化； 收口（RBAC/Bearer 映射进本链）与头套件启用是 W29 #1/#2
-   * 的后续步，届时本注释同步更新。
-   *
-   * <p>顺序：本链（Security 默认 -100）排在四道裸过滤器（HIGHEST_PRECEDENCE+0..3）之后， 即 TraceId → 413 → 限流 → 鉴权 →
-   * 本链（过渡放行）→ Controller。
+   * <ul>
+   *   <li>认证：{@link ApiCredentialAuthenticationFilter}（Bearer 正史 + X-API-Key 兼容期，常量时间比对）
+   *   <li>授权：公开面（{@link SecurityAllowlist}）permitAll → 端点角色表（配置化）→ 其余已认证即可
+   *   <li>401/403：{@link SecurityProblemDetailHandler} 统一 ProblemDetail，401 附 WWW-Authenticate:
+   *       Bearer
+   *   <li>CSRF 关闭：纯无状态 API、无 Cookie 会话，CSRF 无从附着（对话页与调用方皆凭证头直连）； 头套件保持关闭——W29 #2
+   *       逐头启用并配测试，不与收口混在一个变更里
+   * </ul>
    */
   @Bean
-  public SecurityFilterChain w29TransitionalSecurityFilterChain(HttpSecurity http)
+  public SecurityFilterChain securityFilterChain(
+      HttpSecurity http,
+      @Value("${ai.security.api-key:}") String apiKey,
+      SecurityAuthProperties authProperties)
       throws Exception {
-    http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+    if (authProperties.endpointRoles() == null || authProperties.endpointRoles().isEmpty()) {
+      throw new IllegalStateException("ai.security.endpoint-roles 为空：端点角色映射是安全策略，不允许静默为空（W29 #1）");
+    }
+    var problemHandler = new SecurityProblemDetailHandler();
+    http.authorizeHttpRequests(
+            auth -> {
+              SecurityAllowlist.publicPaths()
+                  .forEach(path -> auth.requestMatchers(path).permitAll());
+              authProperties
+                  .endpointRoles()
+                  .forEach(
+                      mapping ->
+                          auth.requestMatchers(
+                                  HttpMethod.valueOf(mapping.method()), mapping.pattern())
+                              .hasRole(mapping.role().toUpperCase()));
+              auth.anyRequest().authenticated();
+            })
         .csrf(csrf -> csrf.disable())
-        .headers(headers -> headers.disable());
+        .headers(headers -> headers.disable())
+        .addFilterBefore(
+            new ApiCredentialAuthenticationFilter(apiKey, authProperties.keyRoles()),
+            AuthorizationFilter.class)
+        .exceptionHandling(
+            handling ->
+                handling
+                    .authenticationEntryPoint(problemHandler)
+                    .accessDeniedHandler(problemHandler));
     return http.build();
   }
 }

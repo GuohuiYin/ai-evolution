@@ -53,8 +53,9 @@ class ApiDocsTest {
 
     assertThat(response.body())
         .contains("\"securitySchemes\"")
+        .contains("bearer") // W29 #1：Bearer 正史
         .contains("apiKey")
-        .contains("X-API-Key")
+        .contains("X-API-Key") // 兼容期仍在契约内（deprecated）
         .contains("\"security\"") // 全局安全要求
         .contains("\"429\""); // W12 #3：限流响应码全端点声明
   }
