@@ -5,6 +5,23 @@ server:
 spring:
   application:
     name: auth-center
+  security:
+    oauth2:
+      authorizationserver:
+        # JWT iss 声明与发现元数据的签发方标识（部署态换域名，env 注入）
+        issuer: ${AUTH_CENTER_ISSUER:http://localhost:19000}
+        client:
+          # 机器通道（MCP 客户端，客户端凭证流）。机器密钥=高熵随机串，管理姿势同 API key
+          # （A5 env 注入）；argon2 慢哈希留给人类密码（步骤 3 identity 域）。
+          # {noop} 前缀：SAS 用 DelegatingPasswordEncoder 解码，高熵机器密钥无需慢哈希
+          mcp-client:
+            registration:
+              client-id: mcp-client
+              client-secret: "{noop}${AUTH_CLIENT_MCP_SECRET:dev-only-mcp-secret-change-me}"
+              client-authentication-methods: client_secret_basic
+              authorization-grant-types: client_credentials
+              scopes:
+                - writer
 
 # K8s 友好最小集（C1）：探针分离；文档面不外露（A7 同纪律，本工程无业务端点文档需求）
 management:

@@ -26,6 +26,12 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
+    <!-- W30 #1：授权服务器（SAS 已于 Boot 4 并入官方栈，BOM 托管，Central 取证在案）。
+         框架级自建是业界认可做法；从零手写 OAuth 协议是业界反对做法（安全铁律） -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security-oauth2-authorization-server</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>
