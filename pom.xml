@@ -48,6 +48,13 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
+    <!-- W29 #1：Spring Security 过滤器链——认证授权收口进业界标准链（RBAC/Bearer），
+         为 W30 资源服务器改造预留迁移面。版本由 Boot 4.1.1 BOM 托管（Security 7.x）。
+         选型理由：框架级标准做法，自研过滤器长期演化必然重造其轮子（角色/顺序/异常翻译） -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-security</artifactId>
+    </dependency>
     <!-- W21 #1：Temporal 工作流引擎（loop run 状态持久化/断点恢复候选方案，先最小环验证） -->
     <dependency>
       <groupId>io.temporal</groupId>
