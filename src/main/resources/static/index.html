@@ -270,13 +270,15 @@
     /* ── 会话状态：conversationId 是续聊凭据（W10 一等公民） ── */
     let conversationId = null;
 
-    /* ── 访问凭证（W12 #2 → W29 #1 切 Bearer 正史）：页面放行但 API 持证。首次发送时提示输入，
-       存 sessionStorage（仅当前标签页，关页即清）；401 时清除并重新询问 ── */
+    /* ── 访问凭证（W30 #2 直切 JWT）：页面放行但 API 持 JWT。过渡姿势：手工粘贴——
+       curl 向认证中心（19000）用 client_credentials 换 token 后贴入；存 sessionStorage
+       （仅当前标签页，关页即清，禁 localStorage 防 XSS 持久化）；401 时清除并重新询问。
+       正式的授权码+PKCE 登录跳转在 W30 #3 落地 ── */
     let apiKey = sessionStorage.getItem('ai-evolution-api-key') || '';
 
     function ensureApiKey() {
       while (!apiKey) {
-        apiKey = (prompt('本服务已启用认证（W29 #1），请输入访问凭证（将随 Authorization: Bearer 头发送）：') || '').trim();
+        apiKey = (prompt('本服务已切换统一认证（W30 #2），请粘贴 JWT（获取：curl -u mcp-client:$AUTH_CLIENT_MCP_SECRET -d grant_type=client_credentials http://localhost:19000/oauth2/token）：') || '').trim();
         if (!apiKey) return false; // 用户取消
       }
       sessionStorage.setItem('ai-evolution-api-key', apiKey);

@@ -14,10 +14,11 @@
 
 import argparse
 import json
-import os
 import time
 import urllib.request
 from pathlib import Path
+
+from auth_token import fetch_token
 
 ROOT = Path(__file__).resolve().parent.parent
 LEDGER = ROOT / "data/cost-ledger.jsonl"
@@ -38,14 +39,14 @@ SAMPLE = [
 ]
 
 
-def chat(query, conversation_id, api_key, timeout=280):
+def chat(query, conversation_id, token, timeout=280):
     body = json.dumps(
         {"message": query, "conversationId": conversation_id}
     ).encode("utf-8")
     req = urllib.request.Request(
         "http://localhost:18080/ai/chat",
         data=body,
-        headers={"Content-Type": "application/json", "X-API-Key": api_key},
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {token}"},
     )
     t0 = time.time()
     with urllib.request.urlopen(req, timeout=timeout) as resp:
@@ -65,7 +66,8 @@ def main():
     ap.add_argument("--from", dest="start", type=int, default=0)
     ap.add_argument("--to", dest="end", type=int, default=len(SAMPLE))
     args = ap.parse_args()
-    api_key = os.environ["AI_EVOLUTION_API_KEY"]
+    # W30 #2：client_credentials 向认证中心换 JWT（共享 API Key 已退役）
+    api_key = fetch_token()
 
     out_file = OUT_DIR / f"agent-tier-v1-{args.arm}.json"
     results = json.loads(out_file.read_text(encoding="utf-8")) if out_file.exists() else {}

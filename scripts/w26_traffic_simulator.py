@@ -19,9 +19,7 @@
 
 import argparse
 import json
-import os
 import random
-import sys
 import threading
 import time
 import urllib.error
@@ -29,6 +27,8 @@ import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
+
+from auth_token import fetch_token
 
 FOLLOW_UPS = [
     "它 2024 年的净利润是多少？",
@@ -66,12 +66,12 @@ def plan_sessions(queries: list[str], seed: int) -> list[list[str]]:
     return sessions
 
 
-def post_chat(base_url: str, api_key: str, message: str, conversation_id: str) -> tuple[int, float, str]:
+def post_chat(base_url: str, token: str, message: str, conversation_id: str) -> tuple[int, float, str]:
     payload = json.dumps({"message": message, "conversationId": conversation_id}).encode()
     req = urllib.request.Request(
         f"{base_url}/ai/chat",
         data=payload,
-        headers={"Content-Type": "application/json", "X-API-Key": api_key},
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {token}"},
     )
     start = time.monotonic()
     try:
@@ -116,9 +116,7 @@ def main():
     ap.add_argument("--seed", type=int, default=20261030)
     args = ap.parse_args()
 
-    api_key = os.environ.get("AI_EVOLUTION_API_KEY", "")
-    if not api_key:
-        sys.exit("缺 AI_EVOLUTION_API_KEY（先 set -a; source .env; set +a）——服务端 W12 起默认拒绝")
+    api_key = fetch_token()  # W30 #2：client_credentials 换 JWT（共享 API Key 已退役）
 
     queries = load_queries(Path(args.golden), Path(args.synthetic))
     sessions = plan_sessions(queries, args.seed)
