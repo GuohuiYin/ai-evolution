@@ -1,5 +1,10 @@
 package com.aievolution.authcenter;
 
+import java.net.CookieManager;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
@@ -12,8 +17,8 @@ import org.testcontainers.mysql.MySQLContainer;
  * MySQL（mysql:8.4，与本地容器同版本）+ admin 种子哈希（argon2 运行时现算， 测试口令固定 {@link #TEST_ADMIN_PASSWORD}）。
  *
  * <p>实踩坑：容器用「单例模式」（static 块手动 start，Ryuk 进程结束回收）而非 {@code @Testcontainers
- * + @Container}——后者按「每个测试类」停起容器，重启后随机端口变更， 而 Spring 上下文缓存里的 DataSource 仍指旧端口：健康检查的 db 指示器拿不到连接， 等满
- * Hikari 30 秒超时返回 503（首个用库的类能过、后续类全挂）。
+ * + @Container}——后者按「每个测试类」停起容器，重启后随机端口变更，而 Spring 上下文缓存里的 DataSource 仍指旧端口：健康检查的 db 指示器拿不到连接，等满
+ * Hikari 30 秒超时返回 503 （首个用库的类能过、后续类全挂）。
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public abstract class AbstractAuthCenterTest {
@@ -44,4 +49,36 @@ public abstract class AbstractAuthCenterTest {
 
   @Value("${local.server.port}")
   protected int port;
+
+  protected String base() {
+    return "http://localhost:" + port;
+  }
+
+  /** 带 Cookie 会话的「浏览器」客户端（授权码流要跨请求携带 JSESSIONID）。 */
+  protected static HttpClient newBrowser() {
+    return HttpClient.newBuilder()
+        .cookieHandler(new CookieManager())
+        .followRedirects(HttpClient.Redirect.NEVER)
+        .build();
+  }
+
+  protected static HttpResponse<String> get(HttpClient client, String url) throws Exception {
+    return client.send(
+        HttpRequest.newBuilder(URI.create(url)).GET().build(),
+        HttpResponse.BodyHandlers.ofString());
+  }
+
+  /** 表单 POST（headers 为键值对序列，如 "Authorization", "Basic ..."）。 */
+  protected static HttpResponse<String> postForm(
+      HttpClient client, String url, String formBody, String... headers) throws Exception {
+    HttpRequest.Builder builder =
+        HttpRequest.newBuilder(URI.create(url))
+            .header("Content-Type", "application/x-www-form-urlencoded");
+    for (int i = 0; i + 1 < headers.length; i += 2) {
+      builder.header(headers[i], headers[i + 1]);
+    }
+    return client.send(
+        builder.POST(HttpRequest.BodyPublishers.ofString(formBody)).build(),
+        HttpResponse.BodyHandlers.ofString());
+  }
 }

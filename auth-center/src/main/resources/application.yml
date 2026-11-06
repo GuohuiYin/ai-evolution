@@ -22,6 +22,19 @@ spring:
               authorization-grant-types: client_credentials
               scopes:
                 - writer
+          # 人通道（对话页 SPA，授权码+PKCE）：public client 无密钥，require-proof-key 强制 PKCE；
+          # consent 页显式关闭——一方应用（自家对话页）无需三方授权确认页（ADR-0013 显式配置精神）；
+          # redirect-uri 与 W30 #3 对话页实现对齐——改动必须前后端同步
+          ai-evolution-web:
+            require-proof-key: true
+            registration:
+              client-id: ai-evolution-web
+              client-authentication-methods: none
+              authorization-grant-types: authorization_code
+              redirect-uris: http://localhost:18080/callback
+              scopes:
+                - reader
+                - writer
 
   datasource:
     # identity 域用户表：auth 独立 schema（与主应用同 MySQL 实例、库级隔离；
