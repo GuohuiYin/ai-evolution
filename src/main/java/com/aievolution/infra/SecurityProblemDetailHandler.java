@@ -14,11 +14,12 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.AccessDeniedHandler;
 
 /**
- * 401/403 统一出口（W29 #1）：认证失败与授权不足自此分清，两者皆走 RFC 7807 ProblemDetail（B3）。
+ * 401/403 统一出口（W29 #1；W30 #2 起凭证 = auth-center 签发的 JWT）： 认证失败与授权不足分清，两者皆走 RFC 7807
+ * ProblemDetail（B3）。
  *
  * <ul>
- *   <li>401：无凭证或凭证非法（认证失败），附 {@code WWW-Authenticate: Bearer} 引导正史通道
- *   <li>403：凭证合法但角色不足（授权失败）——单 key 时代日常不触发，多角色/W30 scope 落地后生效
+ *   <li>401：无凭证或 JWT 非法/过期（认证失败），附 {@code WWW-Authenticate: Bearer} 引导正史通道
+ *   <li>403：JWT 合法但角色不足（授权失败）
  * </ul>
  */
 public class SecurityProblemDetailHandler implements AuthenticationEntryPoint, AccessDeniedHandler {
@@ -36,7 +37,7 @@ public class SecurityProblemDetailHandler implements AuthenticationEntryPoint, A
     write(
         response,
         HttpStatus.UNAUTHORIZED,
-        "缺少或非法凭证（请使用 Authorization: Bearer 头；X-API-Key 兼容期内仍可用，W30 退役）");
+        "缺少或非法凭证（请使用 Authorization: Bearer <JWT>，由统一认证中心 auth-center 签发）");
   }
 
   @Override

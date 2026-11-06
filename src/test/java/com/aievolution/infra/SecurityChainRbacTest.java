@@ -9,8 +9,10 @@ import java.net.http.HttpResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 
-/** W29 #1 链级行为锁定（reader key 上下文）：403 语义与端点角色映射—— 凭证合法但角色不足的端点返回 403 ProblemDetail，角色足够的端点正常放行。 */
+/** W30 #2 链级行为锁定（reader JWT 上下文）：403 语义与端点角色映射—— JWT 合法但角色不足的端点返回 403 ProblemDetail，角色足够的端点正常放行。 */
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
     properties = {
@@ -18,20 +20,25 @@ import org.springframework.boot.test.context.SpringBootTest;
       "spring.ai.openai.api-key=test-key",
       "spring.ai.vectorstore.qdrant.initialize-schema=false",
       "ai.knowledge.ingest.enabled=false",
-      "spring.ai.mcp.client.enabled=false",
-      "ai.security.api-key=test-key",
-      // 本上下文 key 只授 reader：验证 403（授权不足）与 401（认证失败）已分清
-      "ai.security.key-roles=reader"
+      "spring.ai.mcp.client.enabled=false"
     })
 class SecurityChainRbacTest {
+
+  @DynamicPropertySource
+  static void jwtProperties(DynamicPropertyRegistry registry) {
+    registry.add(
+        "spring.security.oauth2.resourceserver.jwt.jwk-set-uri", TestJwtSupport::jwkSetUri);
+  }
 
   @Value("${local.server.port}")
   private int port;
 
   private HttpResponse<String> send(String method, String path) throws Exception {
+    // 本上下文主体只持 reader 角色：验证 403（授权不足）与 401（认证失败）已分清
+    String token = TestJwtSupport.issueToken("reader-user", "reader", null);
     HttpRequest.Builder builder =
         HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))
-            .header("Authorization", "Bearer test-key");
+            .header("Authorization", "Bearer " + token);
     HttpRequest request =
         switch (method) {
           case "GET" -> builder.GET().build();

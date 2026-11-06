@@ -25,8 +25,9 @@ class RateLimitFilterTest {
   private final RateLimitFilter filter = new RateLimitFilter(3, clock::get);
 
   private MockHttpServletRequest requestWithKey(String key) {
+    // W30 #2：身份载体收口为 Bearer 头（X-API-Key 已退役）；非 JWT 形态的串按原值整串分桶
     MockHttpServletRequest request = new MockHttpServletRequest("POST", "/ai/chat");
-    request.addHeader(ApiCredentialAuthenticationFilter.API_KEY_HEADER, key);
+    request.addHeader("Authorization", "Bearer " + key);
     return request;
   }
 
@@ -79,6 +80,31 @@ class RateLimitFilterTest {
     clock.addAndGet(61);
 
     assertThat(pass(KEY_A).getStatus()).isEqualTo(200);
+  }
+
+  @Test
+  void jwtTokensWithSameSubjectShareBucket() throws ServletException, IOException {
+    // W30 #2：JWT 按 sub 分桶——同一主体换签名重发（如刷新 token 后）仍吃同一额度
+    String tokenAlice1 = fakeJwt("alice", "sig-1");
+    String tokenAlice2 = fakeJwt("alice", "sig-2");
+    for (int i = 0; i < 2; i++) {
+      assertThat(pass(tokenAlice1).getStatus()).isEqualTo(200);
+    }
+    assertThat(pass(tokenAlice2).getStatus()).isEqualTo(200);
+    // 第 4 次：同 sub 已超限，无论持哪一串 token
+    assertThat(pass(tokenAlice2).getStatus()).isEqualTo(429);
+    // 另一 sub 额度独立
+    assertThat(pass(fakeJwt("bob", "sig-3")).getStatus()).isEqualTo(200);
+  }
+
+  /** 伪造三段式 JWT（仅测试分桶取值，不验签——限流不是安全决策） */
+  private static String fakeJwt(String sub, String signature) {
+    String payload =
+        java.util.Base64.getUrlEncoder()
+            .withoutPadding()
+            .encodeToString(
+                ("{\"sub\":\"" + sub + "\"}").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    return "header." + payload + "." + signature;
   }
 
   @Test

@@ -55,6 +55,13 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-security</artifactId>
     </dependency>
+    <!-- W30 #2：JWT 资源服务器——凭证验签收口至统一认证中心（auth-center 签发 RS256 JWT，
+         本服务仅凭 JWKS 公钥验签）；opaque Bearer 与 X-API-Key 同批退役（Owner 裁决：直切）。
+         版本由 Boot 4.1.1 BOM 托管（含 spring-security-oauth2-jose / nimbus-jose-jwt） -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+    </dependency>
     <!-- W21 #1：Temporal 工作流引擎（loop run 状态持久化/断点恢复候选方案，先最小环验证） -->
     <dependency>
       <groupId>io.temporal</groupId>

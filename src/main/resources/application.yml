@@ -8,6 +8,12 @@ spring:
       # McpServerIT "response is already committed"）。初访 REQUEST 已完成鉴权，
       # 异步转发不重复鉴权（SSE 场景的业界标准处置）
       dispatcher-types: request, error
+    # W30 #2：JWT 资源服务器——token 由统一认证中心（auth-center，默认 :19000）以 RS256 签发，
+    # 本服务仅凭其 JWKS 公钥验签，不再持有任何共享密钥（启动不拉取，首次验签时取并缓存）
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${AUTH_CENTER_JWKS_URI:http://localhost:19000/oauth2/jwks}
   lifecycle:
     timeout-per-shutdown-phase: 10s
   # W21 #1③：DataSource 自动配置显式关闭——会话记忆 L2 的 H2 数据源由 ConversationMemoryConfig
@@ -263,14 +269,10 @@ ai:
     # 工具入参长度上限（红队基线 M3 修复：防超长 query 直达上游付费 API 的成本攻击）
     max-query-length: 2000
   security:
-    # W12 #2：API Key 鉴权（强制项；W29 #1 起 Bearer 头为正史，X-API-Key 兼容期双收，
-    # Owner 裁决 A，W30 接 JWT 时退役）。空值启动 fail-fast——
-    # 鉴权没有"忘记开"的静默中间态。放行清单见 SecurityAllowlist（测试锁定）
-    api-key: ${AI_EVOLUTION_API_KEY:}
-    # W29 #1：key 身份授予的角色（单 Owner 时代一把 key = admin；W30 角色来源改 JWT scope）
-    key-roles: admin
-    # W29 #1：端点→角色映射（策略配置化 A11，空表启动 fail-fast）。
-    # 未列路径 = 已认证即可；公开面免认证见 SecurityAllowlist
+    # W30 #2：凭证鉴权收口至 JWT 资源服务器（上方 spring.security.oauth2.resourceserver）；
+    # 角色来源 = JWT 声明（人通道 role / 机器通道 scope，映射见 JwtRoleConverter）。
+    # 原 api-key / key-roles 随 opaque Bearer 与 X-API-Key 同批退役（Owner 裁决：直切）。
+    # 放行清单见 SecurityAllowlist（测试锁定）
     endpoint-roles:
       - { method: GET,    pattern: "/api/approvals/*", role: reader }
       - { method: GET,    pattern: "/ai/cost/summary", role: reader }
@@ -286,7 +288,7 @@ ai:
       - { method: POST,   pattern: "/ai/cost/budget",  role: admin }
       - { method: POST,   pattern: "/api/approvals/*", role: admin }
     rate-limit:
-      # W12 #3：固定窗口限流，每身份（API Key，无凭证按 IP）每分钟次数上限。
+      # W12 #3：固定窗口限流，每身份（W30 #2 起按 JWT sub，无凭证按 IP）每分钟次数上限。
       # 单实例内存实现；多副本场景待 L2 持久化一起谈（周计划"明确不做"）
       per-minute: 60
     # W28 #3 请求体传输层上限（字节，默认 32KB）：Content-Length 超限即 413，

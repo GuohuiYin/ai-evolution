@@ -8,6 +8,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.security.oauth2.server.resource.autoconfigure.OAuth2ResourceServerAutoConfiguration;
+import org.springframework.boot.security.oauth2.server.resource.autoconfigure.web.OAuth2ResourceServerWebSecurityAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -16,7 +18,13 @@ import org.springframework.test.web.servlet.MvcResult;
 import reactor.core.publisher.Flux;
 
 /** SSE 流式端点契约测试（W10 #0b）：delta 事件逐段下发，complete 事件收尾带会话与来源。 */
-@WebMvcTest(ChatController.class)
+// W30 #2：切片不装配安全链——资源服务器自动配置需完整 HttpSecurity 装配（仅全量上下文具备），显式排除
+@WebMvcTest(
+    controllers = ChatController.class,
+    excludeAutoConfiguration = {
+      OAuth2ResourceServerAutoConfiguration.class,
+      OAuth2ResourceServerWebSecurityAutoConfiguration.class
+    })
 class ChatStreamControllerTest {
 
   @Autowired private MockMvc mockMvc;

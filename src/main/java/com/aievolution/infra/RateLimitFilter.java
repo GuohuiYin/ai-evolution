@@ -21,7 +21,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * <p>设计决策：
  *
  * <ul>
- *   <li>身份 = {@code X-API-Key} 头值；缺失时退化客户端 IP——排在鉴权<b>之前</b>， 撞库/无凭证试探同样吃额度（鉴权失败不是免费通道）
+ *   <li>身份 = Bearer JWT 的 {@code sub} 声明（W30 #2）；缺失时退化客户端 IP——排在鉴权<b>之前</b>，
+ *       撞库/无凭证试探同样吃额度（鉴权失败不是免费通道）
  *   <li>公开面（{@link SecurityAllowlist}）不限流：健康探针与文档页不应占用业务额度
  *   <li>超限 429 + ProblemDetail（B3）+ {@code Retry-After}（距下一窗口秒数）—— 客户端可自我节流，而不是盲目重试
  *   <li>单实例内存实现（明确不做分布式限流，周计划既定）；窗口按分钟对齐自然时刻， 突刺语义直白可解释（边界分钟最多 2N 的固定窗口固有特性，接受并记录）
@@ -32,6 +33,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
   private static final long WINDOW_SECONDS = 60;
+  private static final String BEARER_PREFIX = "Bearer ";
 
   /** 单窗口计数器：count 原子自增；窗口过期整体替换（compute 内原子完成，无锁外竞态） */
   private static final class Window {
@@ -88,16 +90,33 @@ public class RateLimitFilter extends OncePerRequestFilter {
     return window;
   }
 
-  /** 限流身份：持证按凭证（Bearer 正史优先，X-API-Key 兼容期兜底；不落日志防泄漏）；无凭证按来源 IP */
+  /**
+   * 限流身份（W30 #2）：Bearer JWT 按 {@code sub} 声明分桶；无凭证按来源 IP。
+   *
+   * <p>此处只摘 payload 不验签——分桶不是安全决策（验签在 Spring Security 资源服务器链完成）， 伪造 sub 最坏后果是替别人吃额度，不放大自身额度；解析失败的非法
+   * token 按原值整串分桶， 随后由资源服务器链统一 401。token 不落日志防泄漏。
+   */
   private static String identityOf(HttpServletRequest request) {
     String authorization = request.getHeader("Authorization");
-    if (authorization != null
-        && authorization.startsWith(ApiCredentialAuthenticationFilter.BEARER_PREFIX)) {
-      return "key:"
-          + authorization.substring(ApiCredentialAuthenticationFilter.BEARER_PREFIX.length());
+    if (authorization != null && authorization.startsWith(BEARER_PREFIX)) {
+      return "sub:" + jwtSubjectOrRaw(authorization.substring(BEARER_PREFIX.length()));
     }
-    String key = request.getHeader(ApiCredentialAuthenticationFilter.API_KEY_HEADER);
-    return (key != null && !key.isBlank()) ? "key:" + key : "ip:" + request.getRemoteAddr();
+    return "ip:" + request.getRemoteAddr();
+  }
+
+  /** 摘 JWT payload 的 sub；非三段结构或解码/解析失败时退回原值（整串作桶键，语义与旧 key 分桶一致） */
+  private static String jwtSubjectOrRaw(String token) {
+    String[] parts = token.split("\\.");
+    if (parts.length != 3) {
+      return token;
+    }
+    try {
+      byte[] payload = java.util.Base64.getUrlDecoder().decode(parts[1]);
+      String sub = OBJECT_MAPPER.readTree(payload).path("sub").asText(null);
+      return (sub != null && !sub.isBlank()) ? sub : token;
+    } catch (RuntimeException | java.io.IOException e) {
+      return token;
+    }
   }
 
   private void writeTooManyRequests(HttpServletResponse response, long retryAfterSeconds)

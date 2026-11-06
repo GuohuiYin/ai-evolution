@@ -14,13 +14,21 @@ import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.security.oauth2.server.resource.autoconfigure.OAuth2ResourceServerAutoConfiguration;
+import org.springframework.boot.security.oauth2.server.resource.autoconfigure.web.OAuth2ResourceServerWebSecurityAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 /** 人工反馈入口单测（W24 #3）：👎 登记 PENDING_REVIEW / 👍 留痕 NOTED / 快照最后问答 / 未知会话 404 / 非法 rating 400。 */
-@WebMvcTest(FeedbackController.class)
+// W30 #2：切片不装配安全链——资源服务器自动配置需完整 HttpSecurity 装配（仅全量上下文具备），显式排除
+@WebMvcTest(
+    controllers = FeedbackController.class,
+    excludeAutoConfiguration = {
+      OAuth2ResourceServerAutoConfiguration.class,
+      OAuth2ResourceServerWebSecurityAutoConfiguration.class
+    })
 class FeedbackControllerTest {
 
   @Autowired private MockMvc mockMvc;

@@ -9,11 +9,14 @@ import java.net.http.HttpResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 
 /**
- * W29 #1 链级行为锁定（admin key 上下文）：401 语义、Bearer 正史、X-API-Key 兼容期、公开面放行。
+ * W30 #2 链级行为锁定（admin JWT 上下文）：401 语义、JWT 验签正史、旧凭证双通道退役、公开面放行。
  *
- * <p>403 语义由 reader 上下文锁定，见 {@link SecurityChainRbacTest}。
+ * <p>验签走真 JWKS（{@link TestJwtSupport} 进程内 RSA + 内嵌端点），不打桩。 403 语义由 reader 上下文锁定，见 {@link
+ * SecurityChainRbacTest}。
  */
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -23,11 +26,16 @@ import org.springframework.boot.test.context.SpringBootTest;
       "spring.ai.vectorstore.qdrant.initialize-schema=false",
       "ai.knowledge.ingest.enabled=false",
       "spring.ai.mcp.client.enabled=false",
-      "ai.security.api-key=test-key",
       // W29 #3：测试上下文显式声明一个白名单 origin（生产默认空 = deny-by-default）
       "ai.security.cors.allowed-origins=http://localhost:5173"
     })
 class SecurityChainTest {
+
+  @DynamicPropertySource
+  static void jwtProperties(DynamicPropertyRegistry registry) {
+    registry.add(
+        "spring.security.oauth2.resourceserver.jwt.jwk-set-uri", TestJwtSupport::jwkSetUri);
+  }
 
   @Value("${local.server.port}")
   private int port;
@@ -67,14 +75,25 @@ class SecurityChainTest {
   }
 
   @Test
-  void validBearerTokenPassesAuthentication() throws Exception {
-    HttpResponse<String> response = send("GET", "/ai/cost/summary", "Bearer test-key");
+  void validJwtWithAdminRolePassesAuthentication() throws Exception {
+    String token = TestJwtSupport.issueToken("admin-user", "admin", null);
+    HttpResponse<String> response = send("GET", "/ai/cost/summary", "Bearer " + token);
 
     assertThat(response.statusCode()).isEqualTo(200);
   }
 
   @Test
-  void legacyApiKeyHeaderStillAcceptedDuringCompatWindow() throws Exception {
+  void machineScopeJwtPassesViaScopeClaim() throws Exception {
+    // 机器通道（client_credentials）：角色来自 scope 声明；writer ⊇ reader（层级向下兼容）
+    String token = TestJwtSupport.issueToken("mcp-client", null, "writer");
+    HttpResponse<String> response = send("GET", "/ai/cost/summary", "Bearer " + token);
+
+    assertThat(response.statusCode()).isEqualTo(200);
+  }
+
+  @Test
+  void legacyApiKeyHeaderNoLongerAccepted() throws Exception {
+    // W30 #2 直切（Owner 裁决）：X-API-Key 与 opaque Bearer 同批退役，不再有任何兼容通道
     HttpRequest request =
         HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/ai/cost/summary"))
             .header("X-API-Key", "test-key")
@@ -84,7 +103,7 @@ class SecurityChainTest {
     HttpResponse<String> response =
         HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
 
-    assertThat(response.statusCode()).isEqualTo(200);
+    assertThat(response.statusCode()).isEqualTo(401);
   }
 
   @Test

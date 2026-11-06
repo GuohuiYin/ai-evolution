@@ -12,13 +12,21 @@ import java.time.Instant;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.security.oauth2.server.resource.autoconfigure.OAuth2ResourceServerAutoConfiguration;
+import org.springframework.boot.security.oauth2.server.resource.autoconfigure.web.OAuth2ResourceServerWebSecurityAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 /** 预算运行时调整端点测试（W27 #4b）：调额生效并回显状态 / 非正值 400 / 状态端点回显当日调整留痕。 */
-@WebMvcTest(CostController.class)
+// W30 #2：切片不装配安全链——资源服务器自动配置需完整 HttpSecurity 装配（仅全量上下文具备），显式排除
+@WebMvcTest(
+    controllers = CostController.class,
+    excludeAutoConfiguration = {
+      OAuth2ResourceServerAutoConfiguration.class,
+      OAuth2ResourceServerWebSecurityAutoConfiguration.class
+    })
 class CostControllerTest {
 
   @Autowired private MockMvc mockMvc;

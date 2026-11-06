@@ -13,13 +13,21 @@ import io.temporal.client.WorkflowClient;
 import io.temporal.client.WorkflowNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.security.oauth2.server.resource.autoconfigure.OAuth2ResourceServerAutoConfiguration;
+import org.springframework.boot.security.oauth2.server.resource.autoconfigure.web.OAuth2ResourceServerWebSecurityAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 /** HITL 审批入口单测（W23 #1）：状态查询 / 放行 / 驳回 / 非挂起冲突 / 未知 workflow 404 / 非法决定 400。 */
-@WebMvcTest(ApprovalController.class)
+// W30 #2：切片不装配安全链——资源服务器自动配置需完整 HttpSecurity 装配（仅全量上下文具备），显式排除
+@WebMvcTest(
+    controllers = ApprovalController.class,
+    excludeAutoConfiguration = {
+      OAuth2ResourceServerAutoConfiguration.class,
+      OAuth2ResourceServerWebSecurityAutoConfiguration.class
+    })
 class ApprovalControllerTest {
 
   @Autowired private MockMvc mockMvc;
