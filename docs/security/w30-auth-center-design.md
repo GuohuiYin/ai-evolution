@@ -61,10 +61,14 @@
 
 ## 六、分步拆解（O3 小步，每步独立编译+测试绿）
 
-1. **空壳工程**：`auth-center/` pom + Application + actuator 健康检查 + CI 第二路（零业务）
-2. **机器通道先通**：SAS 最小配置 + 客户端注册表配置化 + 客户端凭证流测试
-3. **人通道**：identity 域（用户表 + 种子 Runner）+ 授权码+PKCE 流测试
-4. **收尾**：JWKS 端点核验 + 本草案裁决回填 + 计划打勾
+1. **空壳工程**：`auth-center/` pom + Application + actuator 健康检查 + CI 第二路（零业务） ✅ `2452b5f`
+2. **机器通道先通**：SAS 最小配置 + 客户端注册表配置化 + 客户端凭证流测试 ✅ `9cc7d71`
+3. **人通道**：identity 域（用户表 + 种子 Runner）+ 授权码+PKCE 流测试 ✅ `f6923ee` + `a53e4ff`
+4. **收尾**：JWKS 端点核验 + 本草案裁决回填 + 计划打勾 ✅（JWKS 断言在 ClientCredentialsFlowTest；本文回填 + 计划打勾随本批）
+
+**交付记录（2026-11-06）**：13/13 测试绿。实踩两坑入档：①Boot 对授权服务器的自动装配
+全有或全无（ConditionalOnDefaultWebSecurity），为放行健康探针整体接管双链；②Testcontainers
+@Container 按测试类停起导致上下文缓存里的连接串失效（健康检查 503）→ 单例容器模式。
 
 ## 裁决记录
 
