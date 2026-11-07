@@ -69,6 +69,9 @@ auth:
     # W30 #4：JWT 签名私钥（PKCS8 PEM，换行用字面 \n 转义；部署态经 Secret 注入）。
     # 留空 = 每启动临时生成（本地开发姿态，重启换钥全失效，WARN 有声化）；提供但解析失败 fail-closed
     private-key-pem: ${AUTH_JWT_PRIVATE_KEY:}
+  registration:
+    # W30 #6：注册限流（每 IP 每小时次数），防批量注册；只卡 POST /register
+    rate-limit-per-hour: ${AUTH_REGISTRATION_RATE_LIMIT:5}
 
 # K8s 友好最小集（C1）：探针分离；文档面不外露（A7 同纪律，本工程无业务端点文档需求）
 management:
