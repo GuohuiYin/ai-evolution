@@ -1,5 +1,6 @@
 package com.aievolution.authcenter.protocol;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -23,11 +24,29 @@ class AuthorizationServerSecurityConfiguration {
 
   @Bean
   @Order(1)
-  SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+  SecurityFilterChain authorizationServerSecurityFilterChain(
+      HttpSecurity http, @Value("${auth.cors.allowed-origins:}") String corsAllowedOrigins)
+      throws Exception {
     OAuth2AuthorizationServerConfigurer authorizationServer =
         new OAuth2AuthorizationServerConfigurer();
     return http.securityMatcher(authorizationServer.getEndpointsMatcher())
         .with(authorizationServer, Customizer.withDefaults())
+        // W30 #3：SPA 跨域换 token 的预检由链内 CorsFilter 在鉴权前处理（deny-by-default，白名单来自配置）
+        .cors(
+            cors ->
+                cors.configurationSource(
+                    request -> {
+                      var config = new org.springframework.web.cors.CorsConfiguration();
+                      config.setAllowedOrigins(
+                          java.util.Arrays.stream(corsAllowedOrigins.split(","))
+                              .map(String::trim)
+                              .filter(origin -> !origin.isEmpty())
+                              .toList());
+                      config.setAllowedMethods(java.util.List.of("GET", "POST", "OPTIONS"));
+                      config.setAllowedHeaders(java.util.List.of("Authorization", "Content-Type"));
+                      config.setMaxAge(3600L);
+                      return config;
+                    }))
         .authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
         .exceptionHandling(
             exceptions ->
@@ -40,7 +59,9 @@ class AuthorizationServerSecurityConfiguration {
 
   @Bean
   @Order(2)
-  SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+  SecurityFilterChain defaultSecurityFilterChain(
+      HttpSecurity http, @Value("${auth.cors.allowed-origins:}") String corsAllowedOrigins)
+      throws Exception {
     return http.authorizeHttpRequests(
             authorize ->
                 authorize
@@ -48,6 +69,23 @@ class AuthorizationServerSecurityConfiguration {
                     .permitAll()
                     .anyRequest()
                     .authenticated())
+        // W30 #3：预检 OPTIONS /oauth2/token 不匹配链 1 的端点匹配器（token 端点按方法圈定，
+        // OPTIONS 落进本链）——CORS 白名单双链同挂，预检由链内 CorsFilter 在鉴权前放行
+        .cors(
+            cors ->
+                cors.configurationSource(
+                    request -> {
+                      var config = new org.springframework.web.cors.CorsConfiguration();
+                      config.setAllowedOrigins(
+                          java.util.Arrays.stream(corsAllowedOrigins.split(","))
+                              .map(String::trim)
+                              .filter(origin -> !origin.isEmpty())
+                              .toList());
+                      config.setAllowedMethods(java.util.List.of("GET", "POST", "OPTIONS"));
+                      config.setAllowedHeaders(java.util.List.of("Authorization", "Content-Type"));
+                      config.setMaxAge(3600L);
+                      return config;
+                    }))
         .formLogin(Customizer.withDefaults())
         .build();
   }

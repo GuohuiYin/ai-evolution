@@ -10,6 +10,8 @@ import org.springframework.util.AntPathMatcher;
  *
  * <ul>
  *   <li>{@code /}、{@code /index.html}、{@code /favicon.ico}：对话页静态资源（页面放行，API 持证）
+ *   <li>{@code /callback}、{@code /callback.html}：W30 #3 登录回调页（授权码+PKCE 的 redirect 落点； 页面放行同对话页，换
+ *       token 的凭证校验在认证中心侧）
  *   <li>{@code /swagger-ui/**}、{@code /v3/api-docs*}：本地 API 文档（A7；部署侧经 ConfigMap 关闭 UI）
  *   <li>{@code /actuator/health/**}：K8s 健康探针（kubelet 不带凭证）；metrics/info 不在其列
  * </ul>
@@ -21,6 +23,8 @@ public final class SecurityAllowlist {
           "/",
           "/index.html",
           "/favicon.ico",
+          "/callback",
+          "/callback.html",
           "/swagger-ui/**",
           "/v3/api-docs",
           "/v3/api-docs.yaml",

@@ -40,5 +40,21 @@ class ChatPageTest {
     assertThat(response.body()).contains("AI Evolution");
     // W11 #2：SSE trajectory 事件的页面挂钩必须在位（可选展示研究轨迹）
     assertThat(response.body()).contains("onTrajectory").contains("研究轨迹");
+    // W30 #3：授权码+PKCE 登录流挂钩在位（无凭证跳转认证中心）
+    assertThat(response.body()).contains("code_challenge").contains("/oauth2/authorize");
+  }
+
+  @Test
+  void loginCallbackPageIsPublicAndServes() throws Exception {
+    // W30 #3：/callback 是授权码+PKCE 的 redirect 落点——必须免认证放行（SecurityAllowlist 登记），
+    // 且由 LoginCallbackController 转发到 callback.html（URL 不带扩展名）
+    HttpRequest request =
+        HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/callback")).build();
+
+    HttpResponse<String> response =
+        HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
+
+    assertThat(response.statusCode()).isEqualTo(200);
+    assertThat(response.body()).contains("code_verifier").contains("/oauth2/token");
   }
 }

@@ -52,6 +52,10 @@ auth:
   identity:
     admin-username: ${AUTH_ADMIN_USERNAME:admin}
     admin-password-hash: ${AUTH_ADMIN_PASSWORD_HASH:}
+  cors:
+    # W30 #3：对话页 SPA（18080）跨域调 /oauth2/token 换 token 是 XHR，浏览器有预检——
+    # 白名单显式声明 SPA origin（授权跳转本身是浏览器重定向，不经过 CORS）
+    allowed-origins: ${AUTH_CENTER_CORS_ORIGINS:http://localhost:18080}
 
 # K8s 友好最小集（C1）：探针分离；文档面不外露（A7 同纪律，本工程无业务端点文档需求）
 management:

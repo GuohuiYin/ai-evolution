@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <title>登录回调 · AI Evolution</title>
+</head>
+<body>
+<p id="msg">正在完成登录…</p>
+<script>
+/* W30 #3：授权码+PKCE 回调——用 code + code_verifier 向认证中心换 token。
+   code_verifier 只存在本浏览器 sessionStorage（PKCE 精髓：服务端不经手，截获 code 也换不出 token）；
+   state 校验防 CSRF（回调必须是本人发起的那次登录）。
+   认证中心地址从登录发起页写入的 sessionStorage 读取（单点定义在 index.html，两处不漂移）。 */
+(async () => {
+  const msg = document.getElementById('msg');
+  const params = new URLSearchParams(location.search);
+  const authCenter = sessionStorage.getItem('ai-evolution-auth-center');
+  const savedState = sessionStorage.getItem('ai-evolution-login-state');
+  const verifier = sessionStorage.getItem('ai-evolution-pkce-verifier');
+  const error = params.get('error');
+  const code = params.get('code');
+  const state = params.get('state');
+
+  if (error) { msg.textContent = '登录被拒绝：' + error; return; }
+  if (!authCenter || !code || !state || state !== savedState || !verifier) {
+    msg.textContent = '登录状态校验失败，请回到首页重新发起登录。';
+    return;
+  }
+  sessionStorage.removeItem('ai-evolution-login-state');
+  sessionStorage.removeItem('ai-evolution-pkce-verifier');
+
+  try {
+    const resp = await fetch(authCenter + '/oauth2/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: location.origin + '/callback',
+        client_id: 'ai-evolution-web',
+        code_verifier: verifier,
+      }),
+    });
+    if (!resp.ok) throw new Error('token 交换失败（HTTP ' + resp.status + '），请回首页重试。');
+    const data = await resp.json();
+    sessionStorage.setItem('ai-evolution-api-key', data.access_token);
+    location.replace('/');
+  } catch (e) {
+    msg.textContent = String(e && e.message ? e.message : e);
+  }
+})();
+</script>
+</body>
+</html>

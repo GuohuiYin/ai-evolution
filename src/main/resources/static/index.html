@@ -270,24 +270,46 @@
     /* ── 会话状态：conversationId 是续聊凭据（W10 一等公民） ── */
     let conversationId = null;
 
-    /* ── 访问凭证（W30 #2 直切 JWT）：页面放行但 API 持 JWT。过渡姿势：手工粘贴——
-       curl 向认证中心（19000）用 client_credentials 换 token 后贴入；存 sessionStorage
-       （仅当前标签页，关页即清，禁 localStorage 防 XSS 持久化）；401 时清除并重新询问。
-       正式的授权码+PKCE 登录跳转在 W30 #3 落地 ── */
+    /* ── 访问凭证（W30 #3 授权码+PKCE 登录流）：页面放行但 API 持 JWT。无 token 或 401 时
+       自动跳转认证中心登录（授权码+PKCE），回调页（callback.html）换 token 写回 sessionStorage
+       （仅当前标签页，关页即清，禁 localStorage 防 XSS 持久化）。
+       PKCE 精髓：code_verifier 只在本浏览器，即使授权码被截获也换不出 token。
+       AUTH_CENTER 是认证中心地址的单点定义（回调页从 sessionStorage 读，不双写）── */
+    const AUTH_CENTER = 'http://localhost:19000';
     let apiKey = sessionStorage.getItem('ai-evolution-api-key') || '';
 
+    function base64url(bytes) {
+      return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    async function startLogin() {
+      const verifier = base64url(crypto.getRandomValues(new Uint8Array(32)));
+      const challenge = base64url(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))));
+      const state = base64url(crypto.getRandomValues(new Uint8Array(16)));
+      sessionStorage.setItem('ai-evolution-pkce-verifier', verifier);
+      sessionStorage.setItem('ai-evolution-login-state', state);
+      sessionStorage.setItem('ai-evolution-auth-center', AUTH_CENTER);
+      location.assign(AUTH_CENTER + '/oauth2/authorize?' + new URLSearchParams({
+        response_type: 'code',
+        client_id: 'ai-evolution-web',
+        redirect_uri: location.origin + '/callback',
+        scope: 'reader writer',
+        state,
+        code_challenge: challenge,
+        code_challenge_method: 'S256',
+      }));
+    }
+
     function ensureApiKey() {
-      while (!apiKey) {
-        apiKey = (prompt('本服务已切换统一认证（W30 #2），请粘贴 JWT（获取：curl -u mcp-client:$AUTH_CLIENT_MCP_SECRET -d grant_type=client_credentials http://localhost:19000/oauth2/token）：') || '').trim();
-        if (!apiKey) return false; // 用户取消
-      }
-      sessionStorage.setItem('ai-evolution-api-key', apiKey);
-      return true;
+      if (apiKey) return true;
+      startLogin(); // 无凭证：跳转认证中心登录（页面即将离开，后续由回调页接管）
+      return false;
     }
 
     function handleUnauthorized() {
       sessionStorage.removeItem('ai-evolution-api-key');
       apiKey = '';
+      startLogin(); // token 过期/失效：自动重新登录（认证中心会话仍在则秒回，无感续期）
     }
 
     function updateBadge() {
@@ -384,7 +406,7 @@
         body: JSON.stringify(conversationId ? { message, conversationId } : { message })
       });
       if (!resp.ok) {
-        if (resp.status === 401) handleUnauthorized(); // 凭证失效：清除，下次发送重新询问
+        if (resp.status === 401) handleUnauthorized(); // 凭证失效：清除并自动跳转重新登录（页面即将离开）
         const hint = { 400: '请求参数不合法', 401: '访问凭证缺失或无效', 403: '凭证角色不足', 502: '模型服务异常（不可重试）', 503: '模型繁忙，请稍后重试' };
         throw new Error(`⚠️ ${hint[resp.status] || '服务异常'}（HTTP ${resp.status}）`);
       }
@@ -419,7 +441,7 @@
     async function send() {
       const text = input.value.trim();
       if (!text || pending) return;
-      if (!ensureApiKey()) return; // 用户取消输入 key：不发送、不占待回状态
+      if (!ensureApiKey()) return; // 无凭证：已触发登录跳转，不发送、不占待回状态
       document.getElementById('welcome')?.remove();
       pending = true; sendBtn.disabled = true;
       input.value = ''; input.style.height = 'auto';
@@ -491,6 +513,7 @@
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
             body: JSON.stringify({ conversationId, rating, comment, query })
           });
+          if (resp.status === 401) handleUnauthorized(); // 凭证失效：清除并自动跳转重新登录
           if (!resp.ok) throw new Error('HTTP ' + resp.status);
           hint.textContent = rating === 'down' ? '已登记 badcase，待人工裁定' : '已收到，感谢反馈';
         } catch (e) {
