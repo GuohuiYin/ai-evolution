@@ -33,7 +33,7 @@ MCP/服务间 ──客户端凭证────┘        （JWKS 公钥端点�
 | 2 | **ai-evolution 改资源服务器**：JWT 校验接 W29 的 Bearer 形态（JWKS 验签）；scope→RBAC 角色映射复用 W29 角色表；X-API-Key 退役或兼容期裁决（取证后定，登记 ADR） | 改造 + 全量安全测试绿 | ✅ `979454a`（2a 直切：资源服务器+JwtRoleConverter+真验签测试，484+17 绿）+ `aa71436`（2b 外围迁移 + ADR-0023；Owner 裁决：直切不留兼容期） |
 | 3 | **对话页接登录流**：授权码+PKCE 跳转登录 + 令牌存储（内存/sessionStorage，禁 localStorage——XSS 面）+ 401 自动回跳 | 前端改造 + 手工验收 | ✅ `31a7ad7`（PKCE 跳转 + /callback 回调页 + 401 自动重登；auth-center 双链 CORS 白名单；浏览器人工走查待 Owner 顺手验收） |
 | 4 | **运维面与留痕**：签名密钥对管理（轮转规程顺延 W31，本周只落初始密钥管理）+ 令牌过期/吊销语义 + ADR（自建 vs Keycloak/云 IdP 的 why/why-not）+ 能力地图「鉴权/限流」行收口 | ADR + 配置 + 能力地图更新 | ✅ `389950b`（env 密钥注入通道+缺省临时生成 WARN；TTL 1h+吊销=换钥语义；ADR-0024；能力地图鉴权行收口） |
-| 5 | **TLS 威胁模型声明 + 部署态落地**：威胁模型写明 localhost 开发豁免（同进程信任边界内）；**Bearer token 跑明文 HTTP 等于没认证**——k8s 部署态走 ingress TLS；若容量顶格，部署态落地可降级为「声明 + backlog 登记」，声明本身不降级 | 威胁模型声明 +（视容量）ingress TLS 清单 | ✅（hash 待回填：边界①声明细化——JWT 时代三条本机链路豁免+出网卡即失效+TTL 封顶泄露面；ingress TLS 按裁决降级挂账，触发条件=任何跨机器/真实部署） |
+| 5 | **TLS 威胁模型声明 + 部署态落地**：威胁模型写明 localhost 开发豁免（同进程信任边界内）；**Bearer token 跑明文 HTTP 等于没认证**——k8s 部署态走 ingress TLS；若容量顶格，部署态落地可降级为「声明 + backlog 登记」，声明本身不降级 | 威胁模型声明 +（视容量）ingress TLS 清单 | ✅ `b98adc9`（边界①声明细化——JWT 时代三条本机链路豁免+出网卡即失效+TTL 封顶泄露面；ingress TLS 按裁决降级挂账，触发条件=任何跨机器/真实部署） |
 | 6 | **用户注册 + 审批激活**（2026-11-05 Owner 裁决纳入，执行序在 #1 之后）：注册端点/页面（开放但限流，防批量注册）→ MySQL 用户表（argon2 哈希落库，明文不过夜）→ 注册即 `pending` 默认拒绝登录 → 复用 W23 HITL 审批设施，Owner 放行后激活；admin 只能来自 env 种子，注册永远产不出 admin | 端点 + 用户表 + 流程测试 | ☐ |
 
 ## 退出条件（O8）
