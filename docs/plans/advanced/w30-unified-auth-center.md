@@ -31,7 +31,7 @@ MCP/服务间 ──客户端凭证────┘        （JWKS 公钥端点�
 | 0 | **安全架构设计文档**（威胁建模先行）：一张「资产 → 威胁 → 已有防线 → 缺口 → 落位周」总表 + 信任边界图——把 W7 红队基线 / W12 鉴权限流 / W18 内容审核三件套 / W25 预算闸 / W29 边界四件全部归位；OWASP LLM Top10 逐项对账（prompt 注入 ✅ / 模型 DoS ✅ / 过度代理 ✅ / 向量库投毒登记触发条件 / 敏感信息泄露归位溯源标注）；缺口处置逐项登记（做/挂账/触发条件） | `docs/security/security-architecture.md` | ☐ |
 | 1 | **授权服务器最小集**：Spring Authorization Server 独立模块——授权码+PKCE（人）+ 客户端凭证（机/MCP）双流程 + JWT 签发 + JWKS 端点 + 客户端注册表配置化；用户存储 MySQL 表（argon2 哈希落库；admin 种子账号走 env 注入哈希、首启动落库，自助注册见 #6） | 新模块 + 流程测试 | ✅ `2452b5f`（空壳+CI 第二路）+ `9cc7d71`（客户端凭证流）+ `f6923ee`（identity 域+种子 fail-closed）+ `a53e4ff`（授权码+PKCE 全链，role 声明注入；13 测试绿；SAS 已并入 Boot 4 官方栈，BOM 托管） |
 | 2 | **ai-evolution 改资源服务器**：JWT 校验接 W29 的 Bearer 形态（JWKS 验签）；scope→RBAC 角色映射复用 W29 角色表；X-API-Key 退役或兼容期裁决（取证后定，登记 ADR） | 改造 + 全量安全测试绿 | ✅ `979454a`（2a 直切：资源服务器+JwtRoleConverter+真验签测试，484+17 绿）+ `aa71436`（2b 外围迁移 + ADR-0023；Owner 裁决：直切不留兼容期） |
-| 3 | **对话页接登录流**：授权码+PKCE 跳转登录 + 令牌存储（内存/sessionStorage，禁 localStorage——XSS 面）+ 401 自动回跳 | 前端改造 + 手工验收 | ☐ |
+| 3 | **对话页接登录流**：授权码+PKCE 跳转登录 + 令牌存储（内存/sessionStorage，禁 localStorage——XSS 面）+ 401 自动回跳 | 前端改造 + 手工验收 | ✅ `31a7ad7`（PKCE 跳转 + /callback 回调页 + 401 自动重登；auth-center 双链 CORS 白名单；浏览器人工走查待 Owner 顺手验收） |
 | 4 | **运维面与留痕**：签名密钥对管理（轮转规程顺延 W31，本周只落初始密钥管理）+ 令牌过期/吊销语义 + ADR（自建 vs Keycloak/云 IdP 的 why/why-not）+ 能力地图「鉴权/限流」行收口 | ADR + 配置 + 能力地图更新 | ☐ |
 | 5 | **TLS 威胁模型声明 + 部署态落地**：威胁模型写明 localhost 开发豁免（同进程信任边界内）；**Bearer token 跑明文 HTTP 等于没认证**——k8s 部署态走 ingress TLS；若容量顶格，部署态落地可降级为「声明 + backlog 登记」，声明本身不降级 | 威胁模型声明 +（视容量）ingress TLS 清单 | ☐ |
 | 6 | **用户注册 + 审批激活**（2026-11-05 Owner 裁决纳入，执行序在 #1 之后）：注册端点/页面（开放但限流，防批量注册）→ MySQL 用户表（argon2 哈希落库，明文不过夜）→ 注册即 `pending` 默认拒绝登录 → 复用 W23 HITL 审批设施，Owner 放行后激活；admin 只能来自 env 种子，注册永远产不出 admin | 端点 + 用户表 + 流程测试 | ☐ |
