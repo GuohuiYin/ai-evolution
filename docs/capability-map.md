@@ -64,7 +64,7 @@
 | 维度 | 现状 | 处置 |
 |---|---|---|
 | 红线/红队/注入防御 | ✅ W7；W29 红队复测 9 项全守住（[记录](security/w29-redteam-recheck.md)） | — |
-| 鉴权/限流 | ✅ **W29 #1 收口进 Spring Security 链**（[ADR-0022](adr/0022-spring-security-rbac-bearer.md)）：Bearer 正史 + X-API-Key 兼容期双收（裁决 A，W30 退役）；最小 RBAC 三角色 reader/writer/admin + RoleHierarchy 层级，端点映射配置化（`ai.security.endpoint-roles`，空表 fail-fast）；401/403 语义分清；无状态会话（STATELESS，401 不发 JSESSIONID）；固定窗口限流 60/min 不变 | 安全审计面本行收口（W29 退出条件）；W30 迁移面：凭证解释 opaque→JWT、角色来源配置→scope |
+| 鉴权/限流 | ✅ **W30 统一认证中心落地**：auth-center（Spring Authorization Server，[ADR-0024](adr/0024-self-hosted-auth-center-vs-idp.md)）双通道签发 JWT——人走授权码+PKCE（对话页自动跳转登录，W30 #3）、机走客户端凭证；主工程直切 JWT 资源服务器（[ADR-0023](adr/0023-jwt-resource-server-cutover.md)），opaque Bearer/X-API-Key 退役；角色=JWT 声明映射（W29 角色表/层级零改动）；限流按 sub 分桶 60/min | 密钥轮转规程顺延 W31；逐 token 吊销待对外服务化重评（现语义=换钥全失效） |
 | 安全响应头 / CORS | ✅ W29 #2/#3：头套件走 Spring Security 组件（DENY/no-referrer/CSP self 白名单+nosniff/HSTS 默认）；CORS deny-by-default + origin 白名单配置化（默认空，预检鉴权前处理） | 对话页内联脚本抽外置后 CSP 可收紧（注释在案） |
 | SSRF egress 控制 | ✅ W29 #4：`EgressUrlGuard` 黑名单制（内网/保留网段拒连+fail-closed+例外清单），拦截先于协议往返；**边界在案**：DNS rebinding TOCTOU 窗口，生产级=egress 代理统一出向 | 多副本/对外服务化时重评为 egress 代理 |
 | 降级容错 | ✅ 见模型层（W12 #4） | — |
