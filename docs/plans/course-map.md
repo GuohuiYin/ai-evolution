@@ -34,10 +34,11 @@ W14-19 把"可信"做成体系（复盘清账→检索收尾→评估造数→�
 推入无人值守运营（可观测+成本工程→仿真运行+双故障注入验收），W27 收官 P5——
 **原 27 周蓝图主体完课，W28 起进入二期（生产硬化期）**。
 
-**当前位置：W29 ✅ 四任务全交付**（#1 认证授权收口 Spring Security 链 + RBAC 三角色 +
-Bearer 双收 `05e989d`/`547554f`；#2 安全响应头套件 `b8de40e`；#3 CORS 显式策略 `d9fe89f`；
-#4 SSRF egress 门禁 + 红队复测 `9d08fcd`）——**二期·生产硬化期第二周收官 → W30 认证中心
-待开工**（二期排序见 [二期一页纸](advanced/phase2-production-hardening.md)）。
+**当前位置：W30 ✅ 七任务全交付**（#0 安全架构威胁建模 `c7238a4`；#1 认证中心落地 `2452b5f`→`a53e4ff`；
+#2 主工程直切 JWT 资源服务器 `979454a`/`aa71436`；#3 对话页授权码+PKCE 登录流 `31a7ad7`；
+#4 密钥管理+令牌生命周期+ADR-0024 `389950b`；#5 TLS 声明 `b98adc9`；#6 注册+审批激活
+`e275df1`/`0368f17`）——**二期·生产硬化期第三周收官 → W31 韧性捆待开工**（二期排序见
+[二期一页纸](advanced/phase2-production-hardening.md)）。
 
 ## 跨周因果边图（只画非线性边——线性时间链见下表）
 
@@ -129,6 +130,7 @@ flowchart LR
 |---|---|---|---|---|---|
 | W28 | 召回漏检修复与二期开篇 | 改写标识符护栏（剥离改写器注入的陌生标识符，解 SparseCoverage「标识符全中才放行」硬规则对正解块的误杀）+ prompt 软约束叠加、rubric 维度归属澄清（遗漏型归 accuracy）、请求体/消息长度双层上限（过滤器 413 + `@Size` 400） | 防线也会误杀——W8 立的防线在改写器注入股票代码后斩掉全部正解块；修防线不如断注入源，护栏（硬）+软约束（软）叠加才稳 | ←承 W27 案 30 归因（正确块 15/16 名进不了 top-5）；→启：W29 安全捆 → W30 安全架构+认证中心 → W31 韧性捆 | [计划](advanced/w28-recall-enhancement.md)、[eval 报告](../eval/generation/w28-rewrite-guard-eval.md)、[设计草案](../eval/retrieval/w28-recall-enhancement-design.md)、[二期一页纸](advanced/phase2-production-hardening.md) |
 | W29 | Web 安全捆一次到位 | 认证授权收口 Spring Security 过滤器链（自研过滤器退役；RBAC 三角色 + RoleHierarchy 层级继承；Bearer 正史 + X-API-Key 兼容期双收标 deprecated，为 W30 接 JWT 预留迁移面）、安全响应头套件（CSP/X-Frame-Options/Referrer-Policy）、CORS deny-by-default + origin 白名单、MCP fetch SSRF egress 门禁（黑名单制——loopback/RFC1918/link-local/组播拒连，fail-closed） | 实弹复测抓到静态审查漏掉的缺陷——红队复测当场发现默认会话策略发 JSESSIONID（无状态 API 不该有会话），改 STATELESS 才闭环；SSE 异步二次入链 SecurityContext 为空误抛 403 炸流——过滤器链须对异步分发类型显式收口 | ←承 W28 收官依赖达成 + Owner 裁决 Bearer 走双收兼容期；→启：W30 安全架构+统一认证授权中心（资源服务器迁移面已备） | [计划](advanced/w29-web-security-hardening.md)、[ADR-0022](../adr/0022-spring-security-rbac-bearer.md)、[红队复测记录](../security/w29-redteam-recheck.md)、[设计草案](../security/w29-auth-alignment-design.md) |
+| W30 | 安全架构 + 统一认证授权中心 | 威胁建模总表+信任边界图（OWASP LLM Top10 逐项对账）；auth-center 独立工程（Spring Authorization Server，SAS 已并入 Boot 4 官方栈）——授权码+PKCE（人）/客户端凭证（机）双通道、MySQL 用户表 argon2 落库、admin env 种子幂等落库；主工程直切 JWT 资源服务器（opaque Bearer/X-API-Key 同批退役，role/scope 声明统一折 ROLE_*）；对话页 PKCE 跳转登录（verifier 不出浏览器）+ 401 自动重登；注册开放但限流、pending+admin 会话审批页激活；密钥 env 注入+缺省临时生成 WARN；TLS localhost 豁免声明 | 直切优于双收——发送点全在仓库内时，兼容期只留攻击面不留收益；测试要真验签不打桩（进程内 RSA+内嵌 JWKS 端点），打桩测不出 Map.toString 当 JSON 这种真坑；新 starter 会把资源服务器自动配置带进 @WebMvcTest 切片——切片排除要显式 | ←承 W29 迁移面预留（Bearer/RBAC/scope 对齐兑现）；→启：W31 韧性捆（密钥轮转规程+安全事件审计流顺延并入） | [计划](advanced/w30-unified-auth-center.md)、[安全架构](../security/security-architecture.md)、[ADR-0023](../adr/0023-jwt-resource-server-cutover.md)、[ADR-0024](../adr/0024-self-hosted-auth-center-vs-idp.md)、[注册设计](../security/w30-registration-design.md) |
 
 ## 决策触发点清单（导航核心：预先写死的 if-then 及其状态）
 
@@ -169,8 +171,8 @@ flowchart LR
 
 ## 下一站
 
-W30（二期第三周，**安全架构 + 统一认证授权中心**——认证中心独立建服务，本系统改造为
-资源服务器接 JWT；W29 的 Bearer/RBAC/scope 对齐即为其预留的最小迁移面，依赖条件已达成）。
+W31（二期第四周，**韧性捆**——W30 顺延并入的密钥轮转规程 + 安全事件审计流在此合并；
+原韧性捆主题随之一并落位，候选池见下）。
 二期全景与排序依据见 [二期一页纸](advanced/phase2-production-hardening.md)；
-W29 交付明细见 [W29 计划](advanced/w29-web-security-hardening.md)（四任务全 ✅）。
+W30 交付明细见 [W30 计划](advanced/w30-unified-auth-center.md)（七任务全 ✅）。
 候选池总表：[w28-plus-todo-candidates](../w28-plus-todo-candidates.md)。
