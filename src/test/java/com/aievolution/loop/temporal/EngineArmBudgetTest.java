@@ -83,8 +83,7 @@ class EngineArmBudgetTest {
   }
 
   @Test
-  void loopEngineDefaultsToPrimaryBudgetWhenNoRegistry() {
-    // failover 关闭（登记 bean 缺席）→ 主力档，不炸不静默
+  void loopEngineDefaultsToPrimaryBudgetWhenNoRegistry() { // failover 关闭（登记 bean 缺席）→ 主力档，不炸不静默
     WorkflowClient client = mock(WorkflowClient.class);
     ResearchLoopWorkflow workflow = mock(ResearchLoopWorkflow.class);
     when(client.newWorkflowStub(eq(ResearchLoopWorkflow.class), any(WorkflowOptions.class)))
@@ -97,5 +96,31 @@ class EngineArmBudgetTest {
     ArgumentCaptor<ResearchRunInput> captor = ArgumentCaptor.forClass(ResearchRunInput.class);
     verify(workflow).runResearch(captor.capture());
     assertThat(captor.getValue().budgets()).isEqualTo(new ActivityBudgets(120, 600));
+  }
+
+  @Test
+  void pipelineEnginePassesHitlModeThrough() {
+    // W31 #2：引擎把配置的 HITL 模式如实传入 workflow 入参
+    WorkflowClient client = mock(WorkflowClient.class);
+    ResearchPipelineWorkflow workflow = mock(ResearchPipelineWorkflow.class);
+    when(client.newWorkflowStub(eq(ResearchPipelineWorkflow.class), any(WorkflowOptions.class)))
+        .thenReturn(workflow);
+    when(workflow.runResearch(any())).thenReturn(DONE);
+    var engine =
+        new TemporalPipelineEngine(
+            client,
+            new LoopListenerRegistry(),
+            "q",
+            true,
+            600,
+            PROPS,
+            () -> ModelArmRegistry.PRIMARY,
+            HitlMode.UNATTENDED);
+
+    engine.newRun(List.of(), "t1", 6, mock(LoopListener.class)).run("茅台营收");
+
+    ArgumentCaptor<ResearchRunInput> captor = ArgumentCaptor.forClass(ResearchRunInput.class);
+    verify(workflow).runResearch(captor.capture());
+    assertThat(captor.getValue().hitlMode()).isEqualTo(HitlMode.UNATTENDED);
   }
 }

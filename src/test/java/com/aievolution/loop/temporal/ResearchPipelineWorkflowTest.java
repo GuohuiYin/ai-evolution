@@ -212,6 +212,11 @@ class ResearchPipelineWorkflowTest {
     return new ResearchRunInput("茅台营收多少", 6, List.of(), "trace-test", true, 3600);
   }
 
+  private static ResearchRunInput unattendedInput() {
+    return new ResearchRunInput(
+        "茅台营收多少", 6, List.of(), "trace-test", true, 3600, null, HitlMode.UNATTENDED);
+  }
+
   private void scriptAlwaysReject() {
     this.activities.verdicts.add(ReviewVerdict.reject("第一批注"));
     this.activities.verdicts.add(ReviewVerdict.reject("第二批注"));
@@ -287,8 +292,24 @@ class ResearchPipelineWorkflowTest {
   }
 
   @Test
-  void inputBudgetOverridesActivityTimeout() {
-    // W31 #1：入参预算档真实生效——quick 档压到 1s，plan 活动睡 2s → 撞活动超时（而非默认 120s 放行）
+  void unattendedModeRefusesImmediatelyWithoutHold() {
+    // W31 #2（Owner 裁决 A）：无人模式打回耗尽 → 不挂起不空等，立即 fail-closed 拒答
+    scriptAlwaysReject();
+
+    ResearchPipelineWorkflow workflow = newWorkflow();
+    LoopResult result = workflow.runResearch(unattendedInput());
+
+    assertThat(result.stopReason()).isEqualTo(StopReason.REVIEW_REJECTED);
+    assertThat(result.answer()).contains("不予作答");
+    // 无 hold/timeout 事件（从不挂起），仅一条无人模式留痕；审批标志从未立起
+    assertThat(this.activities.hitlEvents).hasSize(1);
+    assertThat(this.activities.hitlEvents.get(0)).startsWith("unattended-refusal:");
+    assertThat(workflow.pendingApproval()).isFalse();
+  }
+
+  @Test
+  void inputBudgetOverridesActivityTimeout() { // W31 #1：入参预算档真实生效——quick 档压到 1s，plan 活动睡 2s →
+    // 撞活动超时（而非默认 120s 放行）
     this.activities.planSleepMs = 2000;
     ResearchRunInput budgeted =
         new ResearchRunInput(

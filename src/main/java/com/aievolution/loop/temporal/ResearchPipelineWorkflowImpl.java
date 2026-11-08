@@ -121,8 +121,15 @@ public class ResearchPipelineWorkflowImpl implements ResearchPipelineWorkflow {
       comment = verdict.comment();
       this.status = "running";
     }
-    // 打回耗尽：W23 #1（裁决①B）升级人工——挂起等放行/驳回；开关关闭时沿用即时拒答
+    // 打回耗尽：W23 #1（裁决①B）升级人工——挂起等放行/驳回；开关关闭时沿用即时拒答。
+    // W31 #2（Owner 裁决 A）无人模式：不挂起不空等，立即 fail-closed 拒答（W26 实账：
+    // 无人窗口挂起 100% 空转 10 分钟后同样拒答；红线零让步，复核未过的草稿任何模式都不放出）
     if (input.hitlEnabled() && lastOutcome != null) {
+      if (input.hitlMode() == HitlMode.UNATTENDED) {
+        quickActivities.hitlEvent("unattended-refusal", "无人模式：打回耗尽不挂起，立即按缺席策略拒答", input.traceId());
+        traceLog.warn("hitl mode=unattended, rejections exhausted, immediate fail-closed refusal");
+        return finish(new LoopResult(REFUSAL, List.copyOf(this.steps), StopReason.REVIEW_REJECTED));
+      }
       return awaitHumanDecision(input, lastOutcome, quickActivities);
     }
     traceLog.warn("review rejections exhausted, refuse to answer");

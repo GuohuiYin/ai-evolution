@@ -26,6 +26,7 @@ public class TemporalPipelineEngine {
   private final String taskQueue;
   private final boolean hitlEnabled;
   private final long hitlAwaitSeconds;
+  private final HitlMode hitlMode;
   private final ArmTimeoutProperties armTimeouts;
   private final ModelArmRegistry armRegistry;
 
@@ -37,6 +38,26 @@ public class TemporalPipelineEngine {
       long hitlAwaitSeconds,
       ArmTimeoutProperties armTimeouts,
       ModelArmRegistry armRegistry) {
+    this(
+        workflowClient,
+        listenerRegistry,
+        taskQueue,
+        hitlEnabled,
+        hitlAwaitSeconds,
+        armTimeouts,
+        armRegistry,
+        HitlMode.ATTENDED);
+  }
+
+  public TemporalPipelineEngine(
+      WorkflowClient workflowClient,
+      LoopListenerRegistry listenerRegistry,
+      String taskQueue,
+      boolean hitlEnabled,
+      long hitlAwaitSeconds,
+      ArmTimeoutProperties armTimeouts,
+      ModelArmRegistry armRegistry,
+      HitlMode hitlMode) {
     this.workflowClient = workflowClient;
     this.listenerRegistry = listenerRegistry;
     this.taskQueue = taskQueue;
@@ -44,6 +65,7 @@ public class TemporalPipelineEngine {
     this.hitlAwaitSeconds = hitlAwaitSeconds;
     this.armTimeouts = armTimeouts;
     this.armRegistry = armRegistry;
+    this.hitlMode = hitlMode;
   }
 
   /** 当前臂的预算档（运行启动时决议）：failover 关闭（无登记 bean）按主力臂 */
@@ -80,7 +102,8 @@ public class TemporalPipelineEngine {
                     traceId,
                     this.hitlEnabled,
                     this.hitlAwaitSeconds,
-                    currentBudgets()));
+                    currentBudgets(),
+                    this.hitlMode));
         // 与既有引擎同语义：退出回调由引擎层统一收口（管线内子循环不单独 onComplete）
         listener.onComplete(result);
         return result;

@@ -243,6 +243,9 @@ ai:
     hitl:
       enabled: ${AI_LOOP_HITL_ENABLED:true}
       await-timeout: ${AI_LOOP_HITL_AWAIT_TIMEOUT:PT2H}
+      # W31 #2（Owner 裁决 A）：attended=值守模式（挂起等人工，现行行为）；unattended=无人模式
+      # （打回耗尽不挂起不空等，立即 fail-closed 拒答——W26 实账：无人窗口挂起 100% 空转 10 分钟）
+      mode: ${AI_LOOP_HITL_MODE:attended}
     temporal:
       # Temporal 服务 gRPC 地址（CLI 注意显式 IPv4：localhost 会优先解析 ::1）
       target: ${TEMPORAL_TARGET:127.0.0.1:7233}

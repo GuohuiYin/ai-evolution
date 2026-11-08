@@ -12,6 +12,7 @@ import java.util.List;
  * @param hitlEnabled HITL 断点开关（W23 #1，裁决①B：只接「打回耗尽升级人工」一条触发）； 单循环 workflow 忽略
  * @param hitlAwaitSeconds 审批等待上限（秒），超时未决 fail-closed 拒答（宁可不答不可错答）
  * @param budgets 活动超时预算档（W31 #1，按活跃模型臂查表结果）；null = workflow 内默认值
+ * @param hitlMode HITL 模式（W31 #2）：值守=挂起等人工；无人=不挂起立即 fail-closed 拒答
  */
 public record ResearchRunInput(
     String question,
@@ -20,12 +21,13 @@ public record ResearchRunInput(
     String traceId,
     boolean hitlEnabled,
     long hitlAwaitSeconds,
-    ActivityBudgets budgets) {
+    ActivityBudgets budgets,
+    HitlMode hitlMode) {
 
   /** HITL 关闭的便捷构造（单循环与既有调用面不变） */
   public ResearchRunInput(
       String question, int maxSteps, List<HistoryTurn> history, String traceId) {
-    this(question, maxSteps, history, traceId, false, 0, null);
+    this(question, maxSteps, history, traceId, false, 0, null, HitlMode.ATTENDED);
   }
 
   /** 无预算档的便捷构造（W31 #1 前调用面兼容：默认值由 workflow 内常量承担） */
@@ -36,6 +38,34 @@ public record ResearchRunInput(
       String traceId,
       boolean hitlEnabled,
       long hitlAwaitSeconds) {
-    this(question, maxSteps, history, traceId, hitlEnabled, hitlAwaitSeconds, null);
+    this(
+        question,
+        maxSteps,
+        history,
+        traceId,
+        hitlEnabled,
+        hitlAwaitSeconds,
+        null,
+        HitlMode.ATTENDED);
+  }
+
+  /** 带预算档、值守模式（默认）的便捷构造 */
+  public ResearchRunInput(
+      String question,
+      int maxSteps,
+      List<HistoryTurn> history,
+      String traceId,
+      boolean hitlEnabled,
+      long hitlAwaitSeconds,
+      ActivityBudgets budgets) {
+    this(
+        question,
+        maxSteps,
+        history,
+        traceId,
+        hitlEnabled,
+        hitlAwaitSeconds,
+        budgets,
+        HitlMode.ATTENDED);
   }
 }

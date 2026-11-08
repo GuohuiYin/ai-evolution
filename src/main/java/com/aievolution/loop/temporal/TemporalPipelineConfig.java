@@ -119,6 +119,7 @@ public class TemporalPipelineConfig {
       LoopListenerRegistry pipelineListenerRegistry,
       @Value("${ai.loop.hitl.enabled:false}") boolean hitlEnabled,
       @Value("${ai.loop.hitl.await-timeout:PT2H}") java.time.Duration hitlAwaitTimeout,
+      @Value("${ai.loop.hitl.mode:attended}") String hitlMode,
       com.aievolution.infra.ArmTimeoutProperties armTimeouts,
       org.springframework.beans.factory.ObjectProvider<com.aievolution.infra.ModelArmRegistry>
           armRegistry) {
@@ -130,6 +131,7 @@ public class TemporalPipelineConfig {
         hitlEnabled,
         hitlAwaitTimeout.toSeconds(),
         armTimeouts,
-        armRegistry.getIfAvailable());
+        armRegistry.getIfAvailable(),
+        HitlMode.parse(hitlMode));
   }
 }
