@@ -70,6 +70,9 @@ class AuthorizationServerSecurityConfiguration {
                     // W30 #6：注册入口开放（表单 CSRF 防护仍在；限流由 RegistrationRateLimiter 承担）
                     .requestMatchers("/register")
                     .permitAll()
+                    // W30 #6：审批面仅 admin（admin 只能来自 env 种子）
+                    .requestMatchers("/admin/**")
+                    .hasRole("ADMIN")
                     .anyRequest()
                     .authenticated())
         // W30 #3：预检 OPTIONS /oauth2/token 不匹配链 1 的端点匹配器（token 端点按方法圈定，

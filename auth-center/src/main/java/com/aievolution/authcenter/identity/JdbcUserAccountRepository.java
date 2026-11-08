@@ -49,4 +49,25 @@ class JdbcUserAccountRepository implements UserAccountRepository {
         role.name(),
         status.name());
   }
+
+  @Override
+  public java.util.List<UserAccount> findByStatus(UserAccount.Status status) {
+    return jdbc.query(
+        "SELECT id, username, password_hash, role, status, created_at FROM users WHERE status = ? ORDER BY created_at",
+        (rs, rowNum) ->
+            new UserAccount(
+                rs.getLong("id"),
+                rs.getString("username"),
+                rs.getString("password_hash"),
+                UserAccount.Role.valueOf(rs.getString("role")),
+                UserAccount.Status.valueOf(rs.getString("status")),
+                rs.getTimestamp("created_at").toInstant()),
+        status.name());
+  }
+
+  @Override
+  public boolean updateStatus(String username, UserAccount.Status status) {
+    return jdbc.update("UPDATE users SET status = ? WHERE username = ?", status.name(), username)
+        > 0;
+  }
 }

@@ -12,4 +12,10 @@ public interface UserAccountRepository {
   /** status 由调用方显式给定：种子 admin=ACTIVE，注册新用户=PENDING（#6 默认拒绝）。 */
   void insert(
       String username, String passwordHash, UserAccount.Role role, UserAccount.Status status);
+
+  /** W30 #6 审批面：待激活清单（按注册时间升序，先来的先审）。 */
+  java.util.List<UserAccount> findByStatus(UserAccount.Status status);
+
+  /** W30 #6 审批面：状态迁移（PENDING → ACTIVE）。返回是否命中（用户名不存在 = false）。 */
+  boolean updateStatus(String username, UserAccount.Status status);
 }
