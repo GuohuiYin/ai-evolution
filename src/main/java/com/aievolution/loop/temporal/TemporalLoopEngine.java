@@ -1,5 +1,7 @@
 package com.aievolution.loop.temporal;
 
+import com.aievolution.infra.ArmTimeoutProperties;
+import com.aievolution.infra.ModelArmRegistry;
 import com.aievolution.loop.LoopListener;
 import com.aievolution.loop.LoopResult;
 import com.aievolution.loop.ResearchLoopEngine;
@@ -20,12 +22,28 @@ public class TemporalLoopEngine {
   private final WorkflowClient workflowClient;
   private final LoopListenerRegistry listenerRegistry;
   private final String taskQueue;
+  private final ArmTimeoutProperties armTimeouts;
+  private final ModelArmRegistry armRegistry;
 
   public TemporalLoopEngine(
-      WorkflowClient workflowClient, LoopListenerRegistry listenerRegistry, String taskQueue) {
+      WorkflowClient workflowClient,
+      LoopListenerRegistry listenerRegistry,
+      String taskQueue,
+      ArmTimeoutProperties armTimeouts,
+      ModelArmRegistry armRegistry) {
     this.workflowClient = workflowClient;
     this.listenerRegistry = listenerRegistry;
     this.taskQueue = taskQueue;
+    this.armTimeouts = armTimeouts;
+    this.armRegistry = armRegistry;
+  }
+
+  /** 当前臂的预算档（运行启动时决议，W31 #1）：failover 关闭（无登记 bean）按主力臂 */
+  ActivityBudgets currentBudgets() {
+    String arm = this.armRegistry != null ? this.armRegistry.activeArm() : ModelArmRegistry.PRIMARY;
+    var budget = this.armTimeouts.forArm(arm);
+    return new ActivityBudgets(
+        budget.quickActivityBudget().toSeconds(), budget.heavyActivityBudget().toSeconds());
   }
 
   public ResearchLoopEngine newRun(
@@ -47,7 +65,9 @@ public class TemporalLoopEngine {
                     .setTaskQueue(this.taskQueue)
                     .build());
         LoopResult result =
-            workflow.runResearch(new ResearchRunInput(question, maxSteps, history, traceId));
+            workflow.runResearch(
+                new ResearchRunInput(
+                    question, maxSteps, history, traceId, false, 0, currentBudgets()));
         // 与 inline 引擎 finish() 同语义：退出回调（含收敛与触顶，stopReason 区分）
         listener.onComplete(result);
         return result;

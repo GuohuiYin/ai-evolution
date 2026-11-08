@@ -32,7 +32,9 @@ class TemporalLoopEngineTest {
         .thenReturn(workflow);
 
     LoopListenerRegistry registry = new LoopListenerRegistry();
-    TemporalLoopEngine engine = new TemporalLoopEngine(client, registry, "research-loop");
+    // W31 #1 新构造面：预算表 + 臂登记（null=failover 关闭，按主力臂）
+    TemporalLoopEngine engine =
+        new TemporalLoopEngine(client, registry, "research-loop", EngineArmBudgetTest.PROPS, null);
 
     AtomicReference<LoopResult> completed = new AtomicReference<>();
     LoopListener listener =

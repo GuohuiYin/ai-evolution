@@ -118,12 +118,18 @@ public class TemporalPipelineConfig {
       WorkflowClient pipelineWorkflowClient,
       LoopListenerRegistry pipelineListenerRegistry,
       @Value("${ai.loop.hitl.enabled:false}") boolean hitlEnabled,
-      @Value("${ai.loop.hitl.await-timeout:PT2H}") java.time.Duration hitlAwaitTimeout) {
+      @Value("${ai.loop.hitl.await-timeout:PT2H}") java.time.Duration hitlAwaitTimeout,
+      com.aievolution.infra.ArmTimeoutProperties armTimeouts,
+      org.springframework.beans.factory.ObjectProvider<com.aievolution.infra.ModelArmRegistry>
+          armRegistry) {
+    // W31 #1：按臂预算表 + 活跃臂登记注入引擎；failover 关闭时登记 bean 缺席，引擎按主力臂
     return new TemporalPipelineEngine(
         pipelineWorkflowClient,
         pipelineListenerRegistry,
         TASK_QUEUE,
         hitlEnabled,
-        hitlAwaitTimeout.toSeconds());
+        hitlAwaitTimeout.toSeconds(),
+        armTimeouts,
+        armRegistry.getIfAvailable());
   }
 }

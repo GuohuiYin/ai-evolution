@@ -107,7 +107,13 @@ public class TemporalLoopConfig {
 
   @Bean
   public TemporalLoopEngine temporalLoopEngine(
-      WorkflowClient workflowClient, LoopListenerRegistry listenerRegistry) {
-    return new TemporalLoopEngine(workflowClient, listenerRegistry, TASK_QUEUE);
+      WorkflowClient workflowClient,
+      LoopListenerRegistry listenerRegistry,
+      com.aievolution.infra.ArmTimeoutProperties armTimeouts,
+      org.springframework.beans.factory.ObjectProvider<com.aievolution.infra.ModelArmRegistry>
+          armRegistry) {
+    // W31 #1：按臂预算表 + 活跃臂登记注入引擎；failover 关闭时登记 bean 缺席，引擎按主力臂
+    return new TemporalLoopEngine(
+        workflowClient, listenerRegistry, TASK_QUEUE, armTimeouts, armRegistry.getIfAvailable());
   }
 }
