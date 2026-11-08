@@ -35,7 +35,8 @@ public class ModelFailoverConfiguration {
   @Bean
   public OpenAiChatModel qwenFallbackChatModel(
       OpenAiCommonProperties openAiCommonProperties,
-      @Value("${ai.model.failover.model:Qwen/Qwen3.5-35B-A3B}") String fallbackModel) {
+      @Value("${ai.model.failover.model:Qwen/Qwen3.5-35B-A3B}") String fallbackModel,
+      ArmTimeoutProperties armTimeouts) {
     // 模型名差异落在 ChatOptions，凭证/endpoint 复用 embedding 同一份 SiliconFlow 配置
     OpenAiChatOptions options =
         OpenAiChatOptions.builder()
@@ -43,7 +44,22 @@ public class ModelFailoverConfiguration {
             .apiKey(openAiCommonProperties.getApiKey())
             .model(fallbackModel)
             .build();
-    return OpenAiChatModel.builder().options(options).build();
+    return OpenAiChatModel.builder()
+        .options(options)
+        .httpClientBuilderCustomizer(fallbackTimeoutCustomizer(armTimeouts))
+        .build();
+  }
+
+  /**
+   * 备用臂 HTTP 超时独立成档（W31 #1 步骤 3）：OpenAiChatModel 走官方 openai-java SDK（OkHttp 底层）， 不经过共享
+   * RestClient——W27 #3b 的 RestClient 超时只覆盖主力臂（DeepSeek）， 备用臂此前一直无超时兜底（本任务实抓的覆盖缺口）。 超时值按备用臂档查表（默认
+   * PT6M，Qwen thinking 实账校准）。
+   */
+  static org.springframework.ai.openai.http.okhttp.OpenAiHttpClientBuilderCustomizer
+      fallbackTimeoutCustomizer(ArmTimeoutProperties armTimeouts) {
+    java.time.Duration fallbackTimeout =
+        armTimeouts.forArm(ModelArmRegistry.FALLBACK).httpReadTimeout();
+    return builder -> builder.timeout(fallbackTimeout);
   }
 
   @Bean
