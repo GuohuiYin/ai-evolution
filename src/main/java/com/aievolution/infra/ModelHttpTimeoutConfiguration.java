@@ -3,6 +3,7 @@ package com.aievolution.infra;
 import io.netty.channel.ChannelOption;
 import java.time.Duration;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.restclient.RestClientCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,8 +17,12 @@ import reactor.netty.http.client.HttpClient;
  *
  * <p>取值口径：read 默认 PT3M（与 eval 值守口径同源；pipeline plan/review 活动预算 120s 更紧， 在 Temporal 层先行触发），connect
  * 10s。均外置配置（A11 策略值不过夜）。
+ *
+ * <p>W31 #1：{@link ArmTimeoutProperties} 按臂超时预算表在本类注册——本类是超时策略的既有落点， 且无条件装配（按臂查表的消费方不随 failover
+ * 开关或引擎旗标缺席）。
  */
 @Configuration(proxyBeanMethods = false)
+@EnableConfigurationProperties(ArmTimeoutProperties.class)
 public class ModelHttpTimeoutConfiguration {
 
   @Bean

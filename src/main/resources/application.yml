@@ -186,6 +186,19 @@ ai:
       # 降级期延迟显著升高（选型实测 30-60x），告警日志 + model.failover.total 计数器可见
       enabled: ${AI_MODEL_FAILOVER_ENABLED:true}
       model: ${AI_MODEL_FAILOVER_MODEL:Qwen/Qwen3.5-35B-A3B}
+    # W31 #1 按臂超时预算表（failover 超时联动）：换臂即换档，编排层按 FailoverChatModel 登记的
+    # 活跃臂查表（冷却窗判定）。quick=plan/review/单循环步的轻活动预算，heavy=build 重活动预算，
+    # http-read=该臂模型 HTTP 读超时。primary 档=既有值（正常路径零变化）；fallback 档按 W26 实账
+    # 校准（Qwen thinking 单轮 3,025 token 跑穿 120s、241s 处 500，取 2 倍余量）
+    arm-timeouts:
+      primary:
+        quick-activity-budget: PT2M
+        heavy-activity-budget: PT10M
+        http-read-timeout: PT3M
+      fallback:
+        quick-activity-budget: PT6M
+        heavy-activity-budget: PT20M
+        http-read-timeout: PT6M
     # W25 #3 模型分档（裁决②A 规则先行）：按通路切模型档，空 = 不切（默认零行为变化，可关可切）。
     # 升档示例：AI_MODEL_TIER_AGENT=deepseek-v4-pro；台账 /ai/cost/summary 的 byModel 立见分账
     tiers:
