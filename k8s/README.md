@@ -14,12 +14,12 @@ minikube image load mcp-fetch:1.0.0
 minikube image load qdrant/qdrant:v1.18.2
 kubectl apply -f k8s/
 
-# 3. 创建密钥（Secret 清单不进 git，密钥取自本地 .env）
+# 3. 创建密钥（Secret 清单不进 git，密钥取自本地 .env；轮转流程见 docs/ops/on-call-runbook.md §1.8）
 set -a && source .env && set +a
 kubectl create secret generic ai-evolution-secret \
   --from-literal=AI_API_KEY="$AI_API_KEY" \
   --from-literal=SILICONFLOW_API_KEY="$SILICONFLOW_API_KEY" \
-  --from-literal=AI_EVOLUTION_API_KEY="$AI_EVOLUTION_API_KEY" \
+  --from-literal=TUSHARE_TOKEN="$TUSHARE_TOKEN" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 kubectl rollout status deploy/qdrant
