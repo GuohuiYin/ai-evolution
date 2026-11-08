@@ -28,37 +28,44 @@ public class ResearchLoopWorkflowImpl implements ResearchLoopWorkflow {
   private final List<LoopStep> steps = new ArrayList<>();
   private String status = "not-started";
 
-  private final ResearchLoopActivities activities =
-      Workflow.newActivityStub(
-          ResearchLoopActivities.class,
-          ActivityOptions.newBuilder()
-              // 模型调用含供应商 failover，单次可能数十秒；留足裕量
-              .setStartToCloseTimeout(Duration.ofSeconds(120))
-              .setRetryOptions(
-                  RetryOptions.newBuilder()
-                      .setInitialInterval(Duration.ofSeconds(1))
-                      .setMaximumAttempts(2)
-                      .build())
-              .build());
+  /** 步活动默认预算：W21 原值，入参未带预算档（budgets=null）时沿用 */
+  static final Duration DEFAULT_STEP_BUDGET = Duration.ofSeconds(120);
 
   @Override
   public LoopResult runResearch(ResearchRunInput input) {
+    // 活动 stub 在运行内按入参预算档构建（W31 #1：超时预算随活跃模型臂换档，入参驱动保确定性）
+    Duration stepBudget =
+        input.budgets() != null
+            ? Duration.ofSeconds(input.budgets().quickActivitySeconds())
+            : DEFAULT_STEP_BUDGET;
+    ResearchLoopActivities activities =
+        Workflow.newActivityStub(
+            ResearchLoopActivities.class,
+            ActivityOptions.newBuilder()
+                // 模型调用含供应商 failover，单次可能数十秒；留足裕量
+                .setStartToCloseTimeout(stepBudget)
+                .setRetryOptions(
+                    RetryOptions.newBuilder()
+                        .setInitialInterval(Duration.ofSeconds(1))
+                        .setMaximumAttempts(2)
+                        .build())
+                .build());
     this.status = "running";
     while (this.steps.size() < input.maxSteps()) {
       ModelTurnPayload turn =
-          this.activities.nextTurn(
+          activities.nextTurn(
               input.question(), List.copyOf(this.steps), input.history(), input.traceId());
       if (turn.isFinal()) {
         return finish(
             new LoopResult(turn.answer(), List.copyOf(this.steps), StopReason.FINAL_ANSWER));
       }
       this.steps.add(
-          this.activities.executeStep(
+          activities.executeStep(
               this.steps.size(), turn.thought(), turn.tool(), turn.input(), input.traceId()));
     }
     this.status = "synthesizing";
     String synthesized =
-        this.activities.synthesize(
+        activities.synthesize(
             input.question(), List.copyOf(this.steps), input.history(), input.traceId());
     if (synthesized.isEmpty()) {
       traceLog.warn("synthesize outcome=fallback steps={}", this.steps.size());

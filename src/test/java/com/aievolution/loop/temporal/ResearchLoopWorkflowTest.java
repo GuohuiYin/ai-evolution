@@ -28,11 +28,19 @@ class ResearchLoopWorkflowTest {
   static class ScriptedActivities implements ResearchLoopActivities {
     final Deque<ModelTurnPayload> turns = new ArrayDeque<>();
     String synthesized = "合成答案";
+    long nextTurnSleepMs = 0;
     int executeStepCalls = 0;
 
     @Override
     public ModelTurnPayload nextTurn(
         String question, List<LoopStep> steps, List<HistoryTurn> history, String traceId) {
+      if (this.nextTurnSleepMs > 0) {
+        try {
+          Thread.sleep(this.nextTurnSleepMs);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+      }
       return this.turns.removeFirst();
     }
 
@@ -130,5 +138,25 @@ class ResearchLoopWorkflowTest {
     // 诚实红线（同 inline 语义）：合成失败 answer=null，兜底措辞交调用方
     assertThat(result.stopReason()).isEqualTo(StopReason.MAX_STEPS);
     assertThat(result.answer()).isNull();
+  }
+
+  @Test
+  void inputBudgetOverridesActivityTimeout() {
+    // W31 #1：入参预算档真实生效——步活动预算压到 1s，nextTurn 睡 2s → 撞活动超时
+    this.activities.turns.add(ModelTurnPayload.ofFinal("想好了", "答案"));
+    this.activities.nextTurnSleepMs = 2000;
+    ResearchRunInput budgeted =
+        new ResearchRunInput(
+            "茅台营收多少", 5, List.of(), "trace-test", false, 0, new ActivityBudgets(1, 600));
+
+    org.assertj.core.api.Assertions.assertThatThrownBy(() -> newWorkflow().runResearch(budgeted))
+        .satisfies(
+            e -> {
+              StringBuilder chain = new StringBuilder();
+              for (Throwable cur = e; cur != null; cur = cur.getCause()) {
+                chain.append(cur.getClass().getSimpleName()).append(" ");
+              }
+              assertThat(chain.toString()).contains("TimeoutFailure");
+            });
   }
 }

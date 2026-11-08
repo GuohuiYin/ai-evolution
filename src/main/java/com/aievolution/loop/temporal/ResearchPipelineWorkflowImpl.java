@@ -33,6 +33,12 @@ public class ResearchPipelineWorkflowImpl implements ResearchPipelineWorkflow {
   /** 打回上限（设计 §1.3：打回 ≤2 次） */
   private static final int MAX_REJECTIONS = 2;
 
+  /** 轻活动（plan/review）默认预算：W22 原值，入参未带预算档（budgets=null）时沿用 */
+  static final Duration DEFAULT_QUICK_BUDGET = Duration.ofSeconds(120);
+
+  /** 重活动（build）默认预算：W22 原值 */
+  static final Duration DEFAULT_BUILD_BUDGET = Duration.ofSeconds(600);
+
   /** 打回耗尽的拒答文案（宁可不答不可错答） */
   static final String REFUSAL = "经多轮独立复核仍无法满足溯源与合规要求，本次不予作答。可缩小问题范围或澄清口径后重试。";
 
@@ -45,42 +51,56 @@ public class ResearchPipelineWorkflowImpl implements ResearchPipelineWorkflow {
   private String hitlComment;
   private boolean heldForApproval;
 
-  private final ResearchPipelineActivities quickActivities =
-      Workflow.newActivityStub(
-          ResearchPipelineActivities.class,
-          ActivityOptions.newBuilder()
-              .setStartToCloseTimeout(Duration.ofSeconds(120))
-              .setRetryOptions(
-                  RetryOptions.newBuilder()
-                      .setInitialInterval(Duration.ofSeconds(1))
-                      .setMaximumAttempts(2)
-                      .build())
-              .build());
+  // 活动 stub 在 runResearch 内按入参预算档构建（W31 #1：超时预算随活跃模型臂换档，
+  // 入参驱动 = 每轮运行启动时决议一次，workflow 内确定性不受限）；未带档则沿用 W22 默认值
+  private static ResearchPipelineActivities quickStub(Duration budget) {
+    return Workflow.newActivityStub(
+        ResearchPipelineActivities.class,
+        ActivityOptions.newBuilder()
+            .setStartToCloseTimeout(budget)
+            .setRetryOptions(
+                RetryOptions.newBuilder()
+                    .setInitialInterval(Duration.ofSeconds(1))
+                    .setMaximumAttempts(2)
+                    .build())
+            .build());
+  }
 
-  private final ResearchPipelineActivities buildActivities =
-      Workflow.newActivityStub(
-          ResearchPipelineActivities.class,
-          ActivityOptions.newBuilder()
-              // build 内含逐子问题 ReAct 循环 + 起草合成，模型调用多次——超时放宽
-              .setStartToCloseTimeout(Duration.ofSeconds(600))
-              .setRetryOptions(
-                  RetryOptions.newBuilder()
-                      .setInitialInterval(Duration.ofSeconds(1))
-                      .setMaximumAttempts(2)
-                      .build())
-              .build());
+  private static ResearchPipelineActivities buildStub(Duration budget) {
+    // build 内含逐子问题 ReAct 循环 + 起草合成，模型调用多次——超时放宽
+    return Workflow.newActivityStub(
+        ResearchPipelineActivities.class,
+        ActivityOptions.newBuilder()
+            .setStartToCloseTimeout(budget)
+            .setRetryOptions(
+                RetryOptions.newBuilder()
+                    .setInitialInterval(Duration.ofSeconds(1))
+                    .setMaximumAttempts(2)
+                    .build())
+            .build());
+  }
 
   @Override
   public LoopResult runResearch(ResearchRunInput input) {
+    Duration quickBudget =
+        input.budgets() != null
+            ? Duration.ofSeconds(input.budgets().quickActivitySeconds())
+            : DEFAULT_QUICK_BUDGET;
+    Duration buildBudget =
+        input.budgets() != null
+            ? Duration.ofSeconds(input.budgets().heavyActivitySeconds())
+            : DEFAULT_BUILD_BUDGET;
+    ResearchPipelineActivities quickActivities = quickStub(quickBudget);
+    ResearchPipelineActivities buildActivities = buildStub(buildBudget);
     this.status = "running";
-    Plan plan = this.quickActivities.plan(input.question(), input.history(), input.traceId());
+    Plan plan = quickActivities.plan(input.question(), input.history(), input.traceId());
     traceLog.info("plan ready subQuestions={}", plan.subQuestions().size());
 
     String comment = "";
     BuildOutcome lastOutcome = null;
     for (int attempt = 0; attempt <= MAX_REJECTIONS; attempt++) {
       BuildOutcome outcome =
-          this.buildActivities.build(
+          buildActivities.build(
               input.question(), plan, input.history(), comment, input.maxSteps(), input.traceId());
       lastOutcome = outcome;
       this.steps.clear();
@@ -92,7 +112,7 @@ public class ResearchPipelineWorkflowImpl implements ResearchPipelineWorkflow {
       }
       this.status = "reviewing";
       ReviewVerdict verdict =
-          this.quickActivities.review(input.question(), outcome, input.history(), input.traceId());
+          quickActivities.review(input.question(), outcome, input.history(), input.traceId());
       if (verdict.isPass()) {
         return finish(
             new LoopResult(outcome.draft(), List.copyOf(this.steps), StopReason.FINAL_ANSWER));
@@ -103,7 +123,7 @@ public class ResearchPipelineWorkflowImpl implements ResearchPipelineWorkflow {
     }
     // 打回耗尽：W23 #1（裁决①B）升级人工——挂起等放行/驳回；开关关闭时沿用即时拒答
     if (input.hitlEnabled() && lastOutcome != null) {
-      return awaitHumanDecision(input, lastOutcome);
+      return awaitHumanDecision(input, lastOutcome, quickActivities);
     }
     traceLog.warn("review rejections exhausted, refuse to answer");
     return finish(new LoopResult(REFUSAL, List.copyOf(this.steps), StopReason.REVIEW_REJECTED));
@@ -113,11 +133,14 @@ public class ResearchPipelineWorkflowImpl implements ResearchPipelineWorkflow {
    * 打回耗尽挂起点（W23 #1）：等人工 Signal 至 {@code hitlAwaitSeconds} 上限。 放行=放出最后草稿并如实标注人工背书；驳回/超时=fail-closed
    * 拒答。 挂起原因/人工决定/等待耗时经 hitlEvent activity 入 SSE 轨迹与研究日志（留痕纪律）。
    */
-  private LoopResult awaitHumanDecision(ResearchRunInput input, BuildOutcome lastOutcome) {
+  private LoopResult awaitHumanDecision(
+      ResearchRunInput input,
+      BuildOutcome lastOutcome,
+      ResearchPipelineActivities quickActivities) {
     this.status = "awaiting-approval";
     this.heldForApproval = true;
     long holdStart = Workflow.currentTimeMillis();
-    this.quickActivities.hitlEvent(
+    quickActivities.hitlEvent(
         "hold", "打回耗尽升级人工：复核 " + (MAX_REJECTIONS + 1) + " 轮未过，挂起等人工放行/驳回", input.traceId());
     traceLog.warn("hitl hold reason=review-rejections-exhausted, awaiting human decision");
     boolean decided =
@@ -127,12 +150,12 @@ public class ResearchPipelineWorkflowImpl implements ResearchPipelineWorkflow {
     long waitedMs = Workflow.currentTimeMillis() - holdStart;
     if (!decided) {
       // 缺席策略显式化：超时未决 fail-closed 拒答（宁可不答不可错答）
-      this.quickActivities.hitlEvent(
+      quickActivities.hitlEvent(
           "timeout", "审批超时未决（等待 " + waitedMs + "ms），按缺席策略拒答", input.traceId());
       traceLog.warn("hitl await timeout after {}ms, fail-closed refusal", waitedMs);
       return finish(new LoopResult(REFUSAL, List.copyOf(this.steps), StopReason.REVIEW_REJECTED));
     }
-    this.quickActivities.hitlEvent(
+    quickActivities.hitlEvent(
         this.hitlDecision,
         (this.hitlComment == null ? "" : this.hitlComment) + "（等待 " + waitedMs + "ms）",
         input.traceId());

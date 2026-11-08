@@ -33,6 +33,7 @@ class ResearchPipelineWorkflowTest {
     final Deque<ReviewVerdict> verdicts = new ArrayDeque<>();
     final List<String> receivedComments = new ArrayList<>();
     String draft = "草稿答案";
+    long planSleepMs = 0;
     int planCalls = 0;
     int buildCalls = 0;
     int reviewCalls = 0;
@@ -42,6 +43,13 @@ class ResearchPipelineWorkflowTest {
     @Override
     public Plan plan(String question, List<HistoryTurn> history, String traceId) {
       this.planCalls++;
+      if (this.planSleepMs > 0) {
+        try {
+          Thread.sleep(this.planSleepMs);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+      }
       return this.plan;
     }
 
@@ -276,5 +284,24 @@ class ResearchPipelineWorkflowTest {
     assertThat(result.stopReason()).isEqualTo(StopReason.FINAL_ANSWER);
     assertThat(result.answer()).isEqualTo("草稿答案");
     assertThat(this.activities.hitlEvents).isEmpty();
+  }
+
+  @Test
+  void inputBudgetOverridesActivityTimeout() {
+    // W31 #1：入参预算档真实生效——quick 档压到 1s，plan 活动睡 2s → 撞活动超时（而非默认 120s 放行）
+    this.activities.planSleepMs = 2000;
+    ResearchRunInput budgeted =
+        new ResearchRunInput(
+            "茅台营收多少", 6, List.of(), "trace-test", false, 0, new ActivityBudgets(1, 600));
+
+    org.assertj.core.api.Assertions.assertThatThrownBy(() -> newWorkflow().runResearch(budgeted))
+        .satisfies(
+            e -> {
+              StringBuilder chain = new StringBuilder();
+              for (Throwable cur = e; cur != null; cur = cur.getCause()) {
+                chain.append(cur.getClass().getSimpleName()).append(" ");
+              }
+              assertThat(chain.toString()).contains("TimeoutFailure");
+            });
   }
 }
