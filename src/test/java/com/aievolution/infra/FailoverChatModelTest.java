@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.time.Duration;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,7 @@ class FailoverChatModelTest {
   private ChatModel fallback;
   private ChatOptions fallbackOptions;
   private SimpleMeterRegistry meterRegistry;
+  private MutableClock clock;
   private FailoverChatModel model;
 
   @BeforeEach
@@ -46,7 +48,34 @@ class FailoverChatModelTest {
     fallbackOptions = mock(ChatOptions.class);
     when(fallback.getDefaultOptions()).thenReturn(fallbackOptions);
     meterRegistry = new SimpleMeterRegistry();
-    model = new FailoverChatModel(primary, fallback, meterRegistry, "qwen-fallback");
+    clock = new MutableClock();
+    model =
+        new FailoverChatModel(
+            primary, fallback, meterRegistry, "qwen-fallback", Duration.ofMinutes(5), clock);
+  }
+
+  /** 可变时钟：冷却窗行为测试需要推进时间 */
+  private static final class MutableClock extends java.time.Clock {
+    private java.time.Instant now = java.time.Instant.parse("2026-11-08T00:00:00Z");
+
+    void advance(Duration duration) {
+      this.now = this.now.plus(duration);
+    }
+
+    @Override
+    public java.time.Instant instant() {
+      return this.now;
+    }
+
+    @Override
+    public java.time.ZoneId getZone() {
+      return java.time.ZoneOffset.UTC;
+    }
+
+    @Override
+    public java.time.Clock withZone(java.time.ZoneId zone) {
+      return this;
+    }
   }
 
   private static ChatResponse responseOf(String text) {
@@ -156,5 +185,31 @@ class FailoverChatModelTest {
     assertThatThrownBy(() -> model.stream(PROMPT).collectList().block())
         .isInstanceOf(ResourceAccessException.class);
     verifyNoInteractions(fallback);
+  }
+
+  @Test
+  void activeArmIsPrimaryBeforeAnyFailover() {
+    assertThat(model.activeArm()).isEqualTo(ModelArmRegistry.PRIMARY);
+  }
+
+  @Test
+  void activeArmIsFallbackWithinCooldownAfterFailover() {
+    when(primary.call(any(Prompt.class))).thenThrow(new TransientAiException("503"));
+    when(fallback.call(any(Prompt.class))).thenReturn(responseOf("备用回答"));
+    model.call(PROMPT);
+
+    assertThat(model.activeArm()).isEqualTo(ModelArmRegistry.FALLBACK);
+    clock.advance(Duration.ofMinutes(4));
+    assertThat(model.activeArm()).isEqualTo(ModelArmRegistry.FALLBACK);
+  }
+
+  @Test
+  void activeArmReturnsToPrimaryAfterCooldown() {
+    when(primary.call(any(Prompt.class))).thenThrow(new TransientAiException("503"));
+    when(fallback.call(any(Prompt.class))).thenReturn(responseOf("备用回答"));
+    model.call(PROMPT);
+
+    clock.advance(Duration.ofMinutes(6));
+    assertThat(model.activeArm()).isEqualTo(ModelArmRegistry.PRIMARY);
   }
 }

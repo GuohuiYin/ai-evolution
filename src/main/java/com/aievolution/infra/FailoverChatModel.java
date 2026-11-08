@@ -29,7 +29,7 @@ import reactor.core.publisher.Flux;
  * <p>降级必须可见：WARN 告警日志（traceId 串联）+ {@code model.failover.total} 计数器（A6 埋点）—— 静默降级是故障放大器。备用模型经
  * SiliconFlow 共享算力延迟显著偏高（选型实测 30-60x， docs/eval/selection/model-selection-v1.md），降级期用户体验下降属预期代价。
  */
-public class FailoverChatModel implements ChatModel {
+public class FailoverChatModel implements ChatModel, ModelArmRegistry {
 
   private static final Logger log = LoggerFactory.getLogger(FailoverChatModel.class);
 
@@ -37,13 +37,25 @@ public class FailoverChatModel implements ChatModel {
   private final ChatModel fallback;
   private final MeterRegistry meterRegistry;
   private final String fallbackName;
+  private final java.time.Duration armCooldown;
+  private final java.time.Clock clock;
+
+  /** 最近一次切换时刻（null=从未切换）；冷却窗判定依据，W31 #1 */
+  private volatile java.time.Instant lastFailoverAt;
 
   public FailoverChatModel(
-      ChatModel primary, ChatModel fallback, MeterRegistry meterRegistry, String fallbackName) {
+      ChatModel primary,
+      ChatModel fallback,
+      MeterRegistry meterRegistry,
+      String fallbackName,
+      java.time.Duration armCooldown,
+      java.time.Clock clock) {
     this.primary = primary;
     this.fallback = fallback;
     this.meterRegistry = meterRegistry;
     this.fallbackName = fallbackName;
+    this.armCooldown = armCooldown;
+    this.clock = clock;
   }
 
   @Override
@@ -109,7 +121,21 @@ public class FailoverChatModel implements ChatModel {
     return false;
   }
 
+  /**
+   * 活跃臂判定（W31 #1，Owner 裁决路径 A）：切换发生后冷却窗内报备用臂，窗口过后报主力臂—— 只登记不改调用路径（窗内每次调用仍先试主力，恢复探测语义同 W12），
+   * 编排层据臂查超时预算档实现「换臂即换档」。
+   */
+  @Override
+  public String activeArm() {
+    java.time.Instant last = this.lastFailoverAt;
+    if (last != null && this.clock.instant().isBefore(last.plus(this.armCooldown))) {
+      return ModelArmRegistry.FALLBACK;
+    }
+    return ModelArmRegistry.PRIMARY;
+  }
+
   private void alert(Throwable error) {
+    this.lastFailoverAt = this.clock.instant();
     meterRegistry.counter("model.failover.total", "fallback", fallbackName).increment();
     log.warn(
         "主力模型调用失败，自动切换备用模型 fallback={} errorType={} msg={}",

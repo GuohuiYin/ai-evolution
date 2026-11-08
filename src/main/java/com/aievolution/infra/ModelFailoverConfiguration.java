@@ -52,7 +52,15 @@ public class ModelFailoverConfiguration {
       @Qualifier("deepSeekChatModel") ChatModel primary,
       OpenAiChatModel qwenFallbackChatModel,
       MeterRegistry meterRegistry,
-      @Value("${ai.model.failover.model:Qwen/Qwen3.5-35B-A3B}") String fallbackModel) {
-    return new FailoverChatModel(primary, qwenFallbackChatModel, meterRegistry, fallbackModel);
+      @Value("${ai.model.failover.model:Qwen/Qwen3.5-35B-A3B}") String fallbackModel,
+      @Value("${ai.model.failover.arm-cooldown:PT5M}") java.time.Duration armCooldown) {
+    // 活跃臂冷却窗（W31 #1）：切换后窗内报备用臂，供编排层按臂查超时预算档
+    return new FailoverChatModel(
+        primary,
+        qwenFallbackChatModel,
+        meterRegistry,
+        fallbackModel,
+        armCooldown,
+        java.time.Clock.systemUTC());
   }
 }
