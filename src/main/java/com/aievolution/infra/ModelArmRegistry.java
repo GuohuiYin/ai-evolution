@@ -5,7 +5,7 @@ package com.aievolution.infra;
  *
  * <p>臂名是稳定键（不随具体模型变更）：{@value #PRIMARY} / {@value #FALLBACK}，与配置表 {@code
  * ai.model.arm-timeouts.<臂名>} 对应。实现：{@link FailoverChatModel}——切换发生后进入冷却窗，
- * 窗口内报备用臂，窗口过后报主力臂（调用路径不变，W12 切换语义不动）。
+ * 窗口内报备用臂且调用路径直连备用臂，窗口过后恢复先试主力（W31 #3 窗口实测修订裁决 A→B）。
  */
 public interface ModelArmRegistry {
 

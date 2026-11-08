@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -211,5 +212,53 @@ class FailoverChatModelTest {
 
     clock.advance(Duration.ofMinutes(6));
     assertThat(model.activeArm()).isEqualTo(ModelArmRegistry.PRIMARY);
+  }
+
+  @Test
+  void secondCallWithinCooldownGoesStraightToFallback() {
+    // W31 #3 窗口实测修订（裁决 A→B）：冷却窗内第二笔直连备用臂，不再先试死主力——
+    // 实测 Spring AI 重试模板对连接拒绝重试 40+ 次（约 90s/次调用），先试主力把故障税放大一个量级
+    when(primary.call(any(Prompt.class))).thenThrow(new TransientAiException("503"));
+    when(fallback.call(any(Prompt.class))).thenReturn(responseOf("备用回答"));
+    model.call(PROMPT);
+
+    clock.advance(Duration.ofMinutes(1));
+    assertThat(model.call(PROMPT).getResult().getOutput().getText()).isEqualTo("备用回答");
+
+    verify(primary, times(1)).call(any(Prompt.class));
+    verify(fallback, times(2)).call(any(Prompt.class));
+  }
+
+  @Test
+  void callAfterCooldownProbesPrimaryFirst() {
+    // 窗口过后恢复先试主力（自然探测）：主力已恢复则直接回主力臂
+    when(primary.call(any(Prompt.class))).thenThrow(new TransientAiException("503"));
+    when(fallback.call(any(Prompt.class))).thenReturn(responseOf("备用回答"));
+    model.call(PROMPT);
+
+    clock.advance(Duration.ofMinutes(6));
+    when(primary.call(any(Prompt.class))).thenReturn(responseOf("主力恢复了"));
+
+    assertThat(model.call(PROMPT).getResult().getOutput().getText()).isEqualTo("主力恢复了");
+    verify(primary, times(2)).call(any(Prompt.class));
+    verify(fallback, times(1)).call(any(Prompt.class));
+    assertThat(model.activeArm()).isEqualTo(ModelArmRegistry.PRIMARY);
+  }
+
+  @Test
+  void failedProbeAfterCooldownReentersCooldown() {
+    // 自然探测失败（主力仍断）：重进冷却窗，窗内下一笔继续直连备用臂
+    when(primary.call(any(Prompt.class))).thenThrow(new TransientAiException("503"));
+    when(fallback.call(any(Prompt.class))).thenReturn(responseOf("备用回答"));
+    model.call(PROMPT);
+
+    clock.advance(Duration.ofMinutes(6));
+    model.call(PROMPT); // 探测主力仍失败 → 重进冷却窗
+    assertThat(model.activeArm()).isEqualTo(ModelArmRegistry.FALLBACK);
+
+    clock.advance(Duration.ofMinutes(1));
+    assertThat(model.call(PROMPT).getResult().getOutput().getText()).isEqualTo("备用回答");
+    verify(primary, times(2)).call(any(Prompt.class));
+    verify(fallback, times(3)).call(any(Prompt.class));
   }
 }

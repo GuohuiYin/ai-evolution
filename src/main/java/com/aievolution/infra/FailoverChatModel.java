@@ -28,6 +28,9 @@ import reactor.core.publisher.Flux;
  *
  * <p>降级必须可见：WARN 告警日志（traceId 串联）+ {@code model.failover.total} 计数器（A6 埋点）—— 静默降级是故障放大器。备用模型经
  * SiliconFlow 共享算力延迟显著偏高（选型实测 30-60x， docs/eval/selection/model-selection-v1.md），降级期用户体验下降属预期代价。
+ *
+ * <p>冷却窗短路（W31 #3 窗口实测修订裁决 A→B）：切换发生后冷却窗内**直连备用臂**，不再先试主力—— W31 值守窗口实账：Spring AI 重试模板对连接拒绝重试 40+
+ * 次（约 90 秒/次调用）， 冷却窗内逐调用先试主力的语义把故障税放大一个量级。 窗口过后恢复先试主力（一次自然探测：通则回主力，断则重进冷却窗）。
  */
 public class FailoverChatModel implements ChatModel, ModelArmRegistry {
 
@@ -73,6 +76,10 @@ public class FailoverChatModel implements ChatModel, ModelArmRegistry {
 
   @Override
   public ChatResponse call(Prompt prompt) {
+    if (inCooldown()) {
+      // 冷却窗内直连备用臂（W31 裁决修订）：省掉对死主力的重试风暴（实测约 90s/次调用）
+      return fallback.call(toFallbackPrompt(prompt));
+    }
     try {
       return primary.call(prompt);
     } catch (RuntimeException e) {
@@ -86,6 +93,9 @@ public class FailoverChatModel implements ChatModel, ModelArmRegistry {
 
   @Override
   public Flux<ChatResponse> stream(Prompt prompt) {
+    if (inCooldown()) {
+      return Flux.defer(() -> fallback.stream(toFallbackPrompt(prompt)));
+    }
     AtomicBoolean emitted = new AtomicBoolean(false);
     return Flux.defer(() -> primary.stream(prompt))
         .doOnNext(chunk -> emitted.set(true))
@@ -122,16 +132,18 @@ public class FailoverChatModel implements ChatModel, ModelArmRegistry {
   }
 
   /**
-   * 活跃臂判定（W31 #1，Owner 裁决路径 A）：切换发生后冷却窗内报备用臂，窗口过后报主力臂—— 只登记不改调用路径（窗内每次调用仍先试主力，恢复探测语义同 W12），
-   * 编排层据臂查超时预算档实现「换臂即换档」。
+   * 活跃臂判定（W31 #3 窗口实测修订裁决 A→B，路径 B）：切换发生后冷却窗内报备用臂且调用路径直连备用臂 （见 call/stream 的 {@link #inCooldown()}
+   * 短路），窗口过后恢复先试主力（一次自然探测：通则回主力，断则重进冷却窗）。 编排层据臂查超时预算档实现「换臂即换档」。
    */
   @Override
   public String activeArm() {
+    return inCooldown() ? ModelArmRegistry.FALLBACK : ModelArmRegistry.PRIMARY;
+  }
+
+  /** 冷却窗判定单点：最近一次切换时刻 + 臂冷却时长。call/stream/activeArm 共用， 判定逻辑只允许这一处副本（A11-1 两次即收口）。 */
+  private boolean inCooldown() {
     java.time.Instant last = this.lastFailoverAt;
-    if (last != null && this.clock.instant().isBefore(last.plus(this.armCooldown))) {
-      return ModelArmRegistry.FALLBACK;
-    }
-    return ModelArmRegistry.PRIMARY;
+    return last != null && this.clock.instant().isBefore(last.plus(this.armCooldown));
   }
 
   private void alert(Throwable error) {
