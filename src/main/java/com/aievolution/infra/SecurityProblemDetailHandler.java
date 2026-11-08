@@ -32,6 +32,8 @@ public class SecurityProblemDetailHandler implements AuthenticationEntryPoint, A
       HttpServletResponse response,
       AuthenticationException authException)
       throws IOException {
+    // 安全事件审计流（W31 #4）：认证失败统一留痕
+    SecurityAudit.authFailure(request.getRequestURI(), request.getRemoteAddr());
     // 头必须先于写体：writeValue 即提交响应，之后再设头会被静默丢弃（单测锁定）
     response.setHeader("WWW-Authenticate", "Bearer");
     write(
@@ -46,6 +48,12 @@ public class SecurityProblemDetailHandler implements AuthenticationEntryPoint, A
       HttpServletResponse response,
       AccessDeniedException accessDeniedException)
       throws IOException {
+    // 安全事件审计流（W31 #4）：授权失败留痕，主体取自 SecurityContext（已认证身份）
+    var authentication =
+        org.springframework.security.core.context.SecurityContextHolder.getContext()
+            .getAuthentication();
+    SecurityAudit.authzDenied(
+        request.getRequestURI(), authentication != null ? authentication.getName() : "-");
     write(response, HttpStatus.FORBIDDEN, "凭证合法但角色不足，无权访问该端点");
   }
 

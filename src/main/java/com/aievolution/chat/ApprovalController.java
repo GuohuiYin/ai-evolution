@@ -73,6 +73,8 @@ public class ApprovalController {
       } else {
         workflow.reject(comment);
       }
+      // 安全事件审计流（W31 #4）：人工决定留痕——谁批的、批的什么，审计可查
+      com.aievolution.infra.SecurityAudit.hitlDecision(workflowId, request.decision(), comment);
       return ResponseEntity.accepted()
           .body(Map.of("workflowId", workflowId, "decision", request.decision()));
     } catch (WorkflowNotFoundException e) {

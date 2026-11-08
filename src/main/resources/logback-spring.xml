@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  日志配置（W31 #4 起显式成文）：主体沿用 Spring Boot 默认（console-appender 吃
+  application.yml 的 logging.pattern.console，logging.level.* 照常生效），
+  唯一增量 = 安全事件审计流分流——logger「security-audit」独立滚动文件
+  logs/security-audit.log，值守窗口可与业务日志直接对照；同时挂控制台保持屏幕可见。
+  additivity=false：不再向 root 传播，业务日志流里审计事件只出现一次（控制台那份来自本 logger 直挂）。
+-->
+<configuration>
+  <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+  <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+  <appender name="SECURITY_AUDIT_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>logs/security-audit.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <fileNamePattern>logs/security-audit.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+      <maxFileSize>10MB</maxFileSize>
+      <maxHistory>30</maxHistory>
+    </rollingPolicy>
+    <encoder>
+      <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [traceId=%X{traceId:--}] %msg%n</pattern>
+      <charset>UTF-8</charset>
+    </encoder>
+  </appender>
+
+  <logger name="security-audit" level="INFO" additivity="false">
+    <appender-ref ref="SECURITY_AUDIT_FILE"/>
+    <appender-ref ref="CONSOLE"/>
+  </logger>
+
+  <root level="INFO">
+    <appender-ref ref="CONSOLE"/>
+  </root>
+</configuration>

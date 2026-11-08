@@ -30,6 +30,10 @@ public class ResearchPipelineWorkflowImpl implements ResearchPipelineWorkflow {
 
   private static final Logger traceLog = Workflow.getLogger("research-trace");
 
+  /** 安全事件审计流（W31 #4）：打回/拒答事件与业务轨迹分流，同名 logger 经 logback 路由独立文件 */
+  private static final Logger auditLog =
+      Workflow.getLogger(com.aievolution.infra.SecurityAudit.LOGGER_NAME);
+
   /** 打回上限（设计 §1.3：打回 ≤2 次） */
   private static final int MAX_REJECTIONS = 2;
 
@@ -118,6 +122,8 @@ public class ResearchPipelineWorkflowImpl implements ResearchPipelineWorkflow {
             new LoopResult(outcome.draft(), List.copyOf(this.steps), StopReason.FINAL_ANSWER));
       }
       traceLog.info("review rejected attempt={} comment={}", attempt, verdict.comment());
+      auditLog.info(
+          "event=REVIEW_REJECTED attempt={} comment={}", attempt, abbreviate(verdict.comment()));
       comment = verdict.comment();
       this.status = "running";
     }
@@ -133,7 +139,16 @@ public class ResearchPipelineWorkflowImpl implements ResearchPipelineWorkflow {
       return awaitHumanDecision(input, lastOutcome, quickActivities);
     }
     traceLog.warn("review rejections exhausted, refuse to answer");
+    auditLog.info("event=REFUSAL reason=review-rejections-exhausted");
     return finish(new LoopResult(REFUSAL, List.copyOf(this.steps), StopReason.REVIEW_REJECTED));
+  }
+
+  private static String abbreviate(String text) {
+    if (text == null || text.isBlank()) {
+      return "-";
+    }
+    String oneLine = text.replaceAll("\\s+", " ").trim();
+    return oneLine.length() <= 80 ? oneLine : oneLine.substring(0, 80) + "…";
   }
 
   /**

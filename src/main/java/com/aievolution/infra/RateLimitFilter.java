@@ -79,6 +79,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
                     ? new Window(windowStart, new AtomicInteger(1))
                     : increment(old));
     if (window.count.get() > maxPerMinute) {
+      // 安全事件审计流（W31 #4）：限流命中留痕（identity=分桶键）
+      SecurityAudit.rateLimited(identity, request.getRequestURI());
       writeTooManyRequests(response, WINDOW_SECONDS - (now % WINDOW_SECONDS));
       return;
     }

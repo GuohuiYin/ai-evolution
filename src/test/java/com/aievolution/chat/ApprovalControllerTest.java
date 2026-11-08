@@ -125,4 +125,40 @@ class ApprovalControllerTest {
                 .content("{\"decision\":\"maybe\"}"))
         .andExpect(status().isBadRequest());
   }
+
+  @Test
+  void humanDecisionAuditedToSecurityStream() throws Exception {
+    // W31 #4：人工决定（含决定内容与批注）落入 security-audit 审计流
+    ch.qos.logback.classic.Logger auditLogger =
+        (ch.qos.logback.classic.Logger)
+            org.slf4j.LoggerFactory.getLogger(com.aievolution.infra.SecurityAudit.LOGGER_NAME);
+    ch.qos.logback.core.read.ListAppender<ch.qos.logback.classic.spi.ILoggingEvent> appender =
+        new ch.qos.logback.core.read.ListAppender<>();
+    appender.start();
+    auditLogger.addAppender(appender);
+    try {
+      ResearchPipelineWorkflow workflow = stub("pipeline-t6");
+      when(workflow.pendingApproval()).thenReturn(true);
+
+      mockMvc
+          .perform(
+              post("/api/approvals/pipeline-t6")
+                  .contentType(MediaType.APPLICATION_JSON)
+                  .content("{\"decision\":\"approve\",\"comment\":\"口径已人工核实\"}"))
+          .andExpect(status().isAccepted());
+
+      org.assertj.core.api.Assertions.assertThat(
+              appender.list.stream()
+                  .map(ch.qos.logback.classic.spi.ILoggingEvent::getFormattedMessage))
+          .anySatisfy(
+              e ->
+                  org.assertj.core.api.Assertions.assertThat(e)
+                      .contains("event=HITL_DECISION")
+                      .contains("workflow=pipeline-t6")
+                      .contains("decision=approve")
+                      .contains("口径已人工核实"));
+    } finally {
+      auditLogger.detachAppender(appender);
+    }
+  }
 }

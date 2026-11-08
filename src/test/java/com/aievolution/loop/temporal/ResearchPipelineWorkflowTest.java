@@ -183,6 +183,34 @@ class ResearchPipelineWorkflowTest {
   }
 
   @Test
+  void reviewRejectionsAuditedToSecurityStream() {
+    // W31 #4：打回与最终拒答落入 security-audit 审计流（TestWorkflowEnvironment 进程内，
+    // workflow 日志经 logback 路由，ListAppender 直接捕获）
+    ch.qos.logback.classic.Logger auditLogger =
+        (ch.qos.logback.classic.Logger)
+            org.slf4j.LoggerFactory.getLogger(com.aievolution.infra.SecurityAudit.LOGGER_NAME);
+    ch.qos.logback.core.read.ListAppender<ch.qos.logback.classic.spi.ILoggingEvent> appender =
+        new ch.qos.logback.core.read.ListAppender<>();
+    appender.start();
+    auditLogger.addAppender(appender);
+    try {
+      scriptAlwaysReject();
+
+      newWorkflow().runResearch(input());
+
+      var events =
+          appender.list.stream()
+              .map(ch.qos.logback.classic.spi.ILoggingEvent::getFormattedMessage)
+              .toList();
+      assertThat(events)
+          .anySatisfy(e -> assertThat(e).contains("event=REVIEW_REJECTED").contains("第一批注"))
+          .anySatisfy(e -> assertThat(e).contains("event=REFUSAL"));
+    } finally {
+      auditLogger.detachAppender(appender);
+    }
+  }
+
+  @Test
   void nullDraftSkipsReviewAndReturnsNullAnswer() {
     // 合成失败（draft=null）→ 诚实红线：answer=null 直接收尾，不送复核（无草稿可审）
     this.activities.draft = null;
