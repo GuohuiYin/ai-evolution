@@ -28,7 +28,9 @@ def fetch_token() -> str:
     basic = base64.b64encode(f"{client_id}:{secret}".encode()).decode()
     req = urllib.request.Request(
         f"{base}/oauth2/token",
-        data=b"grant_type=client_credentials",
+        # scope 必须显式请求——SAS 不带 scope 参数时签发的令牌不含 scope 声明（实测 2026-11-08），
+        # 资源服务器侧将因零角色拿到 403；writer 是 mcp-client 注册的唯一 scope
+        data=b"grant_type=client_credentials&scope=writer",
         headers={
             "Content-Type": "application/x-www-form-urlencoded",
             "Authorization": f"Basic {basic}",

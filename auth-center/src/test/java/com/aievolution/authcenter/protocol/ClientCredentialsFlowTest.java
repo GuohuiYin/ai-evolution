@@ -37,6 +37,25 @@ class ClientCredentialsFlowTest extends AbstractAuthCenterTest {
   }
 
   @Test
+  void tokenWithoutScopeRequestCarriesNoScopeClaim() throws Exception {
+    // SAS 行为锁定（2026-11-08 实踩）：不显式请求 scope 时令牌不含 scope 声明——
+    // 调用方（scripts/auth_token.py 等）必须显式带 scope=writer，否则资源服务器侧零角色 403
+    HttpResponse<String> response =
+        postForm(
+            client,
+            base() + "/oauth2/token",
+            "grant_type=client_credentials",
+            "Authorization",
+            "Basic " + basic("mcp-client", "test-secret"));
+
+    assertThat(response.statusCode()).isEqualTo(200);
+    String token = response.body().split("\"access_token\":\"")[1].split("\"")[0];
+    String payload =
+        new String(Base64.getUrlDecoder().decode(token.split("\\.")[1]), StandardCharsets.UTF_8);
+    assertThat(payload).doesNotContain("\"scope\"");
+  }
+
+  @Test
   void rejectsWrongSecret() throws Exception {
     HttpResponse<String> response =
         postForm(
