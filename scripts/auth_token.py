@@ -38,3 +38,7 @@ def fetch_token() -> str:
     )
     with urllib.request.urlopen(req, timeout=10) as resp:
         return json.loads(resp.read())["access_token"]
+
+
+if __name__ == "__main__":
+    print(fetch_token())
