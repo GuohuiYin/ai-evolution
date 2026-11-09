@@ -14,6 +14,7 @@
 | W29 | **Web 安全捆**：认证授权对齐 Spring Security 过滤器链+最小 RBAC（候选 #5）、安全响应头套件（#11）、CORS 显式策略（#12）、SSRF egress 控制（#13） | [w29-web-security-hardening.md](w29-web-security-hardening.md) | 四项同触动过滤器链，捆做一次到位，拆开会反复触碰同一批测试（O3）；依赖 W28 收官 |
 | W30 | **系统安全架构设计 + 统一认证授权中心**：Spring Authorization Server 自建 IdP（框架级自建，不从零手写协议）；TLS 威胁模型声明入周 | [w30-unified-auth-center.md](w30-unified-auth-center.md) | Owner 2026-11-04 当日裁决插入并扩容（学习目标优先）；W29 的 Bearer/RBAC/scope 对齐为其预留最小迁移面 |
 | W31 | **韧性捆**：failover 超时联动（#2）+ HITL 无人模式策略（#3），配值守窗口验收；安全事件审计流 + 密钥轮转规程并入 | [w31-resilience-hardening.md](w31-resilience-hardening.md) | 与下次值守窗口合并做（W26 运行报告遗留）；W30 扩容时顺延至此 |
+| W32 | **运营硬化扫尾捆**：候选池小项清零（#6/#7/#9/#14/#15/#20）+ W31 实账驱动的 token 预算按臂分档（#21） | [w32-ops-hardening-sweep.md](w32-ops-hardening-sweep.md) | 二期四主线收官后的扫尾周；小项清零后 W33 起专心中大项（#16/#17 排队） |
 
 ## 取舍原则（二期通行）
 
