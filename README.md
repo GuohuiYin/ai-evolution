@@ -138,7 +138,7 @@ flowchart TB
         Obs["可观测：traceId 四级留痕 · SSE 轨迹<br/>prompt/response 日志 · token 账本 · failover 计数器<br/>预算闸运行时可调 /ai/cost/budget（W27 #4）"]
         Eval["评估：检索黄金集 69 条 + 生成黄金集 58 条<br/>（LLM judge，A13 prompt 纪律门 + 检索信号口径，CI 定时回归）<br/>Agent 轨迹评估：步数/冗余/收敛率"]
         FB["人工反馈回路（W24）：badcase 登记<br/>→ 人工裁定 → 黄金集候选区 → 转正入集（W25 #5 首例闭环）"]
-        Sec["安全：CVE-2026-59318 fail-fast · 认证中心 JWT + 限流（W30）<br/>MCP 脱敏 · 入参上限 · 工具调用上限"]
+        Sec["安全：CVE-2026-59318 fail-fast · 认证中心 JWT + 限流（W30）<br/>MCP 脱敏 · 入参上限 · 工具调用上限<br/>安全事件审计流独立分流（W31 #4）"]
     end
     services -.-> cross
 ```
@@ -255,7 +255,7 @@ flowchart TB
 - 检索黄金集 69 条（W17 扩容 39→60 + W19 v5 轮换 60→69；Recall@5 基线 72% → W13 混合检索裁决启用后 **93%**，+21pp；W19 轮换复测 94.3%）+ 生成黄金集 58 条（W17-W19 扩库轮换 + W25 反馈回路首例转正；LLM judge 三维评分；judge 校准 W18 95.5% → W19 36.7% 时效破产 → W20 复测 63.3% 立案（[揭盲登记](docs/eval/generation/w20-calibration-rerun.md)）→ W21 输入侧处置复测 83.3% 过线（[r2](docs/eval/generation/w21-calibration-rerun-r2.md)）→ W22 accuracy 维修尺（工具取数如实标注不视为编造）+ 对照案复评确认修尺不松尺 → W24 拒答口径对齐（空召回设计性拒答经检索信号与「无理由拒答」切开，[复评](docs/eval/generation/w24-judge-rescore-2.json)）→ W26 v3.3 语料 asOf 优先重排（[基线 5.6/6](docs/eval/generation/w26-gen-v33-asof-priority.md)）→ W27 校准复测 88.9% 首次无需修正过线（[收卷](docs/eval/generation/w27-judge-calibration.md)）+ v3.4 参照修正（数据源切换型腐烂首例））→ W28 改写注入标识符护栏（[双臂 Recall@5 52/53 零回归、案 30 满分转绿](docs/eval/generation/w28-rewrite-guard-eval.md)）+ Agent 轨迹评估（收敛率/冗余/步数，M3 验收 6/6 收敛）；评估设施加固（W27 #3a：单案故障隔离 + 模型 HTTP 超时，长跑批不再整批报废/挂死）
 - 一页成本账：单次问答 ¥0.0054（W8 口径）；生成 eval 单轮成本可经 `/ai/cost/summary` 日聚总实查（W25 #2 上线）
 
-**路线图**：W5 工具调用（@Tool）+ M1 验收门 ✅ → M2 MCP/护栏/Eval（W6 MCP 协议贯通 ✅，W7 安全加固 ✅，W8 评估体系 ✅——检索/生成双黄金集 + LLM judge + 成本账；few-shot A/B 裁决不启用）→ M3 最小研究 Loop ✅（2026-09-18 验收收官：显式 ReAct + 会话记忆 + SSE 轨迹 / 查询改写 / MCP Client 出向凭证 / 检索两阶段化——hybrid +21pp 启用、rerank +0pp 不启用，数据裁决；[验收记录](docs/plans/m3/m3-acceptance.md)）→ W14-W27 进阶 ✅（P5 无人值守收官）→ **W28+ 二期·生产硬化期**（W28 召回质量 ✅ → W29 Web 安全捆 ✅ → W30 安全架构+统一认证授权中心 ✅ → W31 韧性捆，[二期一页纸](docs/plans/advanced/phase2-production-hardening.md)）。
+**路线图**：W5 工具调用（@Tool）+ M1 验收门 ✅ → M2 MCP/护栏/Eval（W6 MCP 协议贯通 ✅，W7 安全加固 ✅，W8 评估体系 ✅——检索/生成双黄金集 + LLM judge + 成本账；few-shot A/B 裁决不启用）→ M3 最小研究 Loop ✅（2026-09-18 验收收官：显式 ReAct + 会话记忆 + SSE 轨迹 / 查询改写 / MCP Client 出向凭证 / 检索两阶段化——hybrid +21pp 启用、rerank +0pp 不启用，数据裁决；[验收记录](docs/plans/m3/m3-acceptance.md)）→ W14-W27 进阶 ✅（P5 无人值守收官）→ **W28+ 二期·生产硬化期**（W28 召回质量 ✅ → W29 Web 安全捆 ✅ → W30 安全架构+统一认证授权中心 ✅ → W31 韧性捆 ✅（[窗口运行报告](docs/ops/w31-failover-hitl-run-report.md)），[二期一页纸](docs/plans/advanced/phase2-production-hardening.md)）。
 
 ## 文档导航
 
@@ -264,7 +264,7 @@ flowchart TB
 | [docs/plans/](docs/plans/README.md) | 周作战计划与回顾（对 PPT 路线的执行校准版） |
 | [docs/adr/](docs/adr/) | 架构决策记录 |
 | [docs/arch/](docs/arch/) | 架构结构图（如 Advisor 链源码精读——链机制 / 挂载点 / 钩子自测） |
-| [docs/ops/](docs/ops/) | 运维 SOP（值班操作卡——密钥轮转规程 W31 #5、分层诊断排查清单 W26 #1、注入操作卡、W26 无人值守运行报告+成本曲线、W31 值守窗口验收执行单） |
+| [docs/ops/](docs/ops/) | 运维 SOP（值班操作卡——密钥轮转规程 W31 #5、分层诊断排查清单 W26 #1、注入操作卡、W26 无人值守运行报告+成本曲线、W31 值守窗口验收执行单+运行报告） |
 | [docs/eval/](docs/eval/README.md) | 评估体系（选型评测 / 检索·生成·红线质量回归 / 成本） |
 | [docs/cost/](docs/cost/) | 成本账（一页制，随里程碑更新） |
 | [docs/notes/](docs/notes/) | 精读笔记（如 MCP 协议精读——先读懂协议再动手） |
